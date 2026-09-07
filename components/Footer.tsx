@@ -28,6 +28,7 @@ export default function Footer() {
       links: [
         { label: t('github'), href: LINKS.github, external: true },
         { label: t('developers'), href: '/developers', external: false },
+        { label: t('brand'), href: '/brand', external: false },
         { label: t('apply'), href: LINKS.contact, external: true },
         { label: t('mediaKit'), href: LINKS.mediaKit, external: true },
       ],

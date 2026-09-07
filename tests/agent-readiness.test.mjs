@@ -37,6 +37,7 @@ test('localized public routes are recognized and unknown routes are rejected', (
   assert.deepEqual(routeDetails('/about'), { locale: 'en', route: '/about' });
   assert.deepEqual(routeDetails('/es/contact'), { locale: 'es', route: '/contact' });
   assert.deepEqual(routeDetails('/developers'), { locale: 'en', route: '/developers' });
+  assert.deepEqual(routeDetails('/pt/brand'), { locale: 'pt', route: '/brand' });
   assert.equal(routeDetails('/missing-page'), null);
 });
 

@@ -171,6 +171,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Salmon's scale texture from the brand guidelines. */
+.brand-scales {
+  background-image: url('/images/brand-scales.svg');
+  background-repeat: repeat;
+  background-size: 822px 26px;
+}
+
 /* Selection */
 ::selection {
   background-color: rgba(255, 92, 69, 0.3);
