@@ -417,6 +417,7 @@
   },
   "footer": {
     "description": "Open wallet infrastructure",
+    "supportedBy": "Supported by",
     "copyright": "© {year} Salmon Wallet. Todos os direitos reservados.",
     "xTwitter": "X / Twitter",
     "telegram": "Comunidade no Telegram",
