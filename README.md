@@ -1,5 +1,7 @@
 # Salmon Website
+
 <img width="160" alt="logo-salmon" src="https://github.com/salmonw/salmon-wallet-v2/assets/35810074/ac99529f-aff7-47c6-b443-4a58b41a998d">
+
 Public website for [Salmon Wallet](https://salmonwallet.io): an open-source, self-custodial wallet experience focused on Solana and emerging ecosystem integrations.
 
 This repository contains the landing page, localized public pages, app download links, and the staking page for Salmon's Solana validator. Keep public claims grounded in what the code and current product can verify.
