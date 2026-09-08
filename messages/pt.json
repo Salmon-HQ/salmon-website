@@ -427,6 +427,7 @@
     "terms": "Termos e Condições",
     "privacy": "Política de Privacidade",
     "mediaKit": "Kit de Mídia",
+    "brand": "Marca",
     "contact": "Contato / Integrações",
     "apply": "Candidatar-se a uma integração",
     "columns": {
@@ -442,5 +443,15 @@
     "policy": "Leia a política de privacidade",
     "accept": "Aceitar",
     "decline": "Recusar"
+  },
+  "brand": {
+    "metadata": { "title": "Marca Salmon", "description": "Logos, cores, tipografia e recursos para download da marca Salmon Wallet." },
+    "hero": { "eyebrow": "Recursos da marca", "title": "Marca Salmon", "description": "", "download": "Baixar kit da marca" },
+    "symbol": { "title": "Símbolo", "description": "", "alt": "Símbolo branco da Salmon", "darkAlt": "Símbolo azul da Salmon", "appAlt": "Ícone do app Salmon" },
+    "logo": { "title": "Logotipo", "description": "" },
+    "color": { "title": "Paleta de cores", "description": "" },
+    "type": { "title": "Tipografia", "description": "" },
+    "texture": { "title": "Texturas e gradientes", "alt": "Textura de escamas da Salmon" },
+    "download": { "title": "Pronto para usar a Salmon?", "description": "Baixe os logos aprovados em PNG e SVG, além do guia completo da marca.", "cta": "Baixar todos os recursos" }
   }
 }

@@ -427,6 +427,7 @@
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",
     "mediaKit": "Media Kit",
+    "brand": "Brand",
     "contact": "Contact / Integrations",
     "apply": "Apply for an Integration",
     "columns": {
@@ -442,5 +443,15 @@
     "policy": "Read the privacy policy",
     "accept": "Accept",
     "decline": "Decline"
+  },
+  "brand": {
+    "metadata": { "title": "Salmon Brand", "description": "Salmon Wallet logos, colors, typography and downloadable brand assets." },
+    "hero": { "eyebrow": "Brand resources", "title": "Salmon Brand", "description": "", "download": "Download media kit" },
+    "symbol": { "title": "Symbol", "description": "", "alt": "White Salmon symbol", "darkAlt": "Navy Salmon symbol", "appAlt": "Salmon app icon" },
+    "logo": { "title": "Logotype", "description": "" },
+    "color": { "title": "Colors Palette", "description": "" },
+    "type": { "title": "Typography", "description": "" },
+    "texture": { "title": "Textures & Gradients", "alt": "Salmon scale texture" },
+    "download": { "title": "Ready to use Salmon?", "description": "Download approved logos in PNG and SVG, plus the complete brand guidelines.", "cta": "Download all assets" }
   }
 }
