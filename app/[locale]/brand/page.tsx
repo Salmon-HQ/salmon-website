@@ -55,7 +55,7 @@ export default async function BrandPage({ params }: Props) {
 
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#ff5c45]">
             <Image
-              src="/images/logo.png"
+              src="/images/logo.svg"
               alt={t('symbol.alt')}
               width={394}
               height={366}
@@ -75,7 +75,7 @@ export default async function BrandPage({ params }: Props) {
                 <Image src="/images/logo.png" alt={t('symbol.darkAlt')} width={394} height={366} className="h-auto w-44" />
               </div>
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl bg-[#ff5c45] p-10">
-                <Image src="/images/app-icon.png" alt={t('symbol.appAlt')} width={176} height={176} className="h-auto w-40" />
+                <Image src="/images/logo-orange.svg" alt={t('symbol.appAlt')} width={176} height={176} className="h-auto w-40" />
               </div>
             </div>
           </div>
