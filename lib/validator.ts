@@ -13,14 +13,22 @@ export interface ValidatorStats {
   live: boolean;
 }
 
-/** Snapshot fallback (2026-06-25) so the section never renders empty if Stakewiz is down. */
+/**
+ * Snapshot fallback (2026-09-13) so the section never renders empty if
+ * Stakewiz is down.
+ *
+ * Refresh it when it drifts: a stale snapshot is worse than none, because it
+ * is shown as fact precisely when the live source cannot correct it. The
+ * previous one was three months old and understated the validator badly —
+ * 18,951 SOL against 70,779, and 94.8% uptime against 99.98%.
+ */
 const FALLBACK: ValidatorStats = {
-  apy: 5.44,
+  apy: 6.58,
   commission: 5,
-  activeStake: 18951.8,
-  uptime: 94.8,
+  activeStake: 70779.3,
+  uptime: 99.98,
   skipRate: 0,
-  wizScore: 25.08,
+  wizScore: 69.81,
   active: true,
   name: 'Salmon Wallet',
   live: false,
