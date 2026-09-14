@@ -13,7 +13,7 @@
     },
     "stake": {
       "title": "Stake con Salmon — Validador de Solana",
-      "description": "Hacé stake de SOL directamente en Salmon y con nuestro propio validador de Solana — stats en vivo, verificables on-chain."
+      "description": "El validador de Solana de Salmon — stats de rendimiento en vivo, verificables on-chain. El staking nativo dentro de la wallet todavía no está disponible."
     }
   },
   "nav": {
