@@ -75,6 +75,44 @@ export default function Footer() {
   return (
     <footer className="relative overflow-hidden border-t border-border-default bg-bg-secondary/50">
       <div className="relative mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-12 flex flex-col items-center justify-center gap-5 border-b border-border-default/50 pb-12 sm:flex-row sm:gap-8">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-secondary">
+            {t('supportedBy')}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-9 gap-y-6">
+            <a
+              href="https://lafamilia.so/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit La Familia"
+              className="transition-opacity hover:opacity-80"
+            >
+              <Image
+                src="/images/partners/la-familia.png"
+                alt="La Familia"
+                width={3210}
+                height={357}
+                className="h-7 w-auto max-w-[220px] object-contain"
+              />
+            </a>
+            <a
+              href="https://superteam.ar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Superteam Argentina"
+              className="transition-opacity hover:opacity-80"
+            >
+              <Image
+                src="/images/partners/superteam-argentina.svg"
+                alt="Superteam Argentina"
+                width={1000}
+                height={170}
+                className="h-8 w-auto max-w-[190px] object-contain"
+              />
+            </a>
+          </div>
+        </div>
+
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_repeat(4,1fr)] lg:gap-10">
           {/* Brand */}
           <div className="flex flex-col gap-3">
