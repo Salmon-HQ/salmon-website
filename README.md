@@ -111,7 +111,7 @@ This is a public-facing repository and website. Be precise:
 - Do not add security, audit, user-count, asset-protection, rating, or growth claims unless there is a current source of truth.
 - Prefer verifiable proof: open-source repositories, live product surfaces, and live validator data.
 - Keep the positioning close to the current site: open-source, self-custodial, open wallet infrastructure, and a real product available on web, extension, and Android.
-- Treat unreleased surfaces as unreleased. iOS links are currently inert and marked as coming soon.
+- Keep platform availability and store links aligned with the live releases.
 - Keep integration and ecosystem language factual. Do not imply automatic access, guaranteed distribution, or protocol endorsement.
 
 ## Live data

@@ -17,7 +17,7 @@ export default function Hero() {
   const platforms = [
     { key: 'extension', label: tPlatform('extension'), href: LINKS.chrome, icon: <ChromeIcon size={28} />, tint: '#4285F4' },
     { key: 'android', label: tPlatform('android'), href: LINKS.playStore, icon: <AndroidIcon size={28} />, tint: '#3DDC84' },
-    { key: 'ios', label: tPlatform('ios'), href: null, icon: <IosIcon size={28} />, tint: '#A2AAAD' },
+    { key: 'ios', label: tPlatform('ios'), href: LINKS.appStore, icon: <IosIcon size={28} />, tint: '#A2AAAD' },
   ] as const;
 
   // Mount guard: avoid FOIC — content visible during SSR, animations after hydration
@@ -78,7 +78,7 @@ export default function Hero() {
             {t('tagline')}
           </motion.p>
 
-          {/* Where you can get Salmon today — iOS stays inert until it ships */}
+          {/* Where you can get Salmon today */}
           <motion.ul
             variants={fadeBlurUp}
             transition={transition}
@@ -90,38 +90,22 @@ export default function Hero() {
                   <span className="platform-tile flex h-16 w-16 items-center justify-center rounded-2xl border">
                     {icon}
                   </span>
-                  <span className="relative text-xs font-medium text-text-secondary transition-colors duration-300 group-hover:text-text-primary">
-                    <span className={key === 'ios' ? 'transition-opacity duration-300 group-hover:opacity-0' : undefined}>
-                      {label}
-                    </span>
-                    {key === 'ios' && (
-                      <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                        {tPlatform('comingSoon')}
-                      </span>
-                    )}
+                  <span className="text-xs font-medium text-text-secondary transition-colors duration-300 group-hover:text-text-primary">
+                    {label}
                   </span>
                 </>
               );
 
               return (
                 <li key={key} style={{ '--tint': tint } as React.CSSProperties}>
-                  {href ? (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex flex-col items-center gap-2"
-                    >
-                      {tile}
-                    </a>
-                  ) : (
-                    <span
-                      title={tPlatform('comingSoon')}
-                      className="group flex cursor-default flex-col items-center gap-2 opacity-25 transition-opacity duration-300 hover:opacity-40"
-                    >
-                      {tile}
-                    </span>
-                  )}
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center gap-2"
+                  >
+                    {tile}
+                  </a>
                 </li>
               );
             })}

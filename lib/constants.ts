@@ -3,7 +3,7 @@ export const LINKS = {
   chrome:
     'https://chromewebstore.google.com/detail/salmon-wallet/ejbidfepgijlcgahbmbckmnaljagjoll',
   firefox: '#',
-  appStore: '#',
+  appStore: 'https://apps.apple.com/ar/app/salmon-open-wallet/id6799740991',
   playStore: 'https://play.google.com/store/apps/details?id=io.salmonwallet.app',
   github: 'https://github.com/Salmon-HQ',
   repo: 'https://github.com/Salmon-HQ/salmon-wallet-frontend',

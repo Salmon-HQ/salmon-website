@@ -10,15 +10,11 @@ function PlatformCard({
   href,
   icon,
   tint,
-  comingSoon,
-  comingSoonLabel,
 }: {
   title: string;
   href: string;
   icon: React.ReactNode;
   tint: string;
-  comingSoon?: boolean;
-  comingSoonLabel?: string;
 }) {
   const card = (
     <div
@@ -29,15 +25,6 @@ function PlatformCard({
       <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
     </div>
   );
-
-  if (comingSoon) {
-    return (
-      <div className="h-full cursor-default opacity-45" title={comingSoonLabel}>
-        {card}
-        <span className="sr-only">{comingSoonLabel}</span>
-      </div>
-    );
-  }
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="group block h-full">
@@ -74,7 +61,7 @@ export default function GetSalmon() {
             <PlatformCard title={t('android')} href={LINKS.playStore} tint="#3DDC84" icon={<AndroidIcon size={48} />} />
           </ScrollReveal>
           <ScrollReveal direction={cardDirections[2]} delay={0.24} duration={1.1} className="h-full">
-            <PlatformCard title={t('ios')} href={LINKS.appStore} tint="#A2AAAD" comingSoon comingSoonLabel={t('comingSoon')} icon={<IosIcon size={48} />} />
+            <PlatformCard title={t('ios')} href={LINKS.appStore} tint="#A2AAAD" icon={<IosIcon size={48} />} />
           </ScrollReveal>
         </div>
 
