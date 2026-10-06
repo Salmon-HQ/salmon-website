@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 
 const STORAGE_KEY = 'salmon-analytics-consent';
-const GA_MEASUREMENT_ID = 'G-YQYGS0LPNH';
+const GA_MEASUREMENT_ID = 'G-8W36W1WMX8';
 
 type Consent = 'granted' | 'denied' | 'unset';
 
