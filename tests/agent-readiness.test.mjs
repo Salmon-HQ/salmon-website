@@ -13,7 +13,6 @@ import {
 } from '../lib/agent-content.mjs';
 import { clearRateLimits, consumeRateLimit, rateLimitHeaders } from '../lib/rate-limit.mjs';
 import { structuredData } from '../lib/structured-data.mjs';
-import { getLegalDocument, legalDocumentToMarkdown } from '../lib/legal-content.mjs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { renderLegalMarkdown } from '../lib/legal-markdown.mjs';
 import { getPowerupsLegal } from '../lib/legal-powerups.mjs';
@@ -53,36 +52,14 @@ test('homepage markdown has a hierarchical outline and substantial raw content',
   assert.match(markdown, /llms\.txt/);
 });
 
-test('legal documents are complete and structurally aligned in every locale', () => {
+test('legal documents keep the core facts in every locale', () => {
   for (const locale of ['en', 'es', 'pt']) {
-    const terms = getLegalDocument(locale, 'terms');
-    const privacy = getLegalDocument(locale, 'privacy');
-    assert.equal(terms.sections.length, 22);
-    assert.equal(privacy.sections.length, 14);
-
-    const termsMarkdown = legalDocumentToMarkdown(terms);
-    const privacyMarkdown = legalDocumentToMarkdown(privacy);
-    for (const required of ['GeekOcean Labs Ltd', 'Apple App Store', 'USD 100']) {
-      assert.match(termsMarkdown, new RegExp(required));
-    }
-    for (const required of ['GeekOcean Labs Ltd', 'mempool.space', 'CloudWatch', 'Google Analytics 4', '30']) {
-      assert.match(privacyMarkdown, new RegExp(required));
-    }
-    assert.doesNotMatch(`${termsMarkdown}${privacyMarkdown}`, /Blockdaemon|Helius/);
+    const terms = markdownForRoute({ locale, route: '/terms' });
+    const privacy = markdownForRoute({ locale, route: '/privacy' });
+    for (const required of ['GeekOcean Labs Ltd', 'Apple', 'Swap']) assert.match(terms, new RegExp(required));
+    for (const required of ['GeekOcean Labs Ltd', 'mempool.space', 'Google Analytics']) assert.match(privacy, new RegExp(required));
+    assert.doesNotMatch(`${terms}${privacy}`, /Blockdaemon|Helius/);
   }
-});
-
-test('legal markdown routes expose the full localized documents', () => {
-  const english = markdownForRoute({ locale: 'en', route: '/privacy' });
-  const spanish = markdownForRoute({ locale: 'es', route: '/terms' });
-  const portuguese = markdownForRoute({ locale: 'pt', route: '/privacy' });
-  assert.match(english, /^# Privacy Policy/m);
-  assert.match(spanish, /^# Términos y Condiciones/m);
-  assert.match(portuguese, /^# Política de Privacidade/m);
-  assert.ok(english.length > 8_000);
-  assert.ok(spanish.length > 8_000);
-  assert.ok(portuguese.length > 8_000);
-  assert.doesNotMatch(english, /available in the HTML representation/);
 });
 
 test('markdown 404 gives agents recovery links', () => {
@@ -177,7 +154,7 @@ function powerupsSource(locale, kind) {
 const wikiHref = (target) => {
   const [, name, locale] = target.match(/^(.*) (EN|ES|PT)$/);
   const kind = Object.keys(POWERUPS).find((key) => POWERUPS[key] === name);
-  return `${locale === 'EN' ? '' : `/${locale.toLowerCase()}`}/powerups/${kind}`;
+  return `${locale === 'EN' ? '' : `/${locale.toLowerCase()}`}/${kind}`;
 };
 
 // Independent of the renderer: strips markdown syntax line by line to get the expected visible text.
@@ -241,17 +218,17 @@ test('Power-ups legal pages render the SOT text verbatim', () => {
       const expectedHrefs = [...source.matchAll(/\[\[([^\]|]+)\|[^\]]+\]\]|\[[^\]]+\]\(([^)]+)\)/g)].map((m) => (m[1] ? wikiHref(m[1]) : m[2]));
       const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
       assert.deepEqual(hrefs, expectedHrefs, label);
-      const crossLink = `${locale === 'en' ? '' : `/${locale}`}/powerups/${kind === 'terms' ? 'privacy' : 'terms'}`;
+      const crossLink = `${locale === 'en' ? '' : `/${locale}`}/${kind === 'terms' ? 'privacy' : 'terms'}`;
       assert.ok(hrefs.includes(crossLink), `${label}: links to ${crossLink}`);
     }
   }
 });
 
-test('Power-ups legal routes are reachable for agents', () => {
+test('legal routes serve the Power-ups texts to agents', () => {
   for (const locale of ['en', 'es', 'pt']) {
     const prefix = locale === 'en' ? '' : `/${locale}`;
     for (const kind of Object.keys(POWERUPS)) {
-      const route = `/powerups/${kind}`;
+      const route = `/${kind}`;
       assert.deepEqual(routeDetails(`${prefix}${route}`), { locale, route });
       const markdown = markdownForRoute({ locale, route });
       const doc = getPowerupsLegal(locale, kind);
@@ -260,7 +237,7 @@ test('Power-ups legal routes are reachable for agents', () => {
   }
   assert.equal(getPowerupsLegal('es', 'terms').effective, '6 de octubre de 2026');
   const llms = readFileSync(new URL('../public/llms.txt', import.meta.url), 'utf8');
-  assert.match(llms, /salmonwallet\.io\/powerups\/terms/);
-  assert.match(llms, /salmonwallet\.io\/powerups\/privacy/);
-  assert.match(readFileSync(new URL('../app/sitemap.ts', import.meta.url), 'utf8'), /'\/powerups\/terms'[\s\S]*'\/powerups\/privacy'/);
+  assert.doesNotMatch(llms, /powerups\//);
+  assert.doesNotMatch(readFileSync(new URL('../app/sitemap.ts', import.meta.url), 'utf8'), /powerups/);
+  assert.match(readFileSync(new URL('../next.config.ts', import.meta.url), 'utf8'), /source: '\/powerups\/:kind\(terms\|privacy\)', destination: '\/:kind'/);
 });

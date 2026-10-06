@@ -1,4 +1,4 @@
-// Regenerates lib/legal-powerups-content.mjs from the SOT Power-ups legal markdown.
+// Regenerates lib/legal-powerups-content.mjs (the /terms and /privacy text) from the SOT Power-ups legal markdown.
 // Usage: node scripts/sync-powerups-legal.mjs [path to SOT/07-publishing/Website]
 // The legal text is copied verbatim; only frontmatter is dropped and [[wikilinks]] become site links.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -11,7 +11,7 @@ export const SOT_FILES = {
 const LOCALES = ['en', 'es', 'pt'];
 
 export function powerupsPath(locale, kind) {
-  return `${locale === 'en' ? '' : `/${locale}`}/powerups/${kind}`;
+  return `${locale === 'en' ? '' : `/${locale}`}/${kind}`;
 }
 
 const wikiTargets = Object.fromEntries(

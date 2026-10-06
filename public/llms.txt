@@ -19,8 +19,6 @@ For agent calls:
 - [Homepage](https://salmonwallet.io/): Product overview, integration process, Powerups, validator information, and downloads
 - [Privacy policy](https://salmonwallet.io/privacy): Privacy terms
 - [Terms and conditions](https://salmonwallet.io/terms): Product terms
-- [Power-ups privacy policy](https://salmonwallet.io/powerups/privacy): Privacy policy for the wallet with the Payments and Swap Power-ups
-- [Power-ups terms and conditions](https://salmonwallet.io/powerups/terms): Terms for the wallet with the Payments and Swap Power-ups
 - [About Salmon Wallet](https://salmonwallet.io/about): Project identity, product scope, process, and accountability
 - [Contact Salmon Wallet](https://salmonwallet.io/contact): Official integration, product, privacy, and security contact guidance
 - [Salmon Wallet API Docs & Developer Resources](https://salmonwallet.io/developers): API, authentication, rate-limit, CLI, webhook, and MCP capability documentation
