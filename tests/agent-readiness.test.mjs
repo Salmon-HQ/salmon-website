@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
@@ -14,6 +14,10 @@ import {
 import { clearRateLimits, consumeRateLimit, rateLimitHeaders } from '../lib/rate-limit.mjs';
 import { structuredData } from '../lib/structured-data.mjs';
 import { getLegalDocument, legalDocumentToMarkdown } from '../lib/legal-content.mjs';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { renderLegalMarkdown } from '../lib/legal-markdown.mjs';
+import { getPowerupsLegal } from '../lib/legal-powerups.mjs';
+import { convertSotMarkdown } from '../scripts/sync-powerups-legal.mjs';
 
 test('Accept negotiation selects markdown without overriding a preferred HTML type', () => {
   assert.equal(prefersMarkdown('text/markdown'), true);
@@ -156,4 +160,106 @@ test('CLI exposes stable machine-readable links', () => {
   assert.equal(links.discoveryApi, 'https://salmonwallet.io/api/v1/discovery');
   assert.equal(links.developerDocs, 'https://salmonwallet.io/developers');
   assert.match(links.source, /^https:\/\/github\.com\/Salmon-HQ\//);
+});
+
+const SOT_DIR = fileURLToPath(new URL('../../SOT/07-publishing/Website/', import.meta.url));
+const hasSot = existsSync(SOT_DIR);
+const POWERUPS = { terms: 'Salmon Terms And Conditions Powerups 1.4', privacy: 'Salmon Privacy Policy Powerups 1.4' };
+const POWERUPS_SHAPE = { terms: { h2: 22, h3: 15, tables: 0 }, privacy: { h2: 16, h3: 16, tables: 2 } };
+
+// Source of truth: the SOT file when the sibling repo is checked out, otherwise the generated copy.
+function powerupsSource(locale, kind) {
+  if (!hasSot) return getPowerupsLegal(locale, kind).markdown;
+  return readFileSync(`${SOT_DIR}${POWERUPS[kind]} ${locale.toUpperCase()}.md`, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
+}
+
+const wikiHref = (target) => {
+  const [, name, locale] = target.match(/^(.*) (EN|ES|PT)$/);
+  const kind = Object.keys(POWERUPS).find((key) => POWERUPS[key] === name);
+  return `${locale === 'EN' ? '' : `/${locale.toLowerCase()}`}/powerups/${kind}`;
+};
+
+// Independent of the renderer: strips markdown syntax line by line to get the expected visible text.
+function expectedText(markdown) {
+  return markdown
+    .split('\n')
+    .filter((line) => !/^\|( *-+ *\|)+$/.test(line))
+    .map((line) =>
+      line
+        .replace(/^(###|##|-) /, '')
+        .replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replaceAll('**', '')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replaceAll('|', ' ')
+    )
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const htmlText = (html) =>
+  html
+    .replace(/<\/?(strong|em|a)\b[^>]*>/g, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const count = (html, tag) => (html.match(new RegExp(`<${tag}[ >]`, 'g')) ?? []).length;
+
+test('generated Power-ups content matches the SOT files', { skip: !hasSot && 'SOT repo not checked out' }, () => {
+  for (const locale of ['en', 'es', 'pt']) {
+    for (const kind of Object.keys(POWERUPS)) {
+      const source = readFileSync(`${SOT_DIR}${POWERUPS[kind]} ${locale.toUpperCase()}.md`, 'utf8');
+      const { title, markdown } = getPowerupsLegal(locale, kind);
+      assert.deepEqual({ title, markdown }, convertSotMarkdown(source));
+    }
+  }
+});
+
+test('Power-ups legal pages render the SOT text verbatim', () => {
+  for (const locale of ['en', 'es', 'pt']) {
+    for (const kind of Object.keys(POWERUPS)) {
+      const source = powerupsSource(locale, kind);
+      const html = renderToStaticMarkup(renderLegalMarkdown(getPowerupsLegal(locale, kind).markdown));
+      const text = htmlText(html);
+      const label = `${locale} ${kind}`;
+
+      assert.equal(text, expectedText(source), label);
+      for (const leftover of ['**', '[[', '](', '|']) assert.ok(!text.includes(leftover), `${label}: leftover ${leftover}`);
+
+      const lines = source.split('\n');
+      assert.equal(count(html, 'h2'), POWERUPS_SHAPE[kind].h2, label);
+      assert.equal(count(html, 'h3'), POWERUPS_SHAPE[kind].h3, label);
+      assert.equal(count(html, 'table'), POWERUPS_SHAPE[kind].tables, label);
+      assert.equal(count(html, 'li'), lines.filter((line) => line.startsWith('- ')).length, label);
+      const cells = lines.filter((line) => line.startsWith('|') && !/^\|( *-+ *\|)+$/.test(line)).reduce((n, line) => n + line.split('|').length - 2, 0);
+      assert.equal(count(html, 'td') + count(html, 'th'), cells, label);
+
+      const expectedHrefs = [...source.matchAll(/\[\[([^\]|]+)\|[^\]]+\]\]|\[[^\]]+\]\(([^)]+)\)/g)].map((m) => (m[1] ? wikiHref(m[1]) : m[2]));
+      const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+      assert.deepEqual(hrefs, expectedHrefs, label);
+      const crossLink = `${locale === 'en' ? '' : `/${locale}`}/powerups/${kind === 'terms' ? 'privacy' : 'terms'}`;
+      assert.ok(hrefs.includes(crossLink), `${label}: links to ${crossLink}`);
+    }
+  }
+});
+
+test('Power-ups legal routes are reachable for agents', () => {
+  for (const locale of ['en', 'es', 'pt']) {
+    const prefix = locale === 'en' ? '' : `/${locale}`;
+    for (const kind of Object.keys(POWERUPS)) {
+      const route = `/powerups/${kind}`;
+      assert.deepEqual(routeDetails(`${prefix}${route}`), { locale, route });
+      const markdown = markdownForRoute({ locale, route });
+      const doc = getPowerupsLegal(locale, kind);
+      assert.ok(markdown.startsWith(`# ${doc.title}\n\n**${doc.effectiveLabel}:** ${doc.effective}\n\n${doc.markdown}`));
+    }
+  }
+  assert.equal(getPowerupsLegal('es', 'terms').effective, '6 de octubre de 2026');
+  const llms = readFileSync(new URL('../public/llms.txt', import.meta.url), 'utf8');
+  assert.match(llms, /salmonwallet\.io\/powerups\/terms/);
+  assert.match(llms, /salmonwallet\.io\/powerups\/privacy/);
+  assert.match(readFileSync(new URL('../app/sitemap.ts', import.meta.url), 'utf8'), /'\/powerups\/terms'[\s\S]*'\/powerups\/privacy'/);
 });
