@@ -46,8 +46,6 @@ export default function Footer() {
       links: [
         { label: t('terms'), href: '/terms', external: false },
         { label: t('privacy'), href: '/privacy', external: false },
-        { label: t('powerupsTerms'), href: '/powerups/terms', external: false },
-        { label: t('powerupsPrivacy'), href: '/powerups/privacy', external: false },
         { label: t('about'), href: '/about', external: false },
         { label: t('contact'), href: '/contact', external: false },
       ],

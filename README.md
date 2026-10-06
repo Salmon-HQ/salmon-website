@@ -82,7 +82,7 @@ components/
   ui/
 lib/
   constants.ts        Public links and validator constants
-  legal-content.mjs   Localized terms and privacy content
+  legal-powerups-content.mjs  Terms and privacy text, generated from the SOT
   validator.ts        Stakewiz validator stats fetcher
   i18n/               next-intl routing and request config
 messages/
@@ -102,7 +102,7 @@ The site uses `next-intl` with these locales:
 - `es` - served under `/es`
 - `pt` - served under `/pt`
 
-Interface and marketing copy lives in `messages/{locale}.json`. Legal copy lives in `lib/legal-content.mjs` so the HTML pages and negotiated Markdown use one source. When changing either kind of copy, update all three locales and keep their meaning and structure aligned.
+Interface and marketing copy lives in `messages/{locale}.json`. Legal copy is generated from the SOT Power-ups texts into `lib/legal-powerups-content.mjs` (`node scripts/sync-powerups-legal.mjs`) so the HTML pages and negotiated Markdown use one source; never edit it by hand. When changing either kind of copy, update all three locales and keep their meaning and structure aligned.
 
 ## Public content guidelines
 

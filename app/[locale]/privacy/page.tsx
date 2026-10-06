@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LegalDocument from '@/components/LegalDocument';
-import { getLegalDocument } from '@/lib/legal-content.mjs';
+import { getPowerupsLegal } from '@/lib/legal-powerups.mjs';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PrivacyPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const document = getLegalDocument(locale, 'privacy');
+  const document = getPowerupsLegal(locale, 'privacy');
 
   return (
     <>
