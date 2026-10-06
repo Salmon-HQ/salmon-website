@@ -65,9 +65,10 @@ test('legal documents are complete and structurally aligned in every locale', ()
     for (const required of ['GeekOcean Labs Ltd', 'Apple App Store', 'USD 100']) {
       assert.match(termsMarkdown, new RegExp(required));
     }
-    for (const required of ['GeekOcean Labs Ltd', 'Blockdaemon', 'CloudWatch', 'Google Analytics 4', '30']) {
+    for (const required of ['GeekOcean Labs Ltd', 'mempool.space', 'CloudWatch', 'Google Analytics 4', '30']) {
       assert.match(privacyMarkdown, new RegExp(required));
     }
+    assert.doesNotMatch(`${termsMarkdown}${privacyMarkdown}`, /Blockdaemon|Helius/);
   }
 });
 
