@@ -14,7 +14,7 @@ export interface ValidatorStats {
 }
 
 /**
- * Snapshot fallback (2026-09-13) so the section never renders empty if
+ * Snapshot fallback (2026-10-15) so the section never renders empty if
  * Stakewiz is down.
  *
  * Refresh it when it drifts: a stale snapshot is worse than none, because it
@@ -23,12 +23,12 @@ export interface ValidatorStats {
  * 18,951 SOL against 70,779, and 94.8% uptime against 99.98%.
  */
 const FALLBACK: ValidatorStats = {
-  apy: 6.58,
+  apy: 4.86,
   commission: 5,
-  activeStake: 70779.3,
-  uptime: 99.98,
+  activeStake: 71371.3,
+  uptime: 99.99,
   skipRate: 0,
-  wizScore: 69.81,
+  wizScore: 70.18,
   active: true,
   name: 'Salmon Wallet',
   live: false,
@@ -36,7 +36,7 @@ const FALLBACK: ValidatorStats = {
 
 /** Subset of the Stakewiz validator object we consume. */
 interface StakewizValidator {
-  apy_estimate: number;
+  total_apy: number;
   commission: number;
   activated_stake: number;
   uptime: number;
@@ -61,7 +61,7 @@ export async function getValidatorStats(): Promise<ValidatorStats> {
 
     const v = (await res.json()) as Partial<StakewizValidator>;
     // Validate at the boundary — never trust the shape of external data.
-    if (typeof v.apy_estimate !== 'number' || typeof v.activated_stake !== 'number') {
+    if (typeof v.total_apy !== 'number' || typeof v.activated_stake !== 'number') {
       return FALLBACK;
     }
 
@@ -70,7 +70,9 @@ export async function getValidatorStats(): Promise<ValidatorStats> {
     const rawCommission = v.commission ?? FALLBACK.commission;
 
     return {
-      apy: v.apy_estimate,
+      // `total_apy` is Stakewiz's TrueAPY (staking + Jito), the figure its page shows;
+      // `apy_estimate` runs about double it.
+      apy: v.total_apy,
       commission: rawCommission > 100 ? rawCommission / 100 : rawCommission,
       activeStake: v.activated_stake,
       uptime: v.uptime ?? FALLBACK.uptime,
