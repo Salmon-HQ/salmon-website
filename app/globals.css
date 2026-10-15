@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-500.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: #10131c;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
