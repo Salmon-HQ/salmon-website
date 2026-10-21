@@ -63,9 +63,8 @@ export default async function ValidatorStats() {
           role="list"
           className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-2xl border border-border-subtle bg-card-bg/30 backdrop-blur"
         >
-          <Stat label={t('apy')} testId="validator-apy">
-            <NumberTicker value={stats.apy} decimals={2} suffix="%" />
-          </Stat>
+          {/* No estimated yield: a rate shown to UK visitors can be a cryptoasset
+              promotion, pending counsel. */}
           <Stat label={t('commission')} testId="validator-commission">
             <NumberTicker value={stats.commission} suffix="%" />
           </Stat>
