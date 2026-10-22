@@ -142,7 +142,7 @@ test('CLI exposes stable machine-readable links', () => {
 
 const SOT_DIR = fileURLToPath(new URL('../../SOT/07-publishing/Website/', import.meta.url));
 const hasSot = existsSync(SOT_DIR);
-const POWERUPS = { terms: 'Salmon Terms And Conditions Powerups 1.4', privacy: 'Salmon Privacy Policy Powerups 1.4' };
+const POWERUPS = { terms: 'Salmon Terms And Conditions Powerups 1.5', privacy: 'Salmon Privacy Policy Powerups 1.5' };
 const POWERUPS_SHAPE = { terms: { h2: 22, h3: 15, tables: 0 }, privacy: { h2: 16, h3: 16, tables: 2 } };
 
 // Source of truth: the SOT file when the sibling repo is checked out, otherwise the generated copy.
@@ -235,7 +235,7 @@ test('legal routes serve the Power-ups texts to agents', () => {
       assert.ok(markdown.startsWith(`# ${doc.title}\n\n**${doc.effectiveLabel}:** ${doc.effective}\n\n${doc.markdown}`));
     }
   }
-  assert.equal(getPowerupsLegal('es', 'terms').effective, '6 de octubre de 2026');
+  assert.equal(getPowerupsLegal('es', 'terms').effective, '22 de octubre de 2026');
   const llms = readFileSync(new URL('../public/llms.txt', import.meta.url), 'utf8');
   assert.doesNotMatch(llms, /powerups\//);
   assert.doesNotMatch(readFileSync(new URL('../app/sitemap.ts', import.meta.url), 'utf8'), /powerups/);
