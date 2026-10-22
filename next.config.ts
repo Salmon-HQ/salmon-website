@@ -4,7 +4,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./lib/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  // The Power-ups 1.4 texts are the only terms and privacy policy; their old links land on the single pages.
+  // The Power-ups 1.5 texts are the only terms and privacy policy; their old links land on the single pages.
   async redirects() {
     return [
       { source: '/powerups/:kind(terms|privacy)', destination: '/:kind', permanent: true },

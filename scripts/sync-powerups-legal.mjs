@@ -5,8 +5,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 export const SOT_FILES = {
-  terms: 'Salmon Terms And Conditions Powerups 1.4',
-  privacy: 'Salmon Privacy Policy Powerups 1.4',
+  terms: 'Salmon Terms And Conditions Powerups 1.5',
+  privacy: 'Salmon Privacy Policy Powerups 1.5',
 };
 const LOCALES = ['en', 'es', 'pt'];
 
