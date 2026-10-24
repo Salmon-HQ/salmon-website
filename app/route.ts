@@ -5,49 +5,8 @@ export const dynamic = 'force-dynamic';
 
 const SNAPSHOT_PATH = path.join(process.cwd(), 'app/source.html');
 
-const SALMON_FAQ_GROUPS = [
-  {
-    label: 'Product',
-    items: [
-      ['What is Salmon?', 'An open-source, self-custodial, lightweight wallet built as open wallet infrastructure for Solana.'],
-      ['Can I use Salmon today?', 'Yes. The Browser Extension, Web Wallet, Android app, and iOS app are live.'],
-      ['What is the Salmon Core?', 'The focused wallet foundation for controlling assets, understanding signing requests, and interacting safely and reliably with Solana.'],
-      ['What is a Powerup?', 'A selected modular integration that expands what users can do without permanently increasing the complexity of the wallet core.'],
-      ['Why use Salmon?', 'Because access, signing clarity, and reliable interaction matter—not just storage.'],
-      ['Can I stake with Salmon?', 'Not yet. Native in-wallet staking is coming soon. In the meantime, Salmon operates its own Solana validator with public, verifiable performance data.'],
-    ],
-  },
-  {
-    label: 'Integrations',
-    items: [
-      ['What problem is Salmon solving?', 'Strong projects can still struggle to reach active users. Salmon creates a more open, structured, and measurable path from selected integration to activation, feedback, repeat usage, and distribution proof.'],
-      ['Is Salmon permissionless production?', 'No. Projects can apply through an open process, but production integrations require qualification, security review, product judgment, and operational accountability.'],
-      ['How are integrations selected?', 'Salmon evaluates security, user value, UX coherence, technical compatibility, maintainability, partner commitment, and adoption potential.'],
-      ['What do Experimental, Verified, and Featured mean?', 'They represent different levels of maturity, review, production readiness, and distribution support. Technical inclusion does not automatically guarantee endorsement or prominent placement.'],
-      ['How is Salmon different from other wallets?', 'Salmon keeps the core wallet focused and uses selected modular integrations as an adoption strategy. Partners gain a credible path to users, while Salmon gains adoption through real use cases and existing communities.'],
-      ['Who is Salmon for?', 'Solana-native applications, NFT communities, self-custody and security tools, infrastructure products, aligned builders, and users who value open infrastructure.'],
-      ['Why integrate Salmon?', 'To reach users, gather product feedback, validate recurring behavior, and build measurable traction through a structured wallet integration path.'],
-      ['What does success look like?', 'User activation, completed actions, repeat usage, retained cohorts, partner feedback, and evidence that an integration creates durable value.'],
-    ],
-  },
-  {
-    label: 'Security',
-    items: [
-      ['Is Salmon open-source?', 'Yes. The core software is public on GitHub.'],
-      ['How does Salmon approach signing safety?', 'The core experience prioritizes helping users understand and approve signing requests. Every selected Powerup is evaluated for permissions, UX clarity, compatibility, dependencies, and user risk.'],
-      ['Is Salmon audited?', 'Security is treated as an ongoing process: review, testing, audit readiness, and visible improvement.'],
-    ],
-  },
-  {
-    label: 'Ownership',
-    items: [
-      ['What does “built in public” mean?', 'Open-source code, visible progress, integration metrics, and accountable iteration. Salmon is meant to evolve in the open, not behind a closed roadmap.'],
-      ['What does community ownership mean in Salmon?', 'Salmon is community-driven today and built toward ownership and governance structures that can align core assets and strategic oversight with the ecosystem it serves. Technical, security, and product reviews remain delegated operational responsibilities.'],
-    ],
-  },
-] as const;
-
-export async function GET() {
+export async function GET(request: Request) {
+  const origin = new URL(request.url).origin;
   let html: string;
   try {
     html = await readFile(SNAPSHOT_PATH, 'utf8');
@@ -74,20 +33,27 @@ export async function GET() {
       <img src="/images/app-title.png" alt="Salmon" class="salmon-reference-wordmark">
     </a>`,
   );
+  const withDownloadLink = withSalmonLogo.replace(
+    /<a\s+class=soon>/,
+    '<a class=soon href="#salmon-card-1">',
+  );
+  const withoutFaq = withDownloadLink.replace(
+    /<div class=separator><\/div>\s*<section id=faq>[\s\S]*?<\/section>/,
+    '',
+  );
   const overrides = `
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5">
-    <meta name="robots" content="noindex,nofollow">
     <meta name="theme-color" content="#ff5c45">
     <meta name="description" content="A lightweight Solana wallet that expands through optional Powerups.">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Salmon — One wallet. Only what you need.">
     <meta property="og:description" content="A lightweight Solana wallet that expands through optional Powerups.">
-    <meta property="og:image" content="/images/sharing-og.png">
+    <meta property="og:image" content="${origin}/images/sharing-og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Salmon — One wallet. Only what you need.">
     <meta name="twitter:description" content="A lightweight Solana wallet that expands through optional Powerups.">
-    <meta name="twitter:image" content="/images/sharing-og.png">
+    <meta name="twitter:image" content="${origin}/images/sharing-og.png">
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
     <title>Salmon — One wallet. Only what you need.</title>
@@ -206,13 +172,36 @@ export async function GET() {
         color: transparent !important;
         -webkit-text-fill-color: transparent !important;
       }
-      #program .p p {
-        background-image: linear-gradient(132deg, #ff7e6d 4%, #ff5c45 48%, #a12a2a 96%) !important;
-        background-size: 100% 100% !important;
-        background-clip: text !important;
-        -webkit-background-clip: text !important;
-        color: transparent !important;
-        -webkit-text-fill-color: transparent !important;
+      #program .p {
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
+      #intro p {
+        margin-top: 3.5vw !important;
+        font-size: 3.2vw !important;
+        line-height: 1.1 !important;
+      }
+      #program.section {
+        padding-top: 6vw !important;
+      }
+      #program .section-rectangle {
+        width: 9vw !important;
+        height: 9vw !important;
+        box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
+      }
+      #program .section-rectangle svg {
+        width: 3.6vw !important;
+        height: 3.6vw !important;
+      }
+      #program > h2 {
+        padding-top: 1.8vw !important;
+        font-size: 7vw !important;
+        line-height: 1 !important;
+      }
+      #program .card {
+        margin-top: 5vw !important;
       }
       #program .card-content-screen > video:first-child {
         opacity: 1 !important;
@@ -288,6 +277,14 @@ export async function GET() {
       #salmon-card-2 {
         background: #f5f6f9 !important;
       }
+      #salmon-card-0 > p span {
+        display: block;
+        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
       #salmon-card-1 .salmon-get-title {
         margin: 0 0 5vw;
         color: #fff;
@@ -347,93 +344,6 @@ export async function GET() {
         width: 45%;
         height: auto;
         filter: invert(1);
-      }
-      #faq.salmon-faq {
-        display: grid;
-        grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr);
-        gap: 7vw;
-        padding-top: 9vw;
-      }
-      #faq.salmon-faq > h2 {
-        position: sticky;
-        top: 9vw;
-        align-self: start;
-        font-size: clamp(36px, 4.4vw, 72px);
-        line-height: 1;
-        letter-spacing: -.055em;
-      }
-      #faq .salmon-faq-groups {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        border-top: 1px solid rgba(16,19,28,.18);
-      }
-      #faq .salmon-faq-group {
-        border-bottom: 1px solid rgba(16,19,28,.18);
-      }
-      #faq .salmon-faq-group-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 2.2vw 0;
-        color: #10131c;
-        text-align: left;
-      }
-      #faq .salmon-faq-group-label {
-        color: #10131c;
-        font-size: clamp(18px, 1.65vw, 27px);
-        font-weight: 700;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-      }
-      #faq .salmon-faq-group-arrow {
-        color: #ff5c45;
-        font-size: 30px;
-        font-weight: 400;
-        line-height: 1;
-        transition: transform .4s cubic-bezier(.19,1,.22,1);
-      }
-      #faq .salmon-faq-group.on .salmon-faq-group-arrow {
-        transform: rotate(45deg);
-      }
-      #faq .salmon-faq-list {
-        display: none;
-        width: 100%;
-        padding-left: 0;
-        padding-bottom: 2vw;
-      }
-      #faq .salmon-faq-group.on .salmon-faq-list {
-        display: block;
-      }
-      #faq .salmon-faq-list .faq-li {
-        padding: 2vw 0;
-        border-color: rgba(16,19,28,.18);
-      }
-      #faq .salmon-faq-list .faq-list-title {
-        padding-right: 48px;
-        font-size: clamp(18px, 1.4vw, 24px);
-        line-height: 1.25;
-      }
-      #faq .salmon-faq-list .faq-list-arrow {
-        display: grid;
-        place-items: center;
-        width: 28px;
-        height: 28px;
-        color: #ff5c45;
-        font-size: 24px;
-        line-height: 1;
-      }
-      #faq .salmon-faq-list .faq-li.on .faq-list-arrow {
-        transform: rotate(45deg);
-      }
-      #faq .salmon-faq-list .faq-list-p {
-        max-width: 720px;
-        padding-top: 1.2vw;
-        padding-right: 48px;
-        color: #6b6e7b;
-        font-size: clamp(15px, 1.05vw, 18px);
-        line-height: 1.55;
       }
       footer {
         background: #10131c !important;
@@ -531,12 +441,12 @@ export async function GET() {
         .salmon-footer-support-top { align-items: flex-start; margin-top: 72px; margin-left: 0; width: 100%; }
         .salmon-footer-support-logos { align-items: flex-start; flex-direction: column; }
         .salmon-footer-legal { margin-top: 48px; text-align: left; }
-        #faq.salmon-faq { display: block; padding-top: 80px; }
-        #faq.salmon-faq > h2 { position: static; margin-bottom: 72px; font-size: 42px; }
-        #faq .salmon-faq-group-toggle { padding: 26px 0; }
-        #faq .salmon-faq-list { padding-bottom: 20px; }
-        #faq .salmon-faq-list .faq-li { padding: 24px 0; }
-        #faq .salmon-faq-list .faq-list-p { padding-top: 16px; }
+        #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
+        #program.section { padding-top: 14vw !important; }
+        #program .section-rectangle { width: 20vw !important; height: 20vw !important; }
+        #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
+        #program > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #program .card { margin-top: 10vw !important; }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
         #salmon-card-1 .salmon-get-title { margin-bottom: 48px; }
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
@@ -556,12 +466,15 @@ export async function GET() {
       }
     </style>
   `;
-  const localized = withSalmonLogo.replace(
+  const localized = withoutFaq.replace(
     '<head>',
     `<head>${overrides}`,
   );
   const finalHtml = `${localized}<script>
-      function initSalmonStandalone() {
+      // The template measures the page and binds its handlers on window.onload,
+      // so copy is swapped as soon as the DOM is parsed and only the nodes the
+      // template caches (percent counter) wait for load.
+      function applySalmonCopy() {
         var heroScreen = document.querySelector('#hero .card-content-screen');
         if (heroScreen) {
           heroScreen.classList.add('salmon-phone-screen');
@@ -594,9 +507,6 @@ export async function GET() {
           powerupsIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 1.8 3.6 13.5h7.1l-1 8.7 10.7-12.5h-7.2l.5-7.9Z"/></svg>';
         }
 
-        var powerupsPercent = document.querySelector('#program-card-content-percent-w');
-        if (powerupsPercent) powerupsPercent.remove();
-
         var powerupsIntro = document.querySelector('#program-card-content-intro');
         if (powerupsIntro) {
           powerupsIntro.innerHTML = "Wallets became mega-apps, complicated to navigate and understand. <span>Let's fix that.</span>";
@@ -617,10 +527,10 @@ export async function GET() {
           if (powerupsSteps[index]) powerupsSteps[index].textContent = copy;
         });
 
-        var powerupsClosing = document.querySelector('#program .p p');
-        if (powerupsClosing) {
-          powerupsClosing.textContent = 'Open entry. Curated production. Projects can apply through an open process. Production access is earned through qualification because integrations affect signing flows, permissions, navigation, performance, security, and the wider wallet experience.';
-        }
+        // The template measures this block to end the phone animation, so it is
+        // emptied rather than removed.
+        var powerupsClosing = document.querySelector('#program .p');
+        if (powerupsClosing) powerupsClosing.innerHTML = '';
 
         var salmonClosing = document.querySelector('#salmon > .p');
         if (salmonClosing) salmonClosing.remove();
@@ -632,7 +542,7 @@ export async function GET() {
         if (ownershipIcon) ownershipIcon.innerHTML = '<img src="/images/logo.svg" alt="Salmon">';
 
         var ownershipIntro = document.querySelector('#salmon-card-0 > p');
-        if (ownershipIntro) ownershipIntro.textContent = 'When using Salmon, you own both the experience and the project';
+        if (ownershipIntro) ownershipIntro.innerHTML = 'Own it twice. <span>Own the wallet. Own the experience.</span>';
 
         var ownershipWalletImage = document.querySelector('#salmon-card-2 img');
         if (ownershipWalletImage) {
@@ -645,47 +555,19 @@ export async function GET() {
           getSalmonCard.classList.add('salmon-get-card');
           getSalmonCard.innerHTML = '<h3 class="salmon-get-title">Get Salmon</h3><div class="salmon-downloads">' +
             '<a class="salmon-download" href="https://chromewebstore.google.com/detail/salmon-wallet/ejbidfepgijlcgahbmbckmnaljagjoll" target="_blank" rel="noopener noreferrer" aria-label="Download Salmon for Chrome"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M21.17 8H12M3.95 6.06 8.54 14M10.88 21.94 15.46 14"/></svg></a>' +
-            '<a class="salmon-download" href="https://apps.apple.com/ar/app/salmon-open-wallet/id6799740991" target="_blank" rel="noopener noreferrer" aria-label="Download Salmon for iOS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.286 7.008C5.07 7.008 4 10.238 4 12.928 4 16.157 6.143 21 8.286 21c1.165-.05 1.799-.538 3.214-.538 1.406 0 1.607.538 3.214.538S19 17.771 19 15.619c-.03-.011-2.649-.434-2.679-3.23-.02-2.335 2.589-3.179 2.679-3.228-1.096-1.606-3.162-2.113-3.75-2.153-1.535-.12-3.032 1.077-3.75 1.077-.729 0-2.036-1.077-3.214-1.077M12 4a2 2 0 0 0 2-2 2 2 0 0 0-2 2"/></svg></a>' +
+            '<a class="salmon-download" href="https://apps.apple.com/app/salmon-open-wallet/id6799740991" target="_blank" rel="noopener noreferrer" aria-label="Download Salmon for iOS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.286 7.008C5.07 7.008 4 10.238 4 12.928 4 16.157 6.143 21 8.286 21c1.165-.05 1.799-.538 3.214-.538 1.406 0 1.607.538 3.214.538S19 17.771 19 15.619c-.03-.011-2.649-.434-2.679-3.23-.02-2.335 2.589-3.179 2.679-3.228-1.096-1.606-3.162-2.113-3.75-2.153-1.535-.12-3.032 1.077-3.75 1.077-.729 0-2.036-1.077-3.214-1.077M12 4a2 2 0 0 0 2-2 2 2 0 0 0-2 2"/></svg></a>' +
             '<a class="salmon-download" href="https://play.google.com/store/apps/details?id=io.salmonwallet.app" target="_blank" rel="noopener noreferrer" aria-label="Download Salmon for Android"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v6M20 10v6M7 9h10v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V9a5 5 0 0 1 10 0M8 3l1 2M16 3l-1 2M9 18v3M15 18v3"/></svg></a>' +
             '<a class="salmon-download" href="https://dappstore.solanamobile.com/" target="_blank" rel="noopener noreferrer" aria-label="Get Salmon for Seeker"><img src="/images/seeker.svg" alt="" aria-hidden="true"></a>' +
           '</div>';
         }
 
-        var faq = document.querySelector('#faq');
-        if (faq) {
-          var salmonFaqGroups = ${JSON.stringify(SALMON_FAQ_GROUPS)};
-          faq.classList.add('salmon-faq');
-          faq.innerHTML = '<h2>Salmon FAQs</h2><div class="salmon-faq-groups">' + salmonFaqGroups.map(function (group) {
-            return '<section class="salmon-faq-group"><button class="salmon-faq-group-toggle" type="button" aria-expanded="false"><span class="salmon-faq-group-label">' + group.label + '</span><span class="salmon-faq-group-arrow" aria-hidden="true">+</span></button><ul class="salmon-faq-list">' + group.items.map(function (item) {
-              return '<li class="faq-li"><div class="faq-list-title">' + item[0] + '<span class="faq-list-arrow" aria-hidden="true">+</span></div><p class="faq-list-p">' + item[1] + '</p></li>';
-            }).join('') + '</ul></section>';
-          }).join('') + '</div>';
-
-          faq.addEventListener('click', function (event) {
-            var groupToggle = event.target.closest('.salmon-faq-group-toggle');
-            if (groupToggle) {
-              var group = groupToggle.closest('.salmon-faq-group');
-              var willOpen = !group.classList.contains('on');
-              faq.querySelectorAll('.salmon-faq-group.on').forEach(function (openGroup) {
-                openGroup.classList.remove('on');
-                openGroup.querySelector('.salmon-faq-group-toggle').setAttribute('aria-expanded', 'false');
-                openGroup.querySelectorAll('.faq-li.on').forEach(function (openItem) { openItem.classList.remove('on'); });
-              });
-              if (willOpen) {
-                group.classList.add('on');
-                groupToggle.setAttribute('aria-expanded', 'true');
-              }
-              return;
-            }
-            var item = event.target.closest('.faq-li');
-            if (!item || !faq.contains(item)) return;
-            faq.querySelectorAll('.faq-li.on').forEach(function (openItem) {
-              if (openItem !== item) openItem.classList.remove('on');
-            });
-            item.classList.toggle('on');
-          });
-        }
-
+        applySalmonFooter();
+      }
+      function initSalmonStandalone() {
+        var powerupsPercent = document.querySelector('#program-card-content-percent-w');
+        if (powerupsPercent) powerupsPercent.remove();
+      }
+      function applySalmonFooter() {
         var footer = document.querySelector('footer');
         if (footer) {
           footer.innerHTML = \`
@@ -711,7 +593,7 @@ export async function GET() {
                 <ul>
                   <li><a href="https://chromewebstore.google.com/detail/salmon-wallet/ejbidfepgijlcgahbmbckmnaljagjoll" target="_blank" rel="noopener noreferrer">Chrome</a></li>
                   <li><a href="https://play.google.com/store/apps/details?id=io.salmonwallet.app" target="_blank" rel="noopener noreferrer">Android</a></li>
-                  <li><a href="https://apps.apple.com/ar/app/salmon-open-wallet/id6799740991" target="_blank" rel="noopener noreferrer">iOS</a></li>
+                  <li><a href="https://apps.apple.com/app/salmon-open-wallet/id6799740991" target="_blank" rel="noopener noreferrer">iOS</a></li>
                   <li><a href="https://dappstore.solanamobile.com/" target="_blank" rel="noopener noreferrer">Seeker</a></li>
                 </ul>
               </nav>
@@ -720,6 +602,7 @@ export async function GET() {
                 <ul>
                   <li><a href="https://github.com/Salmon-HQ" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                   <li><a href="https://docs.salmonwallet.io/" target="_blank" rel="noopener noreferrer">Docs</a></li>
+                  <li><a href="https://docs.salmonwallet.io/" target="_blank" rel="noopener noreferrer">FAQ</a></li>
                   <li><a href="https://www.salmonwallet.io/brand">Brand</a></li>
                   <li><a href="mailto:integrations@salmonwallet.io">Apply for an Integration</a></li>
                   <li><a href="https://www.salmonwallet.io/downloads/salmonwallet-mediakit.zip">Media Kit</a></li>
@@ -748,6 +631,7 @@ export async function GET() {
             </div>\`;
         }
       }
+      applySalmonCopy();
       if (document.readyState !== 'complete') {
         window.addEventListener('load', initSalmonStandalone, { once: true });
       } else {
