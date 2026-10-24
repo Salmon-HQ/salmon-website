@@ -10,18 +10,18 @@ const VALIDATOR_DETAILS_URL =
   'https://www.validators.app/validators/SA1LFXr4os2P4VKGUyRv84uFfuUYgcQkFh2uA4SmRcr?locale=en&network=mainnet';
 
 interface ValidatorStats {
-  commission: number; // %
   activeStake: number; // SOL
   uptime: number; // %
+  location: string; // city reported by Stakewiz
   active: boolean;
   live: boolean; // false = static fallback
 }
 
 // Snapshot from Stakewiz (2026-10-24), shown only when the API is unreachable.
 const VALIDATOR_FALLBACK: ValidatorStats = {
-  commission: 5,
   activeStake: 72697,
   uptime: 99.99,
+  location: 'Sao Paulo',
   active: true,
   live: false,
 };
@@ -35,18 +35,20 @@ async function getValidatorStats(): Promise<ValidatorStats> {
     if (!res.ok) return VALIDATOR_FALLBACK;
     const v = await res.json();
     if (typeof v.activated_stake !== 'number') return VALIDATOR_FALLBACK;
-    // Stakewiz reports commission in basis points (500 = 5%).
-    const commission = typeof v.commission === 'number' ? v.commission : VALIDATOR_FALLBACK.commission;
     return {
-      commission: commission > 100 ? commission / 100 : commission,
       activeStake: v.activated_stake,
       uptime: typeof v.uptime === 'number' ? v.uptime : VALIDATOR_FALLBACK.uptime,
+      location: typeof v.ip_city === 'string' && v.ip_city ? v.ip_city : VALIDATOR_FALLBACK.location,
       active: !v.delinquent,
       live: true,
     };
   } catch {
     return VALIDATOR_FALLBACK;
   }
+}
+
+function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
 function renderValidatorSection(stats: ValidatorStats) {
@@ -61,7 +63,7 @@ function renderValidatorSection(stats: ValidatorStats) {
       <ul class="salmon-validator-stats">
         <li><strong>${stake} SOL</strong><span>Active stake</span></li>
         <li><strong>${stats.uptime.toFixed(2)}%</strong><span>Uptime</span></li>
-        <li><strong>${stats.commission}%</strong><span>Commission</span></li>
+        <li><strong>${escapeHtml(stats.location)}</strong><span>Location</span></li>
         <li><strong><i class="salmon-validator-dot${stats.active ? '' : ' is-down'}" aria-hidden="true"></i>${stats.active ? 'Active' : 'Delinquent'}</strong><span>Status</span></li>
       </ul>
       <div class="salmon-validator-foot">
@@ -173,10 +175,12 @@ function externalAttrs(href: string) {
   return href.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : '';
 }
 
-const getSalmonCardHtml = `<h3 class="salmon-get-title">Get Salmon</h3><div class="salmon-downloads">${STORES.map(
+const downloadsHtml = `<div class="salmon-downloads">${STORES.map(
   (store) =>
     `<a class="salmon-download" href="${store.href}"${externalAttrs(store.href)} aria-label="${store.label}">${store.icon}</a>`,
 ).join('')}</div>`;
+
+const getSalmonCardHtml = `<h3 class="salmon-get-title">Get Salmon</h3>${downloadsHtml}`;
 
 // Layout follows hims.com: app card on the left, link columns, socials,
 // legal row and an oversized wordmark closing the page.
@@ -185,10 +189,7 @@ const footerHtml = `
     <aside class="salmon-footer-app">
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
       <p class="salmon-footer-app-title">One wallet.<br>Only what you need.</p>
-      <div class="salmon-footer-stores">${STORES.map(
-        (store) =>
-          `<a href="${store.href}"${externalAttrs(store.href)} aria-label="${store.label}">${store.icon}<span>${store.name}</span></a>`,
-      ).join('')}</div>
+      ${downloadsHtml}
       <div class="salmon-footer-phone"><img src="/images/reference/salmon-card-2.png" alt="Salmon wallet portfolio"></div>
     </aside>
     <div class="salmon-footer-main">
@@ -506,9 +507,6 @@ export async function GET(request: Request) {
         object-fit: contain;
         filter: brightness(0);
       }
-      #salmon-card-2 {
-        background: #f5f6f9 !important;
-      }
       #salmon-card-0 > p span {
         display: block;
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
@@ -526,13 +524,13 @@ export async function GET(request: Request) {
         letter-spacing: -.055em;
         text-align: center;
       }
-      #salmon-card-1 .salmon-downloads {
+      .salmon-downloads {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0;
       }
-      #salmon-card-1 .salmon-download {
+      .salmon-download {
         display: flex;
         flex: 0 0 9vw;
         flex-direction: column;
@@ -549,18 +547,18 @@ export async function GET(request: Request) {
         box-shadow: 0 16px 48px rgba(0,0,0,.22);
         transition: transform .35s cubic-bezier(.19,1,.22,1), background-color .35s ease;
       }
-      #salmon-card-1 .salmon-download + .salmon-download {
+      .salmon-download + .salmon-download {
         margin-left: -2.15vw;
       }
-      #salmon-card-1 .salmon-download:nth-child(1) { z-index: 4; }
-      #salmon-card-1 .salmon-download:nth-child(2) { z-index: 3; }
-      #salmon-card-1 .salmon-download:nth-child(3) { z-index: 2; }
-      #salmon-card-1 .salmon-download:nth-child(4) { z-index: 1; }
-      #salmon-card-1 .salmon-download:hover {
+      .salmon-download:nth-child(1) { z-index: 4; }
+      .salmon-download:nth-child(2) { z-index: 3; }
+      .salmon-download:nth-child(3) { z-index: 2; }
+      .salmon-download:nth-child(4) { z-index: 1; }
+      .salmon-download:hover {
         transform: translateY(-8px);
         background: #ff7e6d;
       }
-      #salmon-card-1 .salmon-download svg {
+      .salmon-download svg {
         position: static;
         width: 2.6vw;
         height: 2.6vw;
@@ -572,7 +570,7 @@ export async function GET(request: Request) {
         stroke-linecap: round;
         stroke-linejoin: round;
       }
-      #salmon-card-1 .salmon-download img {
+      .salmon-download img {
         width: 45%;
         height: auto;
         filter: invert(1);
@@ -723,36 +721,20 @@ export async function GET(request: Request) {
         line-height: 1.05;
         letter-spacing: -.045em;
       }
-      .salmon-footer-stores {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        width: 100%;
-        max-width: 280px;
+      .salmon-footer-app .salmon-download {
+        flex-basis: 72px;
+        width: 72px;
+        height: 72px;
+        min-width: 72px;
+        min-height: 72px;
       }
-      .salmon-footer-stores a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 11px 12px;
-        border-radius: 12px;
-        background: #232837;
-        font-size: 14px;
-        font-weight: 500;
-        transition: background-color .25s ease;
+      .salmon-footer-app .salmon-download + .salmon-download { margin-left: -14px; }
+      .salmon-footer-app .salmon-download svg {
+        width: 26px;
+        height: 26px;
+        min-width: 0;
+        min-height: 0;
       }
-      .salmon-footer-stores a:hover { background: #ff5c45; }
-      .salmon-footer-stores svg {
-        width: 18px;
-        height: 18px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.7;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      .salmon-footer-stores img { width: 18px; height: 18px; }
       .salmon-footer-phone {
         position: absolute;
         bottom: -90px;
@@ -841,12 +823,17 @@ export async function GET(request: Request) {
       .salmon-footer-legal ul { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 10px; }
       .salmon-footer-legal a, .salmon-footer-legal p { color: #9a9ca6; font-size: 13px; }
       .salmon-footer-legal a:hover { color: #ff5c45; }
+      /* DM Sans 700 at line-height 1 draws "Salmon" from .11em to .85em, so a
+         .74em box hides the bottom 15% of the letters behind the page edge. */
       .salmon-footer-wordmark {
-        padding: 6vw 0 4vw;
+        height: .74em;
+        margin-top: 6vw;
+        padding: 0;
         color: #1a1e2a;
         font-size: 26.5vw;
         font-weight: 700;
-        line-height: .8;
+        line-height: 1;
+        overflow: hidden;
         letter-spacing: -.065em;
         text-align: center;
         white-space: nowrap;
@@ -855,7 +842,7 @@ export async function GET(request: Request) {
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #footer-top.salmon-footer { grid-template-columns: 1fr; gap: 64px; padding: 48px 6.15vw 0 !important; }
-        .salmon-footer-app { min-height: 560px; }
+        .salmon-footer-app { min-height: 640px; }
         .salmon-footer-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 24px; }
         .salmon-footer-row { padding-top: 56px; }
         .salmon-footer-support { flex-direction: column; align-items: flex-start; gap: 14px; }
@@ -969,11 +956,8 @@ export async function GET(request: Request) {
         var ownershipIntro = document.querySelector('#salmon-card-0 > p');
         if (ownershipIntro) ownershipIntro.innerHTML = 'Own it twice. <span>Own the wallet. Own the experience.</span>';
 
-        var ownershipWalletImage = document.querySelector('#salmon-card-2 img');
-        if (ownershipWalletImage) {
-          ownershipWalletImage.src = '/images/reference/salmon-card-2.png';
-          ownershipWalletImage.alt = 'Salmon wallet portfolio';
-        }
+        var parallaxCard = document.querySelector('#salmon-card-2');
+        if (parallaxCard) parallaxCard.remove();
 
         var getSalmonCard = document.querySelector('#salmon-card-1');
         if (getSalmonCard) {
