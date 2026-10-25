@@ -263,8 +263,16 @@ export async function GET(request: Request) {
     /<a\s+class=soon>/,
     '<a class=soon href="#salmon-card-1">',
   );
+  // The template script still queries #shop on load (clip, sticky list, nav-logo
+  // colour), so the Member Shop section becomes an empty stub instead of being
+  // removed. Sitting right after #salmon, its card-content also marks where the
+  // light nav logo over the black section ends. The separator after it goes too.
+  const withoutShop = withDownloadLink.replace(
+    /<section id=shop[\s\S]*?<\/section>\s*<div class=separator><\/div>/,
+    '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
+  );
   const validatorSection = renderValidatorSection(await getValidatorStats());
-  const withValidator = withDownloadLink.replace(
+  const withValidator = withoutShop.replace(
     /<section id=faq>[\s\S]*?<\/section>/,
     () => validatorSection,
   );
@@ -317,7 +325,14 @@ export async function GET(request: Request) {
         font-weight: 700;
         line-height: 1;
         letter-spacing: -0.04em;
+        transition: color .2s cubic-bezier(.215,.61,.355,1);
       }
+      /* The template toggles .fx over the black #salmon section and .hide over
+         the footer; the original SVG logo handled both, the custom one did not. */
+      #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
+      #nav-logo.fx::after { color: #fff; }
+      #nav-logo.fx .salmon-reference-wordmark { filter: invert(1); }
+      #nav-logo.hide { opacity: 0; pointer-events: none; }
       #nav-logo .salmon-reference-mark {
         display: block;
         width: 23px;
@@ -468,13 +483,11 @@ export async function GET(request: Request) {
         pointer-events: none;
       }
       #program .card-content-screen > *,
-      #salmon-card-0 .card-content-screen > *,
-      #shop .card-content-screen > * {
+      #salmon-card-0 .card-content-screen > * {
         visibility: hidden !important;
       }
       #program .card-content-screen::after,
-      #salmon-card-0 .card-content-screen::after,
-      #shop .card-content-screen::after {
+      #salmon-card-0 .card-content-screen::after {
         content: "Mobile placeholder";
         position: absolute;
         inset: 0;
@@ -492,8 +505,16 @@ export async function GET(request: Request) {
         letter-spacing: .16em;
         text-transform: uppercase;
       }
-      #shop {
-        display: none !important;
+      #shop, #shop * {
+        position: static !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+      }
+      #salmon {
+        padding-bottom: calc(64px + 24px);
       }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
@@ -530,17 +551,19 @@ export async function GET(request: Request) {
         justify-content: center;
         gap: 0;
       }
+      /* --d drives width, height and flex-basis together so the buttons stay
+         circles at every breakpoint. */
       .salmon-download {
+        --d: max(92px, 9vw);
         display: flex;
-        flex: 0 0 9vw;
+        flex: 0 0 var(--d);
         flex-direction: column;
         align-items: center;
         justify-content: center;
         box-sizing: border-box;
-        width: 9vw;
-        height: 9vw;
-        min-width: 92px;
-        min-height: 92px;
+        width: var(--d);
+        height: var(--d);
+        aspect-ratio: 1;
         border-radius: 50%;
         background: #fff;
         color: #10131c;
@@ -548,7 +571,7 @@ export async function GET(request: Request) {
         transition: transform .35s cubic-bezier(.19,1,.22,1), background-color .35s ease;
       }
       .salmon-download + .salmon-download {
-        margin-left: -2.15vw;
+        margin-left: calc(var(--d) * -.24);
       }
       .salmon-download:nth-child(1) { z-index: 4; }
       .salmon-download:nth-child(2) { z-index: 3; }
@@ -580,8 +603,12 @@ export async function GET(request: Request) {
         grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
         align-items: center;
         gap: 6vw;
-        margin: 0 64px;
-        padding: 9vw 0 10vw;
+        position: relative;
+        z-index: 1;
+        margin: -24px 0 0;
+        padding: 9vw 64px 10vw;
+        border-radius: 24px 24px 0 0;
+        background: #fff;
         color: #10131c;
       }
       .salmon-validator-eyebrow {
@@ -721,14 +748,7 @@ export async function GET(request: Request) {
         line-height: 1.05;
         letter-spacing: -.045em;
       }
-      .salmon-footer-app .salmon-download {
-        flex-basis: 72px;
-        width: 72px;
-        height: 72px;
-        min-width: 72px;
-        min-height: 72px;
-      }
-      .salmon-footer-app .salmon-download + .salmon-download { margin-left: -14px; }
+      .salmon-footer-app .salmon-download { --d: 72px; }
       .salmon-footer-app .salmon-download svg {
         width: 26px;
         height: 26px;
@@ -847,7 +867,8 @@ export async function GET(request: Request) {
         .salmon-footer-row { padding-top: 56px; }
         .salmon-footer-support { flex-direction: column; align-items: flex-start; gap: 14px; }
         .salmon-footer-legal { align-items: flex-start; }
-        #salmon-validator { display: block; margin: 0 6.15vw; padding: 80px 0 96px; }
+        #salmon { padding-bottom: calc(16px + 24px); }
+        #salmon-validator { display: block; padding: 80px 6.15vw 96px; }
         .salmon-validator-lead { margin-bottom: 40px; }
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
@@ -856,12 +877,12 @@ export async function GET(request: Request) {
         #program .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
         #program > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #salmon > h2 { font-size: 20vw; line-height: 20vw; }
         #program .card { margin-top: 10vw !important; }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
         #salmon-card-1 .salmon-get-title { margin-bottom: 48px; }
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
-        #salmon-card-1 .salmon-download { width: 112px; height: 112px; }
-        #salmon-card-1 .salmon-download + .salmon-download { margin-left: -28px; }
+        #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
         #program .card-content-screen {
           box-shadow:
