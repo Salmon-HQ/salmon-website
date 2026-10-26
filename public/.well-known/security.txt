@@ -1,0 +1,7 @@
+# Security contact for Salmon Wallet (RFC 9116).
+Contact: mailto:hello@salmonwallet.io
+Contact: https://github.com/Salmon-HQ/salmon-wallet-backend/security/advisories/new
+Expires: 2027-10-25T00:00:00.000Z
+Preferred-Languages: en, es
+Canonical: https://www.salmonwallet.io/.well-known/security.txt
+Policy: https://github.com/Salmon-HQ/salmon-wallet-backend/blob/main/SECURITY.md
