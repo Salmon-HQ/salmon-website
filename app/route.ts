@@ -482,9 +482,17 @@ export async function GET(request: Request) {
         border: 0;
         pointer-events: none;
       }
-      #program .card-content-screen > *,
       #salmon-card-0 .card-content-screen > * {
         visibility: hidden !important;
+      }
+      /* Powerup screens sit above the placeholder, which shows only while an image is missing. */
+      #program .card-content-screen::after {
+        z-index: 0 !important;
+      }
+      #program .card-content-screen > img {
+        z-index: 1;
+        height: 100%;
+        object-fit: cover;
       }
       #program .card-content-screen::after,
       #salmon-card-0 .card-content-screen::after {
@@ -950,6 +958,24 @@ export async function GET(request: Request) {
           powerupsGridImage.src = '/images/reference/powerups-01.webp';
           powerupsGridImage.alt = 'Salmon Powerups';
         }
+
+        // One image per scroll step. The template calls play()/pause() on the
+        // first two screens, so the images get no-op versions of both.
+        var powerupsScreens = document.querySelectorAll('#program .card-content-screen > *');
+        [
+          { src: '/powerups/step1.png', alt: 'Powerups list in Salmon' },
+          { src: '/powerups/step2.png', alt: 'Swap Powerup turned on' },
+          { src: '/powerups/step3.png', alt: 'Swap tab added to the wallet' }
+        ].forEach(function (screen, index) {
+          var current = powerupsScreens[index];
+          if (!current) return;
+          var img = document.createElement('img');
+          img.src = screen.src;
+          img.alt = screen.alt;
+          img.onerror = function () { img.style.display = 'none'; };
+          img.play = img.pause = function () {};
+          current.replaceWith(img);
+        });
 
         var powerupsSteps = document.querySelectorAll('#program .card-content-list-sticky-copy p');
         [
