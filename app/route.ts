@@ -96,7 +96,7 @@ const STORES = [
   {
     name: 'Seeker',
     label: 'Get Salmon for Seeker',
-    href: 'https://dappstore.solanamobile.com/',
+    href: 'solanadappstore://details?id=io.salmonwallet.app',
     icon: '<img src="/images/seeker.svg" alt="" aria-hidden="true">',
   },
 ];
