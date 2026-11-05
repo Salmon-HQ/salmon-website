@@ -1,4 +1,4 @@
-# Salmon standalone concept
+# Salmon standalone concept WIP
 
 Portable, self-contained version of the Salmon `/reference` concept.
 
