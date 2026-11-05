@@ -1,17 +1,29 @@
 import Image from 'next/image';
-import type { CSSProperties, ReactNode } from 'react';
+import { NftGrid } from './AppScreenMocks';
 import { u } from './phone-scale';
-import { fleshFills, fleshTile } from './flesh';
-import { seigaihaTile, seigaihaTileUrl } from './scales';
+import {
+  BottomFade,
+  CapsLabel,
+  COLORS,
+  IconBubble,
+  MOTION,
+  PowerupRow,
+  ScreenGround,
+  TOKENS,
+  TokenPickRow,
+  UnderlineTab,
+  WalletHeader,
+  cardStyle,
+  changeColor,
+  tabular,
+  transition,
+} from './mock-kit';
 import {
   ArrowDownLeftIcon,
   ArrowUpRightIcon,
   ArrowsLeftRightIcon,
-  CaretRightIcon,
   ClockIcon,
-  CopyIcon,
   EyeIcon,
-  FadersHorizontalIcon,
   FadersIcon,
   PlusIcon,
   QrCodeIcon,
@@ -41,6 +53,8 @@ export type MockStep = 0 | 1 | 2 | 3;
 
 /** Where the screen is inside the flow; each beat changes one thing. */
 export interface MockState {
+  /** A finger is on the Powerups FAB. */
+  fabTapping: boolean;
   catalogOpen: boolean;
   swapOn: boolean;
   swapAdded: boolean;
@@ -49,16 +63,18 @@ export interface MockState {
   swapSelected: boolean;
 }
 
-const HOME: MockState = { catalogOpen: false, swapOn: false, swapAdded: false, tapping: false, swapSelected: false };
+const HOME: MockState = { fabTapping: false, catalogOpen: false, swapOn: false, swapAdded: false, tapping: false, swapSelected: false };
 
 /**
  * The flow as beats, in order, with how long each waits after the one before
- * when walking forward: the toggle, then its tab arriving behind the dim, the
- * sheet closing, a tap on the new tab, and the tab opening.
+ * when walking forward: Home at rest, a tap on the FAB, the catalog rising,
+ * the toggle, its tab arriving behind the dim, the sheet closing, a tap on
+ * the new tab, and the tab opening.
  */
 export const FLOW_BEATS: { state: MockState; delay: number }[] = [
   { state: HOME, delay: 0 },
-  { state: { ...HOME, catalogOpen: true }, delay: 0 },
+  { state: { ...HOME, fabTapping: true }, delay: 1100 },
+  { state: { ...HOME, catalogOpen: true }, delay: 380 },
   { state: { ...HOME, catalogOpen: true, swapOn: true }, delay: 250 },
   { state: { ...HOME, catalogOpen: true, swapOn: true, swapAdded: true }, delay: 650 },
   { state: { ...HOME, swapOn: true, swapAdded: true }, delay: 900 },
@@ -67,346 +83,7 @@ export const FLOW_BEATS: { state: MockState; delay: number }[] = [
 ];
 
 /** The beat each landing step settles on. */
-export const STEP_BEAT: Record<MockStep, number> = { 0: 0, 1: 1, 2: 3, 3: 6 };
-
-/** semantic.ts, dark. Names are the token's, not a local invention. */
-const COLORS = {
-  depthAbyss: '#070911',
-  waterTop: '#10131C',
-  waterBottom: '#070911',
-  /** Card tone `surface`: membraneThin over the ramp, hairline edge. */
-  cardFill: 'rgba(11, 15, 25, 0.48)',
-  hairline: 'rgba(199, 211, 232, 0.10)',
-  borderDefault: '#58637B',
-  borderRaised: '#6F7B95',
-  textPrimary: '#EDF1F7',
-  textSecondary: '#A7B1C4',
-  textTertiary: '#8B96AD',
-  textDisabled: '#6F7B95',
-  accentFill: '#FF5C45',
-  accentTint: 'rgba(255, 92, 69, 0.10)',
-  accentOnFill: '#070911',
-  changePositive: '#33D6A6',
-  changeNegative: '#FF6B85',
-  surfaceCrest: '#1B2233',
-  /** overlay.backdrop */
-  backdrop: 'rgba(7, 9, 17, 0.84)',
-  /** Thermocline tier="thick" — membraneThick */
-  sheetFill: 'rgba(11, 15, 25, 0.66)',
-  /** flesh.band — salmon-50, the pale myoseptal band inside a salmon fill. */
-  fleshBand: '#FFF1EE',
-  /** chainMarks.byChain.solana — the chain tab's underline. */
-  chainSolana: '#8B5CF6',
-} as const;
-
-/** durations.ts — motionMs and the named curves. */
-const MOTION = {
-  swell: 180,
-  drift: 280,
-  rise: 500,
-  current: 'cubic-bezier(0.32, 0.72, 0, 1)',
-  settle: 'cubic-bezier(0.22, 1, 0.36, 1)',
-  sink: 'cubic-bezier(0.4, 0, 1, 1)',
-} as const;
-
-/** scales.deepFieldStroke / deepFieldScale / deepFieldFloor, dark. */
-const DEEP_FIELD = {
-  stroke: 'rgba(199, 211, 232, 0.03)',
-  scale: 3.2,
-  floor: 0.35,
-} as const;
-
-/** The app's fonts ship patched for tabular figures; every number uses them. */
-const tabular = { fontVariantNumeric: 'tabular-nums' } as const;
-
-interface MockToken {
-  name: string;
-  symbol: string;
-  logo: string;
-  price: string;
-  change: string;
-  direction: 'up' | 'down';
-  amount: string;
-  usdValue: string;
-}
-
-const TOKENS: MockToken[] = [
-  {
-    name: 'Solana',
-    symbol: 'SOL',
-    logo: '/images/tokens/sol.png',
-    price: '$163.50',
-    change: '+2.40%',
-    direction: 'up',
-    amount: '8.2 SOL',
-    usdValue: '$1,340.70',
-  },
-  {
-    name: 'USD Coin',
-    symbol: 'USDC',
-    logo: '/images/tokens/usdc.png',
-    price: '$1.00',
-    change: '+0.02%',
-    direction: 'up',
-    amount: '350 USDC',
-    usdValue: '$350.00',
-  },
-  {
-    name: 'Jupiter',
-    symbol: 'JUP',
-    logo: '/images/tokens/jup.png',
-    price: '$0.52',
-    change: '-1.80%',
-    direction: 'down',
-    amount: '412 JUP',
-    usdValue: '$214.24',
-  },
-  {
-    name: 'Bonk',
-    symbol: 'BONK',
-    logo: '/images/tokens/bonk.png',
-    price: '$0.00',
-    change: '+5.10%',
-    direction: 'up',
-    amount: '5.20M BONK',
-    usdValue: '$106.60',
-  },
-];
-
-const changeColor = (direction: MockToken['direction']) =>
-  direction === 'up' ? COLORS.changePositive : COLORS.changeNegative;
-
-/**
- * IconBubble — one object behind the wallet thumb, the settings gear, the eye,
- * the money circles, the FAB and the Powerup tiles; the tones differ, nothing else.
- */
-type BubbleTone = 'ink' | 'accent' | 'accentTint' | 'outline' | 'ghost';
-
-const BUBBLE_TONES: Record<BubbleTone, { background: string; border?: string }> = {
-  ink: { background: COLORS.depthAbyss },
-  accent: { background: COLORS.accentFill },
-  accentTint: { background: COLORS.accentTint },
-  outline: { background: 'transparent', border: COLORS.borderRaised },
-  ghost: { background: 'transparent' },
-};
-
-/** componentSizes.bubbleFleshScale — the drawing at half size inside a bubble. */
-const BUBBLE_FLESH_SCALE = 0.5;
-
-/**
- * FleshBackground — the myosepta, drawn inside a salmon fill and nowhere else.
- * `showFlesh` defaults to `tone === 'accent'` in the app, so the Send circle
- * and the FAB carry it without asking: a filled control is mass, and mass has
- * an inside.
- */
-function FleshBackground({ size }: { size: number }) {
-  return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      // The tile is authored in design points, so the viewBox is the bubble's
-      // own point size: the texture then rides the phone's scale like every
-      // other measurement here, instead of being fixed in CSS pixels.
-      viewBox={`0 0 ${size} ${size}`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <defs>
-        <pattern
-          id={`bubble-flesh-${size}`}
-          patternUnits="userSpaceOnUse"
-          width={fleshTile.width}
-          height={fleshTile.height}
-          patternTransform={`scale(${BUBBLE_FLESH_SCALE})`}
-        >
-          {fleshFills.map(([d, fillOpacity], i) => (
-            <path key={i} d={d} fill={COLORS.fleshBand} fillOpacity={fillOpacity} />
-          ))}
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#bubble-flesh-${size})`} />
-    </svg>
-  );
-}
-
-function IconBubble({
-  size,
-  tone,
-  radius,
-  children,
-}: {
-  size: number;
-  tone: BubbleTone;
-  /** shape="rounded" — the Powerup tiles; circles otherwise. */
-  radius?: number;
-  children: ReactNode;
-}) {
-  const { background, border } = BUBBLE_TONES[tone];
-  return (
-    <span
-      className="relative flex shrink-0 items-center justify-center overflow-hidden"
-      style={{
-        width: u(size),
-        height: u(size),
-        borderRadius: radius ? u(radius) : '9999px',
-        backgroundColor: background,
-        ...(border ? { border: `0.5px solid ${border}` } : {}),
-      }}
-    >
-      {tone === 'accent' && <FleshBackground size={size} />}
-      <span className="relative flex items-center justify-center">{children}</span>
-    </span>
-  );
-}
-
-/** A transition on several properties, each with the same timing. */
-const transition = (properties: string[], ms: number, curve: string): CSSProperties => ({
-  transitionProperty: properties.join(', '),
-  transitionDuration: `${ms}ms`,
-  transitionTimingFunction: curve,
-});
-
-/** UnderlineTabs size md: 16pt labels, bold when active, a 2pt underline under the text. */
-function UnderlineTab({
-  label,
-  active,
-  underline = COLORS.accentFill,
-}: {
-  label: string;
-  active: boolean;
-  underline?: string;
-}) {
-  return (
-    <span className="relative flex flex-col items-center" style={{ paddingBottom: u(4) }}>
-      <span
-        style={{
-          fontSize: u(16),
-          lineHeight: 1.4,
-          fontWeight: active ? 700 : 600,
-          color: active ? COLORS.textPrimary : COLORS.textSecondary,
-          ...transition(['color'], MOTION.drift, MOTION.current),
-        }}
-      >
-        {label}
-      </span>
-      <span
-        className="absolute bottom-0 left-0 w-full"
-        style={{
-          height: u(2),
-          borderRadius: u(4),
-          backgroundColor: underline,
-          opacity: active ? 1 : 0,
-          transform: `scaleX(${active ? 1 : 0.4})`,
-          ...transition(['opacity', 'transform'], MOTION.drift, MOTION.current),
-        }}
-      />
-    </span>
-  );
-}
-
-/** SectionLabel variant="caps". */
-function CapsLabel({ children }: { children: ReactNode }) {
-  return (
-    <p
-      className="font-bold uppercase"
-      style={{ fontSize: u(12), lineHeight: 1.4, letterSpacing: u(0.3), color: COLORS.textSecondary }}
-    >
-      {children}
-    </p>
-  );
-}
-
-const cardStyle: CSSProperties = {
-  padding: u(16),
-  borderRadius: u(16),
-  backgroundColor: COLORS.cardFill,
-  border: `1px solid ${COLORS.hairline}`,
-};
-
-/** RN Switch on iOS: 51×31 track, 27pt thumb. Only the colours are the app's. */
-function Toggle({ on }: { on: boolean }) {
-  return (
-    <span
-      className="relative shrink-0"
-      style={{
-        width: u(51),
-        height: u(31),
-        borderRadius: '9999px',
-        backgroundColor: on ? COLORS.accentFill : COLORS.borderDefault,
-        ...transition(['background-color'], MOTION.drift, MOTION.current),
-      }}
-    >
-      <span
-        className="absolute"
-        style={{
-          top: u(2),
-          left: u(2),
-          width: u(27),
-          height: u(27),
-          borderRadius: '9999px',
-          backgroundColor: COLORS.textPrimary,
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)',
-          transform: `translateX(${on ? u(20) : '0'})`,
-          ...transition(['transform'], MOTION.drift, MOTION.settle),
-        }}
-      />
-    </span>
-  );
-}
-
-function PowerupRow({
-  icon,
-  title,
-  subtitle,
-  on,
-}: {
-  icon: ReactNode;
-  title: string;
-  subtitle: string;
-  on: boolean;
-}) {
-  return (
-    <div className="flex items-center" style={{ ...cardStyle, gap: u(12) }}>
-      <IconBubble size={44} tone="accentTint" radius={16}>
-        {icon}
-      </IconBubble>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-bold" style={{ fontSize: u(16), lineHeight: 1.4, color: COLORS.textPrimary }}>
-          {title}
-        </p>
-        <p className="truncate font-medium" style={{ fontSize: u(14), lineHeight: 1.4, color: COLORS.textSecondary }}>
-          {subtitle}
-        </p>
-      </div>
-      <Toggle on={on} />
-    </div>
-  );
-}
-
-/** The ListRow the Swap form uses for both tokens: logo, symbol, a line under it, a caret. */
-function TokenPickRow({ logo, symbol, detail }: { logo: string; symbol: string; detail: string }) {
-  return (
-    <div className="flex items-center" style={{ ...cardStyle, gap: u(12) }}>
-      <Image
-        src={logo}
-        alt=""
-        width={76}
-        height={76}
-        className="shrink-0 object-cover"
-        style={{ width: u(38), height: u(38), borderRadius: '9999px' }}
-      />
-      <div className="min-w-0 flex-1">
-        <p className="font-bold" style={{ fontSize: u(16), lineHeight: 1.4, color: COLORS.textPrimary }}>
-          {symbol}
-        </p>
-        <p className="truncate font-medium" style={{ ...tabular, fontSize: u(14), lineHeight: 1.4, color: COLORS.textSecondary }}>
-          {detail}
-        </p>
-      </div>
-      <CaretRightIcon size={u(20)} color={COLORS.textTertiary} />
-    </div>
-  );
-}
+export const STEP_BEAT: Record<MockStep, number> = { 0: 0, 1: 2, 2: 4, 3: 7 };
 
 function SwapForm() {
   return (
@@ -468,87 +145,23 @@ function SwapForm() {
   );
 }
 
-export default function HomeScreenMock({ state = HOME }: { state?: MockState }) {
-  const { catalogOpen, swapOn, swapAdded, tapping } = state;
+export default function HomeScreenMock({
+  state = HOME,
+  tab = 'assets',
+}: {
+  state?: MockState;
+  /** Which sub-tab the Home shows when no Powerup tab is selected. */
+  tab?: 'assets' | 'nfts';
+}) {
+  const { fabTapping, catalogOpen, swapOn, swapAdded, tapping } = state;
   const swapTab = state.swapSelected;
 
   return (
     <div aria-hidden="true" className="wallet-mock absolute inset-0 overflow-hidden">
-      {/* The water column, mounted once by (tabs)/_layout.tsx: the depth ramp,
-          the deep field of scales over it, and the floor fade over both. */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: `linear-gradient(to bottom, ${COLORS.waterTop}, ${COLORS.waterBottom})`,
-        }}
-      />
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: seigaihaTileUrl(DEEP_FIELD.stroke, DEEP_FIELD.scale),
-          backgroundRepeat: 'repeat',
-          // The tile is authored at 806.4×25.2 and shown at `scale`, in the
-          // screen's own units — so the arcs and their 1pt stroke ride the
-          // phone's size the way every other measurement here does.
-          backgroundSize: `${u(seigaihaTile.width * DEEP_FIELD.scale)} ${u(seigaihaTile.height * DEEP_FIELD.scale)}`,
-          // Density is the depth cue: the field thins downward to its floor
-          // rather than to nothing, which would give the column an end.
-          maskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,${DEEP_FIELD.floor}) 100%)`,
-          WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,${DEEP_FIELD.floor}) 100%)`,
-        }}
-      />
+      <ScreenGround />
 
       <div className="relative z-10 flex flex-col">
-        {/* WalletHeader — a 38pt row on the screen gutter, under the safe area */}
-        <div
-          className="flex items-center justify-between"
-          style={{ height: u(38), marginTop: u(62), paddingInline: u(12) }}
-        >
-          <div className="flex min-w-0 flex-1 items-center" style={{ gap: u(10) }}>
-            <IconBubble size={38} tone="ink">
-              {/* BrandMark: the salmon mark stands in for a missing avatar */}
-              <Image
-                src="/images/logo.png"
-                alt=""
-                width={36}
-                height={34}
-                style={{ width: u(18), height: 'auto' }}
-              />
-            </IconBubble>
-
-            <div className="flex min-w-0 flex-1 items-center" style={{ gap: u(8) }}>
-              <div className="min-w-0">
-                <p
-                  className="truncate font-bold"
-                  style={{ fontSize: u(14), lineHeight: u(18), color: COLORS.textPrimary }}
-                >
-                  Account #1
-                </p>
-                <p
-                  className="truncate font-medium"
-                  style={{
-                    ...tabular,
-                    fontSize: u(12),
-                    lineHeight: u(15),
-                    letterSpacing: u(0.3),
-                    color: COLORS.textTertiary,
-                  }}
-                >
-                  7Q3H…as6n
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center" style={{ gap: u(8) }}>
-            <span style={{ padding: u(4) }}>
-              <CopyIcon size={u(23)} color={COLORS.textSecondary} />
-            </span>
-            <IconBubble size={36} tone="ink">
-              <FadersHorizontalIcon size={u(18)} color={COLORS.textPrimary} />
-            </IconBubble>
-          </div>
-        </div>
+        <WalletHeader />
 
         {/* The pinned block: balance, then the sub-tabs row. A Powerup tab is
             focus mode: the balance block folds away and the row rises. */}
@@ -614,15 +227,13 @@ export default function HomeScreenMock({ state = HOME }: { state?: MockState }) 
           {/* PortfolioSubTabs — a Powerup's tab appends after NFTs */}
           <div className="flex items-center justify-between" style={{ gap: u(12) }}>
             <div className="flex items-start">
-              <UnderlineTab label="Assets" active={!swapTab} />
+              <UnderlineTab label="Assets" active={!swapTab && tab === 'assets'} />
               <span style={{ marginLeft: u(20) }}>
-                <UnderlineTab label="NFTs" active={false} />
+                <UnderlineTab label="NFTs" active={!swapTab && tab === 'nfts'} />
               </span>
               <span
                 className="relative"
                 style={{
-                  // Clipped sideways while it grows in, never vertically, so the
-                  // touch below can spill past the label.
                   overflowX: 'clip',
                   marginLeft: swapAdded ? u(20) : 0,
                   maxWidth: swapAdded ? u(60) : 0,
@@ -634,28 +245,13 @@ export default function HomeScreenMock({ state = HOME }: { state?: MockState }) 
                 <span
                   className="block"
                   style={{
-                    transform: tapping ? 'scale(0.92)' : 'none',
-                    ...transition(['transform'], MOTION.swell, MOTION.current),
+                    transform: tapping ? 'scale(0.88)' : 'none',
+                    opacity: tapping ? 0.7 : 1,
+                    ...transition(['transform', 'opacity'], MOTION.swell, MOTION.current),
                   }}
                 >
                   <UnderlineTab label="Swap" active={swapTab} />
                 </span>
-                {/* The touch: a soft disc that lands on the tab and lifts off */}
-                <span
-                  className="pointer-events-none absolute left-1/2 top-1/2"
-                  style={{
-                    width: u(40),
-                    height: u(40),
-                    marginLeft: u(-20),
-                    marginTop: u(-22),
-                    borderRadius: '9999px',
-                    backgroundColor: 'rgba(237, 241, 247, 0.28)',
-                    boxShadow: '0 0 0 1px rgba(237, 241, 247, 0.35)',
-                    opacity: tapping ? 1 : 0,
-                    transform: tapping ? 'scale(1)' : 'scale(1.4)',
-                    ...transition(['opacity', 'transform'], MOTION.drift, MOTION.settle),
-                  }}
-                />
               </span>
             </div>
             <IconBubble size={36} tone="outline">
@@ -676,7 +272,7 @@ export default function HomeScreenMock({ state = HOME }: { state?: MockState }) 
               ...transition(['opacity', 'transform'], swapTab ? 360 : 560, swapTab ? MOTION.sink : MOTION.settle),
             }}
           >
-            {TOKENS.map((token) => (
+            {tab === 'nfts' ? <NftGrid /> : TOKENS.map((token) => (
               <div key={token.symbol} className="flex items-center" style={{ ...cardStyle, gap: u(12) }}>
                 <Image
                   src={token.logo}
@@ -737,23 +333,26 @@ export default function HomeScreenMock({ state = HOME }: { state?: MockState }) 
         </div>
       </div>
 
-      {/* water.fadeBottom — starts and ends on the ramp's own floor */}
-      <div
-        className="absolute inset-x-0 bottom-0 z-20"
-        style={{
-          height: u(180),
-          background: `linear-gradient(to bottom, rgba(7, 9, 17, 0), ${COLORS.waterBottom})`,
-        }}
-      />
+      <BottomFade />
 
       {/* PowerupsFab — 48pt accent circle on the right gutter */}
       <span
         className="absolute z-20"
         style={{ right: u(12), bottom: u(54), borderRadius: '9999px', boxShadow: '0 0 12px rgba(0, 0, 0, 0.64)' }}
       >
-        <IconBubble size={48} tone="accent">
-          <PlusIcon size={u(24)} color={COLORS.accentOnFill} />
-        </IconBubble>
+        <span
+          className="block"
+          style={{
+            // The press reads on the control itself: it sinks and dims a touch.
+            transform: fabTapping ? 'scale(0.86)' : 'none',
+            filter: fabTapping ? 'brightness(0.85)' : 'none',
+            ...transition(['transform', 'filter'], MOTION.swell, MOTION.current),
+          }}
+        >
+          <IconBubble size={48} tone="accent">
+            <PlusIcon size={u(24)} color={COLORS.accentOnFill} />
+          </IconBubble>
+        </span>
       </span>
 
       {/* overlay.backdrop under the catalog sheet */}

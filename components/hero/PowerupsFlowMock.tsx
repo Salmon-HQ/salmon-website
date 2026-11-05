@@ -6,8 +6,8 @@ import HomeScreenMock, { FLOW_BEATS, STEP_BEAT, type MockStep } from './HomeScre
 /** The message the landing sends this frame when a Powerups step scrolls into view. */
 export const POWERUPS_STEP_MESSAGE = 'salmon-powerups-step';
 
-/** The tap only reads going forward; scrolling back skips it. */
-const TAP_BEAT = 5;
+/** Taps only read going forward; scrolling back skips them. */
+const TAP_BEATS = [1, 6];
 const BACK_DELAY = 220;
 
 /**
@@ -34,7 +34,7 @@ export default function PowerupsFlowMock({ initialStep }: { initialStep: MockSte
     if (beat === target) return;
     const forward = target > beat;
     let next = forward ? beat + 1 : beat - 1;
-    if (!forward && next === TAP_BEAT) next -= 1;
+    if (!forward && TAP_BEATS.includes(next)) next -= 1;
     const timer = window.setTimeout(() => setBeat(next), forward ? FLOW_BEATS[next].delay : BACK_DELAY);
     return () => window.clearTimeout(timer);
   }, [beat, target]);

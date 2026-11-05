@@ -165,3 +165,35 @@ export function PlusIcon({ size, color }: IconProps) {
     </svg>
   );
 }
+
+export function CaretLeftIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="160 208 80 128 160 48" />
+      </g>
+    </svg>
+  );
+}
+
+export function CaretDownIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="208 96 128 176 48 96" />
+      </g>
+    </svg>
+  );
+}
+
+/** Bold, like the arrow between the two sides of a swap review. */
+export function ArrowRightIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, 24)}>
+        <line x1="40" y1="128" x2="216" y2="128" />
+        <polyline points="144 56 216 128 144 200" />
+      </g>
+    </svg>
+  );
+}

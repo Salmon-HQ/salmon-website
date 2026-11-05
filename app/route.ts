@@ -190,7 +190,7 @@ const footerHtml = `
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
       <p class="salmon-footer-app-title">One wallet.<br>Available today.</p>
       ${downloadsHtml}
-      <div class="salmon-footer-phone"><img src="/screens/home.webp" alt="Salmon wallet home: balance and token list" loading="lazy" width="720" height="1564"></div>
+      <div class="salmon-footer-phone"><iframe src="/phone-preview" title="Salmon wallet home: balance and token list" loading="lazy" tabindex="-1"></iframe></div>
     </aside>
     <div class="salmon-footer-main">
       <div class="salmon-footer-columns">${FOOTER_COLUMNS.map(
@@ -247,10 +247,10 @@ const introTilesHtml = `<div id=intro-img class=salmon-intro-tiles aria-hidden=t
 ).join('')}</div>`;
 
 const SCREENS = [
-  { src: '/screens/swap.webp', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
-  { src: '/screens/payments.webp', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
-  { src: '/screens/nfts.webp', title: 'NFTs', powerup: false, alt: 'NFT grid in Salmon showing four collectibles', copy: 'Your collectibles in one grid, right next to your tokens.' },
-  { src: '/screens/token.webp', title: 'Token details', powerup: false, alt: 'Solana token detail in Salmon: price chart and market data', copy: 'Price chart, market data and an overview for every token you hold.' },
+  { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
+  { screen: 'payments', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
+  { screen: 'nfts', title: 'NFTs', powerup: false, alt: 'NFT grid in Salmon showing generative art collectibles', copy: 'Your collectibles in one grid, right next to your tokens.' },
+  { screen: 'token', title: 'Token details', powerup: false, alt: 'Solana token detail in Salmon: price chart and market data', copy: 'Price chart, market data and an overview for every token you hold.' },
 ];
 
 const screensSectionHtml = `<section id=screens class=section aria-labelledby=screens-title>
@@ -258,7 +258,7 @@ const screensSectionHtml = `<section id=screens class=section aria-labelledby=sc
   <h2 id=screens-title>Inside the app</h2>
   <p class=salmon-screens-intro>A look inside Salmon. <span>The screens you’ll actually use.</span></p>
   <ul class=salmon-screens-list>${SCREENS.map(
-    (screen) => `<li><figure><div class=salmon-screens-phone><img src="${screen.src}" alt="${screen.alt}" width="720" height="1564" loading="lazy" decoding="async"></div><figcaption>${screen.powerup ? '<span class=salmon-screens-tag>Powerup</span>' : ''}<strong>${screen.title}</strong><span>${screen.copy}</span></figcaption></figure></li>`,
+    (screen) => `<li><figure><div class=salmon-screens-phone><iframe src="/phone-preview?screen=${screen.screen}" title="${screen.alt}" loading="lazy" tabindex="-1"></iframe></div><figcaption>${screen.powerup ? '<span class=salmon-screens-tag>Powerup</span>' : ''}<strong>${screen.title}</strong><span>${screen.copy}</span></figcaption></figure></li>`,
   ).join('')}</ul>
 </section>`;
 
@@ -555,6 +555,7 @@ export async function GET(request: Request) {
         background: #080a0f;
         transform: translateX(-50%);
       }
+      #salmon-card-0 .card-content-screen iframe,
       .salmon-phone-screen iframe {
         width: 100%;
         height: 100%;
@@ -864,7 +865,7 @@ export async function GET(request: Request) {
         transform: translateX(-50%);
         overflow: hidden;
       }
-      .salmon-footer-phone img { width: 100%; height: 100%; object-fit: cover; }
+      .salmon-footer-phone iframe { position: absolute; inset: 0; border: 0; pointer-events: none; }
       .salmon-footer-main {
         display: flex;
         flex-direction: column;
@@ -1082,7 +1083,8 @@ export async function GET(request: Request) {
           0 0 0 var(--bezel) #ff7e6d,
           0 1.8vw 4vw rgba(16,19,28,.22);
       }
-      .salmon-screens-phone img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .salmon-screens-phone { position: relative; }
+      .salmon-screens-phone iframe { position: absolute; inset: 0; border: 0; pointer-events: none; }
       .salmon-screens-list figcaption {
         display: flex;
         flex-direction: column;
@@ -1218,18 +1220,26 @@ export async function GET(request: Request) {
           flowFrame.tabIndex = -1;
           powerupsScreen.appendChild(flowFrame);
 
+          // The flow starts from Home only once the phone is actually in view.
+          var phoneInView = false;
           var sentStep = -1;
           var sendStep = function () {
             var step = 0;
-            markers.forEach(function (marker, index) {
-              if (marker.style.opacity === '1') step = index + 1;
-            });
+            if (phoneInView) {
+              markers.forEach(function (marker, index) {
+                if (marker.style.opacity === '1') step = index + 1;
+              });
+            }
             if (step === sentStep || !flowFrame.contentWindow) return;
             sentStep = step;
             flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-step', step: step }, window.location.origin);
           };
           new MutationObserver(sendStep).observe(powerupsScreen, { attributes: true, subtree: true, attributeFilter: ['style'] });
           flowFrame.addEventListener('load', function () { sentStep = -1; sendStep(); });
+          new IntersectionObserver(function (entries) {
+            phoneInView = entries[0].isIntersecting;
+            sendStep();
+          }, { threshold: 0.6 }).observe(powerupsScreen);
         }
 
         var salmonHeading = document.querySelector('#salmon > h2');

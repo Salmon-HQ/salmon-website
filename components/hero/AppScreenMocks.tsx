@@ -1,0 +1,493 @@
+import Image from 'next/image';
+import type { ReactNode } from 'react';
+import { u } from './phone-scale';
+import {
+  ActionColumn,
+  BottomFade,
+  COLORS,
+  IconBubble,
+  KeyValueRow,
+  PrimaryButton,
+  ScreenGround,
+  ScreenHeader,
+  SecondaryButton,
+  UnderlineTab,
+  WalletHeader,
+  cardStyle,
+  tabular,
+} from './mock-kit';
+import { ArrowRightIcon, ArrowUpRightIcon, CaretDownIcon } from './wallet-icons';
+
+/**
+ * The app screens the landing shows besides Home, rebuilt from
+ * salmon-wallet-frontend: core's TransactionConfirmation (swap review),
+ * PaymentRequestSheet, send/review.tsx, NftsTab and token/[id].tsx.
+ *
+ * The data is invented but consistent with the Home mock's account: 8.2 SOL
+ * at $163.50, 350 USDC. The NFTs are generative pieces from made-up
+ * collections, drawn here so no real artist's work is shown.
+ */
+
+function Screen({ children }: { children: ReactNode }) {
+  return (
+    <div aria-hidden="true" className="wallet-mock absolute inset-0 overflow-hidden">
+      <ScreenGround />
+      {children}
+    </div>
+  );
+}
+
+/** Swap review — core's TransactionConfirmation, opened by "Review swap". */
+export function SwapReviewMock() {
+  const side = (label: string, logo: string, amount: string, usd: string) => (
+    <div className="flex flex-1 flex-col items-center" style={{ gap: u(4) }}>
+      <span
+        className="font-medium uppercase"
+        style={{ fontSize: u(10), letterSpacing: u(0.5), color: COLORS.textTertiary }}
+      >
+        {label}
+      </span>
+      <Image src={logo} alt="" width={80} height={80} style={{ width: u(40), height: u(40), borderRadius: '9999px' }} />
+      <span
+        className="font-bold"
+        style={{ ...tabular, fontSize: u(18), lineHeight: u(22.5), letterSpacing: u(-0.12), color: COLORS.textPrimary }}
+      >
+        {amount}
+      </span>
+      <span className="font-medium" style={{ ...tabular, fontSize: u(12), lineHeight: u(16.8), color: COLORS.textSecondary }}>
+        {usd}
+      </span>
+    </div>
+  );
+
+  return (
+    <Screen>
+      <div className="relative z-10 flex flex-col" style={{ paddingTop: u(62 + 24), paddingInline: u(18) }}>
+        <p
+          className="text-center font-semibold"
+          style={{ fontSize: u(24), lineHeight: u(30), letterSpacing: u(-0.12), color: COLORS.textPrimary, marginBottom: u(24) }}
+        >
+          Swap Review
+        </p>
+        <div className="flex items-center" style={{ padding: u(10), gap: u(8), marginBottom: u(20) }}>
+          {side('You pay', '/images/tokens/sol.png', '1 SOL', '$163.50')}
+          <ArrowRightIcon size={u(20)} color={COLORS.accentFill} />
+          {side('You receive (estimated)', '/images/tokens/usdc.png', '162.68 USDC', '$162.68')}
+        </div>
+        <div className="flex flex-col" style={{ ...cardStyle, gap: u(12), marginBottom: u(20) }}>
+          <KeyValueRow label="Rate" value="1 SOL ≈ 163.50 USDC" />
+          <KeyValueRow label="Salmon fee" value="0.82 USDC (0.5%), taken from what you receive" />
+          <KeyValueRow label="Minimum received" value="161.87 USDC" />
+          <div className="flex items-center justify-between">
+            <span className="font-medium" style={{ fontSize: u(14), lineHeight: u(19.6), color: COLORS.textSecondary }}>
+              Details
+            </span>
+            <CaretDownIcon size={u(16)} color={COLORS.textSecondary} />
+          </div>
+        </div>
+        <p className="text-center font-medium" style={{ fontSize: u(12), color: COLORS.textTertiary }}>
+          Powered by Jupiter
+        </p>
+      </div>
+      <ActionColumn gutter={18}>
+        <SecondaryButton label="Back" />
+        <PrimaryButton label="Confirm (59)" />
+      </ActionColumn>
+    </Screen>
+  );
+}
+
+/** A deterministic stand-in for a QR code: real finder patterns, modules that encode nothing. */
+function DecoyQr() {
+  const n = 41;
+  let seed = 7;
+  const random = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const inFinder = (x: number, y: number) =>
+    (x < 8 && y < 8) || (x >= n - 8 && y < 8) || (x < 8 && y >= n - 8);
+  const inLogo = (x: number, y: number) => Math.abs(x - 20) <= 5 && Math.abs(y - 20) <= 5;
+  const modules: [number, number][] = [];
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (!inFinder(x, y) && !inLogo(x, y) && random() < 0.48) modules.push([x, y]);
+    }
+  }
+  const finder = (x: number, y: number) => (
+    <g key={`${x}-${y}`}>
+      <rect x={x} y={y} width={7} height={7} rx={1.4} fill={COLORS.depthAbyss} />
+      <rect x={x + 1} y={y + 1} width={5} height={5} rx={0.9} fill={COLORS.textPrimary} />
+      <rect x={x + 2} y={y + 2} width={3} height={3} rx={0.6} fill={COLORS.depthAbyss} />
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${n} ${n}`} className="block h-full w-full" shapeRendering="crispEdges">
+      <rect width={n} height={n} fill={COLORS.textPrimary} />
+      {modules.map(([x, y]) => (
+        <rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={COLORS.depthAbyss} />
+      ))}
+      {[finder(0, 0), finder(n - 7, 0), finder(0, n - 7)]}
+    </svg>
+  );
+}
+
+/** The Payments Powerup's request sheet, risen over a dimmed Home. */
+export function PaymentRequestMock() {
+  return (
+    <Screen>
+      <div className="relative z-10">
+        <WalletHeader />
+      </div>
+      <div className="absolute inset-0 z-20" style={{ backgroundColor: COLORS.backdrop }} />
+      <div
+        className="absolute inset-x-0 bottom-0 z-30 flex flex-col"
+        style={{
+          top: u(52),
+          borderTopLeftRadius: u(24),
+          borderTopRightRadius: u(24),
+          border: `0.75px solid ${COLORS.borderDefault}`,
+          borderBottom: 0,
+          backgroundColor: COLORS.sheetFill,
+        }}
+      >
+        <div className="flex justify-center" style={{ paddingTop: u(12), paddingBottom: u(8) }}>
+          <span style={{ width: u(44), height: u(5), borderRadius: '9999px', backgroundColor: COLORS.textTertiary, opacity: 0.4 }} />
+        </div>
+        <p
+          className="text-center font-semibold"
+          style={{ fontSize: u(24), lineHeight: 1.25, letterSpacing: u(-0.12), color: COLORS.textPrimary }}
+        >
+          Payment request
+        </p>
+        <div className="flex flex-col" style={{ paddingInline: u(12), paddingTop: u(12), gap: u(20) }}>
+          <div
+            className="relative self-center overflow-hidden"
+            style={{ width: u(416), height: u(416), borderRadius: u(16), border: `${u(22)} solid ${COLORS.textPrimary}` }}
+          >
+            <DecoyQr />
+            {/* The brand knockout: 24% of the code, the mark at 66% of that */}
+            <span
+              className="absolute left-1/2 top-1/2 flex items-center justify-center"
+              style={{
+                width: u(89),
+                height: u(89),
+                marginLeft: u(-44.5),
+                marginTop: u(-44.5),
+                borderRadius: u(22),
+                backgroundColor: COLORS.textPrimary,
+              }}
+            >
+              <Image
+                src="/images/logo.svg"
+                alt=""
+                width={118}
+                height={118}
+                style={{ width: u(59), height: u(59), filter: 'brightness(0)' }}
+              />
+            </span>
+          </div>
+          <div className="text-center font-bold" style={{ ...cardStyle, ...tabular, fontSize: u(48), color: COLORS.textPrimary }}>
+            25.00 USDC
+          </div>
+          <div className="flex flex-col" style={{ ...cardStyle, gap: u(12) }}>
+            <KeyValueRow label="For" value="Design review, March" />
+            <KeyValueRow label="Expires in" value="23 h 59 min" />
+            <KeyValueRow label="Status" value="Waiting for payment" />
+          </div>
+          <SecondaryButton label="Copy request" />
+          <SecondaryButton label="Remove request" danger />
+        </div>
+      </div>
+    </Screen>
+  );
+}
+
+/** send/review.tsx — the last look before signing. */
+export function SendReviewMock() {
+  return (
+    <Screen>
+      <div className="relative z-10">
+        <ScreenHeader title="Review send" subtitle="Check the details before signing." />
+        <div style={{ paddingInline: u(12) }}>
+          <div className="flex flex-col" style={{ ...cardStyle, gap: u(12) }}>
+            <KeyValueRow label="Amount" action="Change" value="0.5 SOL" />
+            <KeyValueRow label="To" value="Lucía" />
+            <KeyValueRow label="Address" value="9xQe…F4kD" />
+            <KeyValueRow label="Network Fee" value="~0.000005 SOL" />
+          </div>
+        </div>
+      </div>
+      <ActionColumn>
+        <SecondaryButton label="Cancel" />
+        <PrimaryButton label="Confirm" />
+      </ActionColumn>
+    </Screen>
+  );
+}
+
+/** Generative pieces for the NFT grid. Each is its own small composition. */
+const NFT_ART: { name: string; collection: string; art: ReactNode }[] = [
+  {
+    name: 'Low Tide No. 12',
+    collection: 'Low Tide Studies',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <rect width="100" height="100" fill="#0f1b2d" />
+        {Array.from({ length: 14 }, (_, i) => (
+          <path
+            key={i}
+            d={`M-5 ${18 + i * 5.5} Q 25 ${12 + i * 5.5 + Math.sin(i) * 6} 50 ${18 + i * 5.5} T 105 ${18 + i * 5.5}`}
+            fill="none"
+            stroke="#e9dfc9"
+            strokeOpacity={0.25 + (i / 14) * 0.7}
+            strokeWidth="0.9"
+          />
+        ))}
+        <circle cx="72" cy="22" r="7" fill="#e9dfc9" fillOpacity="0.9" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Halflight 3',
+    collection: 'Halflight',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <defs>
+          <filter id="halflight-soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.2" />
+          </filter>
+        </defs>
+        <rect width="100" height="100" fill="#3a1d2b" />
+        <g filter="url(#halflight-soft)">
+          <rect x="12" y="10" width="76" height="42" rx="2" fill="#d9583f" />
+          <rect x="12" y="58" width="76" height="30" rx="2" fill="#6e2f3f" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    name: 'Strata 21',
+    collection: 'Strata',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <rect width="100" height="100" fill="#efe6d6" />
+        {Array.from({ length: 11 }, (_, i) => (
+          <ellipse
+            key={i}
+            cx={54 + Math.sin(i * 0.9) * 4}
+            cy={56 + Math.cos(i * 0.7) * 3}
+            rx={6 + i * 4.6}
+            ry={4 + i * 3.6}
+            fill="none"
+            stroke="#7a5a3c"
+            strokeOpacity={0.85 - i * 0.05}
+            strokeWidth="0.8"
+            transform={`rotate(${-18 + i * 2} 54 56)`}
+          />
+        ))}
+      </svg>
+    ),
+  },
+  {
+    name: 'Orbit 88',
+    collection: 'Orbits',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <rect width="100" height="100" fill="#0b0b0e" />
+        {Array.from({ length: 12 }, (_, i) => (
+          <circle
+            key={i}
+            cx={50 + i * 1.6}
+            cy={50 - i * 1.1}
+            r={6 + i * 3.4}
+            fill="none"
+            stroke="#f2f2f2"
+            strokeOpacity={0.95 - i * 0.06}
+            strokeWidth="0.7"
+          />
+        ))}
+        <circle cx="50" cy="50" r="2.4" fill="#ff5c45" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Ember Field 07',
+    collection: 'Ember Fields',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <defs>
+          <radialGradient id="ember-a" cx="35%" cy="40%" r="55%">
+            <stop offset="0%" stopColor="#ffb36b" />
+            <stop offset="100%" stopColor="#ffb36b" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="ember-b" cx="70%" cy="70%" r="50%">
+            <stop offset="0%" stopColor="#e2364a" />
+            <stop offset="100%" stopColor="#e2364a" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <rect width="100" height="100" fill="#2a0f14" />
+        <rect width="100" height="100" fill="url(#ember-b)" />
+        <rect width="100" height="100" fill="url(#ember-a)" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Shoal 0418',
+    collection: 'Shoal',
+    art: (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+        <rect width="100" height="100" fill="#0d2a2c" />
+        {Array.from({ length: 64 }, (_, i) => {
+          const x = (i % 8) * 13 + ((Math.floor(i / 8) % 2) * 6.5);
+          const y = Math.floor(i / 8) * 13 + 4;
+          return (
+            <path
+              key={i}
+              d={`M${x} ${y + 6} q 6 -7 12 0`}
+              fill="none"
+              stroke="#7fd1c3"
+              strokeOpacity={0.35 + ((i * 37) % 10) / 16}
+              strokeWidth="1"
+            />
+          );
+        })}
+      </svg>
+    ),
+  },
+];
+
+/** NftsTab: two columns, 12pt gaps, the name band laid over the bottom of each tile. */
+export function NftGrid() {
+  return (
+    <div className="grid grid-cols-2" style={{ gap: u(12) }}>
+      {NFT_ART.map((nft) => (
+        <div
+          key={nft.name}
+          className="relative overflow-hidden"
+          style={{ aspectRatio: '194 / 193', borderRadius: u(12), border: `1px solid ${COLORS.hairline}` }}
+        >
+          <div className="absolute inset-0">{nft.art}</div>
+          <div
+            className="absolute inset-x-0 bottom-0 flex flex-col"
+            style={{ backgroundColor: 'rgba(7, 9, 17, 0.9)', paddingBlock: u(8), paddingInline: u(12), gap: u(2) }}
+          >
+            <span className="truncate font-semibold" style={{ fontSize: u(14), lineHeight: u(19.6), color: COLORS.textPrimary }}>
+              {nft.name}
+            </span>
+            <span className="truncate" style={{ fontSize: u(12), lineHeight: u(16.8), color: COLORS.textSecondary }}>
+              {nft.collection}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** One month of SOL closing at $163.50, smoothed with quadratic segments like PriceChart. */
+function chartPath(width: number, height: number) {
+  const n = 42;
+  let seed = 11;
+  const random = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const values = Array.from({ length: n }, (_, i) => 144.9 + (18.6 * i) / (n - 1) + Math.sin(i / 3.2) * 4.5 + (random() - 0.5) * 5);
+  values[n - 1] = 163.5;
+  const min = Math.min(...values) - 2;
+  const max = Math.max(...values) + 2;
+  const points = values.map((v, i) => [(i / (n - 1)) * width, height - ((v - min) / (max - min)) * height] as const);
+  let d = `M ${points[0][0]} ${points[0][1]}`;
+  for (let i = 1; i < n - 1; i++) {
+    const mx = (points[i][0] + points[i + 1][0]) / 2;
+    const my = (points[i][1] + points[i + 1][1]) / 2;
+    d += ` Q ${points[i][0]} ${points[i][1]} ${mx} ${my}`;
+  }
+  d += ` L ${points[n - 1][0]} ${points[n - 1][1]}`;
+  return { d, end: points[n - 1] };
+}
+
+/** token/[id].tsx for Solana. */
+export function TokenDetailMock() {
+  const width = 428;
+  const height = 200;
+  const { d, end } = chartPath(width, height);
+  const up = COLORS.changePositive;
+  return (
+    <Screen>
+      <div className="relative z-10 flex flex-col">
+        <ScreenHeader
+          title="Solana"
+          glyph={
+            <Image src="/images/tokens/sol.png" alt="" width={48} height={48} style={{ width: u(24), height: u(24), borderRadius: '9999px' }} />
+          }
+        />
+        <div className="flex flex-col" style={{ paddingInline: u(12), gap: u(12) }}>
+          <div className="flex flex-col" style={{ gap: u(8) }}>
+            <span
+              className="font-bold"
+              style={{ ...tabular, fontSize: u(48), lineHeight: 1.25, letterSpacing: u(-0.25), color: COLORS.textPrimary }}
+            >
+              8.2 SOL
+            </span>
+            <div className="flex items-center" style={{ gap: u(12) }}>
+              <span className="font-bold" style={{ ...tabular, fontSize: u(16), color: COLORS.textSecondary }}>
+                $1,340.70 · $163.50
+              </span>
+              <span className="ml-auto">
+                <IconBubble size={36} tone="accent">
+                  <ArrowUpRightIcon size={u(18)} color={COLORS.accentOnFill} bold />
+                </IconBubble>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col" style={{ gap: u(12) }}>
+            {/* The chart bleeds to the screen's left edge */}
+            <svg viewBox={`0 0 ${width} ${height}`} style={{ width: u(width), height: u(height), marginLeft: u(-12) }}>
+              <defs>
+                <linearGradient id="price-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={up} stopOpacity="0.3" />
+                  <stop offset="100%" stopColor={up} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={`${d} L ${width} ${height} L 0 ${height} Z`} fill="url(#price-fill)" />
+              <path d={d} fill="none" stroke={up} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx={end[0]} cy={end[1]} r="9" fill={up} fillOpacity="0.18" />
+              <circle cx={end[0]} cy={end[1]} r="3.5" fill={up} />
+            </svg>
+            <div className="flex justify-center" style={{ gap: u(12) }}>
+              {['1H', '1D', '1W', '1M', '3M', '1Y'].map((range) => (
+                <UnderlineTab key={range} label={range} active={range === '1M'} size={12} />
+              ))}
+            </div>
+            <KeyValueRow label="1M change" value="+12.84%" tone="success" />
+          </div>
+
+          <div className="flex flex-col" style={{ ...cardStyle, gap: u(12) }}>
+            <p className="font-bold" style={{ fontSize: u(16), lineHeight: u(22.4), color: COLORS.textPrimary }}>
+              Market data
+            </p>
+            <KeyValueRow label="Market Cap" value="$79,605,112,340" />
+            <KeyValueRow label="24h Volume" value="$3,124,887,015" />
+            <KeyValueRow label="Circulating Supply" value="486.88M SOL" />
+            <KeyValueRow label="Total Supply" value="592.31M SOL" />
+            <KeyValueRow label="All-Time High" value="$293.31" />
+          </div>
+
+          <div className="flex flex-col" style={{ ...cardStyle, gap: u(8) }}>
+            <p className="font-bold" style={{ fontSize: u(16), lineHeight: u(22.4), color: COLORS.textPrimary }}>
+              About
+            </p>
+            <p style={{ fontSize: u(14), lineHeight: u(21), color: COLORS.textSecondary }}>
+              Solana is a high-performance blockchain built for fast, low-cost transactions at global scale.
+            </p>
+          </div>
+        </div>
+      </div>
+      <BottomFade />
+    </Screen>
+  );
+}
+

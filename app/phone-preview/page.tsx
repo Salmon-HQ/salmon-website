@@ -1,19 +1,29 @@
+import type { ReactNode } from 'react';
+import { PaymentRequestMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
 import HomeScreenMock, { FLOW_BEATS, STEP_BEAT, type MockStep } from '@/components/hero/HomeScreenMock';
 import PowerupsFlowMock from '@/components/hero/PowerupsFlowMock';
 
-// ?flow=powerups is the Powerups phone, driven by the landing's scroll;
-// ?step=1-3 pins a step for checking it on its own.
+const SCREENS: Record<string, ReactNode> = {
+  nfts: <HomeScreenMock tab="nfts" />,
+  'swap-review': <SwapReviewMock />,
+  payments: <PaymentRequestMock />,
+  send: <SendReviewMock />,
+  token: <TokenDetailMock />,
+};
+
+// ?screen= picks a static screen; ?flow=powerups is the Powerups phone, driven
+// by the landing's scroll; ?step=1-3 pins a flow step for checking it alone.
 export default async function PhonePreview({
   searchParams,
 }: {
-  searchParams: Promise<{ flow?: string; step?: string }>;
+  searchParams: Promise<{ flow?: string; step?: string; screen?: string }>;
 }) {
-  const { flow, step } = await searchParams;
+  const { flow, step, screen } = await searchParams;
   const pinned = [1, 2, 3].includes(Number(step)) ? (Number(step) as MockStep) : 0;
 
-  return (
-    <main className="@container fixed inset-0 overflow-hidden bg-[#10131c]">
-      {flow === 'powerups' ? <PowerupsFlowMock initialStep={pinned} /> : <HomeScreenMock state={FLOW_BEATS[STEP_BEAT[pinned]].state} />}
-    </main>
-  );
+  let content: ReactNode = <HomeScreenMock state={FLOW_BEATS[STEP_BEAT[pinned]].state} />;
+  if (flow === 'powerups') content = <PowerupsFlowMock initialStep={pinned} />;
+  else if (screen && SCREENS[screen]) content = SCREENS[screen];
+
+  return <main className="@container fixed inset-0 overflow-hidden bg-[#10131c]">{content}</main>;
 }
