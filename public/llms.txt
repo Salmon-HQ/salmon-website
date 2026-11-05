@@ -1,0 +1,29 @@
+# Salmon Wallet
+
+> Salmon is an open-source, self-custodial Solana wallet for iOS, Android, Chrome and the Solana Seeker. It starts lightweight and expands through optional Powerups.
+
+Salmon keeps its wallet core small. Extra capabilities, such as Swap and Payments, are Powerups that each user turns on only when needed. Only the user holds the recovery phrase and private keys. Salmon also operates a Solana validator.
+
+Use this site to find official Salmon downloads, understand what the wallet does, and reach the open-source code. Wallet operations (signing, keys, funds) happen only inside the Salmon apps, never on this website.
+
+## Downloads
+
+- [iOS app](https://apps.apple.com/app/salmon-open-wallet/id6799740991): Salmon on the App Store
+- [Android app](https://play.google.com/store/apps/details?id=io.salmonwallet.app): Salmon on Google Play
+- [Chrome extension](https://chromewebstore.google.com/detail/salmon-wallet/ejbidfepgijlcgahbmbckmnaljagjoll): Salmon browser extension
+
+## Product
+
+- [Homepage](https://www.salmonwallet.io/): Product overview, Powerups, app screens, validator stats, FAQ and downloads
+- [Source code](https://github.com/Salmon-HQ): Public repositories of the Salmon wallet
+
+## Legal
+
+- [Terms and conditions](https://www.salmonwallet.io/terms)
+- [Privacy policy](https://www.salmonwallet.io/privacy)
+
+## Optional
+
+- [X](https://x.com/salmonwallet): Announcements
+- [Telegram](https://t.me/salmon_wallet): Community
+- [Medium](https://medium.com/@salmonwallet): Articles

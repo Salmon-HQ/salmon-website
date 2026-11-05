@@ -190,7 +190,7 @@ const footerHtml = `
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
       <p class="salmon-footer-app-title">One wallet.<br>Available today.</p>
       ${downloadsHtml}
-      <div class="salmon-footer-phone"><img src="/images/reference/salmon-card-2.png" alt="Salmon wallet portfolio"></div>
+      <div class="salmon-footer-phone"><img src="/screens/home.webp" alt="Salmon wallet home: balance and token list" loading="lazy" width="720" height="1564"></div>
     </aside>
     <div class="salmon-footer-main">
       <div class="salmon-footer-columns">${FOOTER_COLUMNS.map(
@@ -231,6 +231,71 @@ const footerHtml = `
   </div>
   <div class="salmon-footer-wordmark" aria-hidden="true">Salmon</div>`;
 
+const SCREENS = [
+  { src: '/screens/swap.webp', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
+  { src: '/screens/payments.webp', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
+  { src: '/screens/nfts.webp', title: 'NFTs', powerup: false, alt: 'NFT grid in Salmon showing four collectibles', copy: 'Your collectibles in one grid, right next to your tokens.' },
+  { src: '/screens/token.webp', title: 'Token details', powerup: false, alt: 'Solana token detail in Salmon: price chart and market data', copy: 'Price chart, market data and an overview for every token you hold.' },
+];
+
+const screensSectionHtml = `<section id=screens class=section aria-labelledby=screens-title>
+  <div class=section-rectangle><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 1.5h10A2.5 2.5 0 0 1 19.5 4v16a2.5 2.5 0 0 1-2.5 2.5H7A2.5 2.5 0 0 1 4.5 20V4A2.5 2.5 0 0 1 7 1.5Zm3 2a.75.75 0 0 0 0 1.5h4a.75.75 0 0 0 0-1.5h-4Z"/></svg></div>
+  <h2 id=screens-title>Inside the app</h2>
+  <p class=salmon-screens-intro>A look inside Salmon. <span>The screens you’ll actually use.</span></p>
+  <ul class=salmon-screens-list>${SCREENS.map(
+    (screen) => `<li><figure><div class=salmon-screens-phone><img src="${screen.src}" alt="${screen.alt}" width="720" height="1564" loading="lazy" decoding="async"></div><figcaption>${screen.powerup ? '<span class=salmon-screens-tag>Powerup</span>' : ''}<strong>${screen.title}</strong><span>${screen.copy}</span></figcaption></figure></li>`,
+  ).join('')}</ul>
+</section>`;
+
+// Visible answers matter more than markup for search and AI answers: Google
+// retired FAQ rich results in May 2026, so there is no FAQPage JSON-LD.
+const FAQ = [
+  ['What is Salmon?', 'Salmon is an open-source, self-custodial Solana wallet for mobile and browser. It starts lightweight and expands through optional Powerups.'],
+  ['Where can I get Salmon?', `Salmon is available as a <a href="${STORES[0].href}" target="_blank" rel="noopener noreferrer">browser extension for Chrome</a> and as an app for <a href="${STORES[1].href}" target="_blank" rel="noopener noreferrer">iOS</a>, <a href="${STORES[2].href}" target="_blank" rel="noopener noreferrer">Android</a> and the Solana Seeker.`],
+  ['What is a Powerup?', 'A Powerup is an optional capability, such as Swap or Payments, that extends Salmon only when you choose to turn it on.'],
+  ['Who holds my keys?', 'You do. Salmon is self-custodial: only you hold your recovery phrase and private keys.'],
+  ['Is Salmon open source?', 'Yes. Salmon’s code is public on <a href="https://github.com/Salmon-HQ" target="_blank" rel="noopener noreferrer">GitHub</a>, and product development happens in the open.'],
+];
+
+const faqSectionHtml = `<section id=faq> <h2>Salmon FAQs</h2> <ul>${FAQ.map(
+  ([question, answer], index) =>
+    `<li class="faq-li${index === 0 ? ' on' : ''}"> <h3 class=faq-list-title> ${question} <span class=faq-list-arrow> <svg> <use xlink:href=#svg-faq-arrow></use> </svg> </span> </h3> <p class=faq-list-p>${answer}</p> </li>`,
+).join('')}</ul> </section>`;
+
+const SITE_URL = 'https://www.salmonwallet.io';
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Salmon Wallet',
+      url: SITE_URL,
+      logo: `${SITE_URL}/images/app-icon.png`,
+      sameAs: [...SOCIALS.map((social) => social.href), ...STORES.slice(0, 3).map((store) => store.href)],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: 'Salmon',
+      url: SITE_URL,
+      publisher: { '@id': `${SITE_URL}/#organization` },
+    },
+    {
+      '@type': 'MobileApplication',
+      name: 'Salmon',
+      description: 'An open-source, self-custodial Solana wallet for mobile and browser that expands through optional Powerups.',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'iOS, Android, Chrome',
+      url: SITE_URL,
+      downloadUrl: STORES.slice(0, 3).map((store) => store.href),
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      publisher: { '@id': `${SITE_URL}/#organization` },
+    },
+  ],
+};
+
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   let html: string;
@@ -249,7 +314,7 @@ export async function GET(request: Request) {
     '<h1> <span class="salmon-h1-strong">One wallet.</span><br> Only what you need. </h1>',
   );
   const withSalmonPhone = withHeadline.replace(
-    /<div class="card-content-screen"><video[\s\S]*?<\/video><\/div>/,
+    /<div class=card-content-screen><video[^>]*hero\/00\.mp4[\s\S]*?<\/video><\/div>/,
     '<div class="card-content-screen salmon-phone-screen"><iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe></div>',
   );
   const withSalmonLogo = withSalmonPhone.replace(
@@ -271,24 +336,34 @@ export async function GET(request: Request) {
     /<section id=shop[\s\S]*?<\/section>\s*<div class=separator><\/div>/,
     '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
   );
+  const withScreens = withoutShop
+    .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
+    .replace(
+      /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
+      () => `<div id=salmon-card-1 class=salmon-get-card>${getSalmonCardHtml}</div> `,
+    )
+    .replace(/<footer>[\s\S]*?<\/footer>/, () => `<footer>${footerHtml}</footer>`);
   const validatorSection = renderValidatorSection(await getValidatorStats());
-  const withValidator = withoutShop.replace(
+  const withValidator = withScreens.replace(
     /<section id=faq>[\s\S]*?<\/section>/,
-    () => validatorSection,
+    () => `${validatorSection}${faqSectionHtml}`,
   );
   const overrides = `
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5">
     <meta name="theme-color" content="#ff5c45">
-    <meta name="description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta name="description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Salmon — One wallet. Only what you need.">
-    <meta property="og:description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta property="og:description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
     <meta property="og:image" content="${origin}/images/sharing-og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Salmon — One wallet. Only what you need.">
-    <meta name="twitter:description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta name="twitter:description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
     <meta name="twitter:image" content="${origin}/images/sharing-og.png">
+    <link rel="canonical" href="${SITE_URL}/">
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">
+    <script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, '\\u003c')}</script>
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
     <title>Salmon — One wallet. Only what you need.</title>
@@ -522,9 +597,6 @@ export async function GET(request: Request) {
         border: 0;
         pointer-events: none;
       }
-      #salmon-card-0 .card-content-screen > * {
-        visibility: hidden !important;
-      }
       /* Powerup screens sit above the placeholder, which shows only while an image is missing. */
       #program .card-content-screen::after {
         z-index: 0 !important;
@@ -534,8 +606,7 @@ export async function GET(request: Request) {
         height: 100%;
         object-fit: cover;
       }
-      #program .card-content-screen::after,
-      #salmon-card-0 .card-content-screen::after {
+      #program .card-content-screen::after {
         content: "Mobile placeholder";
         position: absolute;
         inset: 0;
@@ -947,6 +1018,90 @@ export async function GET(request: Request) {
         white-space: nowrap;
         user-select: none;
       }
+      #screens.section { padding-top: 6vw !important; }
+      #screens .section-rectangle {
+        width: 9vw !important;
+        height: 9vw !important;
+        box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
+        background-color: #fff7f4 !important;
+      }
+      #screens .section-rectangle svg { width: 3.6vw; height: 3.6vw; fill: #ff5c45; }
+      #screens > h2 {
+        padding-top: 1.8vw !important;
+        font-size: 7vw !important;
+        line-height: 1 !important;
+        color: #10131c;
+      }
+      .salmon-screens-intro {
+        margin: 3vw auto 0;
+        color: #10131c;
+        font-size: 3.2vw;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: -.04em;
+        text-align: center;
+      }
+      .salmon-screens-intro span {
+        display: block;
+        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+      /* Same bezel as the hero and Powerups phones, a size smaller. */
+      .salmon-screens-list {
+        --bezel: .82vw;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 3vw;
+        max-width: 84vw;
+        margin: 6vw auto 0;
+        padding: 0;
+        list-style: none;
+      }
+      .salmon-screens-list figure { margin: 0; }
+      .salmon-screens-phone {
+        overflow: hidden;
+        width: calc(100% - 2 * var(--bezel));
+        margin: var(--bezel) auto 0;
+        aspect-ratio: 720 / 1564;
+        border-radius: calc(2.2vw - var(--bezel));
+        background: #161c2d;
+        box-shadow:
+          0 0 0 calc(var(--bezel) * .88) #080a0f,
+          0 0 0 var(--bezel) #ff7e6d,
+          0 1.8vw 4vw rgba(16,19,28,.22);
+      }
+      .salmon-screens-phone img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .salmon-screens-list figcaption {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: calc(1.6vw + var(--bezel));
+        color: #5d6170;
+        font-size: clamp(14px, 1.1vw, 17px);
+        line-height: 1.4;
+        letter-spacing: -.01em;
+      }
+      .salmon-screens-list figcaption strong {
+        color: #10131c;
+        font-size: clamp(18px, 1.5vw, 24px);
+        font-weight: 600;
+        letter-spacing: -.03em;
+      }
+      .salmon-screens-tag {
+        align-self: flex-start;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #fff7f4;
+        color: #ff5c45;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .02em;
+      }
+      #faq .faq-list-title { margin: 0; font-weight: inherit; }
+      #faq .faq-list-p a { color: #ff5c45; }
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #footer-top.salmon-footer { grid-template-columns: 1fr; gap: 64px; padding: 48px 6.15vw 0 !important; }
@@ -961,6 +1116,29 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
+        #screens.section { padding-top: 14vw !important; }
+        #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
+        #screens .section-rectangle svg { width: 8vw; height: 8vw; }
+        #screens > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        .salmon-screens-intro { margin-top: 8vw; font-size: 8.5vw; }
+        /* One phone per swipe, with the next one peeking in. */
+        .salmon-screens-list {
+          --bezel: 2.2vw;
+          grid-template-columns: none;
+          grid-auto-flow: column;
+          grid-auto-columns: 62vw;
+          gap: 7vw;
+          max-width: none;
+          margin-top: 10vw;
+          padding: 0 6.15vw 4vw;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scroll-padding: 0 6.15vw;
+          scrollbar-width: none;
+        }
+        .salmon-screens-list::-webkit-scrollbar { display: none; }
+        .salmon-screens-list li { scroll-snap-align: start; }
+        .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
         #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
@@ -1002,41 +1180,9 @@ export async function GET(request: Request) {
       // so copy is swapped as soon as the DOM is parsed and only the nodes the
       // template caches (percent counter) wait for load.
       function applySalmonCopy() {
-        var heroScreen = document.querySelector('#hero .card-content-screen');
-        if (heroScreen) {
-          heroScreen.classList.add('salmon-phone-screen');
-          heroScreen.innerHTML = '<iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe>';
-        }
-
-        var heroWords = document.querySelectorAll('#hero-txt > div');
-        ['make', 'it', 'yours'].forEach(function (word, index) {
-          if (heroWords[index]) heroWords[index].textContent = word;
-        });
-
-        var heroClosing = document.querySelector('#hero .p p');
-        if (heroClosing) {
-          heroClosing.innerHTML = 'A community-driven Solana wallet that expands through optional Powerups. <span class="salmon-copy-accent">Lightweight by default.</span> <span class="salmon-copy-soft">Modular when useful.</span> <span class="salmon-copy-deep">Open where it matters.</span>';
-        }
-
-        var introItems = document.querySelectorAll('#intro-list > li');
-        ['Stake', 'Swap', 'Pay'].forEach(function (label, index) {
-          if (introItems[index]) introItems[index].textContent = label;
-        });
-
-        var introClosing = document.querySelector('#intro > p');
-        if (introClosing) introClosing.textContent = 'Add more when you need more.';
-
-        var powerupsHeading = document.querySelector('#program > h2');
-        if (powerupsHeading) powerupsHeading.textContent = 'Powerups';
-
         var powerupsIcon = document.querySelector('#program .section-rectangle');
         if (powerupsIcon) {
           powerupsIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 1.8 3.6 13.5h7.1l-1 8.7 10.7-12.5h-7.2l.5-7.9Z"/></svg>';
-        }
-
-        var powerupsIntro = document.querySelector('#program-card-content-intro');
-        if (powerupsIntro) {
-          powerupsIntro.innerHTML = "Wallets became mega-apps, complicated to navigate and understand. <span>Let's fix that.</span>";
         }
 
         var powerupsGridImage = document.querySelector('#program-card-content-grid img');
@@ -1063,31 +1209,9 @@ export async function GET(request: Request) {
           current.replaceWith(img);
         });
 
-        var powerupsSteps = document.querySelectorAll('#program .card-content-list-sticky-copy p');
-        [
-          'Find the Powerup you need. Add only the capabilities that fit your wallet.',
-          'Turn it on when you need it. You decide what becomes part of your experience.',
-          'Keep your wallet lean. The core stays focused; everything else remains optional.'
-        ].forEach(function (copy, index) {
-          if (powerupsSteps[index]) powerupsSteps[index].textContent = copy;
-        });
-
-        // The template measures this block to end the phone animation, so it is
-        // emptied rather than removed.
-        var powerupsClosing = document.querySelector('#program .p');
-        if (powerupsClosing) powerupsClosing.innerHTML = '';
-
-        var salmonClosing = document.querySelector('#salmon > .p');
-        if (salmonClosing) salmonClosing.remove();
-
         var salmonHeading = document.querySelector('#salmon > h2');
-        if (salmonHeading) salmonHeading.textContent = 'Real ownership';
-
         var ownershipIcon = document.querySelector('#salmon .section-rectangle');
         if (ownershipIcon) ownershipIcon.innerHTML = '<img src="/images/logo.svg" alt="Salmon">';
-
-        var ownershipIntro = document.querySelector('#salmon-card-0 > p');
-        if (ownershipIntro) ownershipIntro.innerHTML = 'Own it twice. <span>Own the wallet. Own the experience.</span>';
 
         var ownershipCard = document.querySelector('#salmon-card-0');
         if (ownershipCard && salmonHeading) ownershipCard.prepend(salmonHeading);
@@ -1095,22 +1219,10 @@ export async function GET(request: Request) {
 
         var parallaxCard = document.querySelector('#salmon-card-2');
         if (parallaxCard) parallaxCard.remove();
-
-        var getSalmonCard = document.querySelector('#salmon-card-1');
-        if (getSalmonCard) {
-          getSalmonCard.classList.add('salmon-get-card');
-          getSalmonCard.innerHTML = ${JSON.stringify(getSalmonCardHtml)};
-        }
-
-        applySalmonFooter();
       }
       function initSalmonStandalone() {
         var powerupsPercent = document.querySelector('#program-card-content-percent-w');
         if (powerupsPercent) powerupsPercent.remove();
-      }
-      function applySalmonFooter() {
-        var footer = document.querySelector('footer');
-        if (footer) footer.innerHTML = ${JSON.stringify(footerHtml)};
       }
       applySalmonCopy();
       if (document.readyState !== 'complete') {
