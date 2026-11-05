@@ -396,8 +396,13 @@ export async function GET(request: Request) {
           radial-gradient(at 38% 72%, rgba(255, 92, 69, .42) 0, transparent 30%),
           radial-gradient(at 48% 52%, rgba(161, 42, 42, .35) 0, transparent 52%) !important;
       }
+      /* No cream card or shadow behind Powerups, so the page runs white into
+         Real ownership without a colour cut. */
       #program .card-content {
-        background-color: #fff7f4 !important;
+        background-color: transparent !important;
+      }
+      #program .card-shadow {
+        display: none !important;
       }
       #program .section-rectangle {
         background-color: #fff7f4 !important;
@@ -478,15 +483,19 @@ export async function GET(request: Request) {
       }
       /* The Powerups phone, bezel included, matches a card in the row image
          (540x1150 px, 80 px corners, in a 2880x2408 image), so the screen is
-         shrunk by --bezel, the outer box-shadow width. */
+         shrunk by --bezel, the outer box-shadow width. The hero phone uses the
+         same size for continuity. */
+      #hero .card-content-screen,
       #program .card-content-screen {
         --bezel: 1.02vw;
       }
+      .shim-not-null #hero .card-content-screen,
       .shim-not-null #program .card-content-screen {
         width: calc(18.75vw - 2 * var(--bezel));
         height: calc(39.93vw - 2 * var(--bezel));
         border-radius: calc(2.78vw - var(--bezel));
       }
+      .shim-null #hero .card-content-screen,
       .shim-null #program .card-content-screen {
         width: calc(22.43vh - 2 * var(--bezel));
         height: calc(47.76vh - 2 * var(--bezel));
@@ -568,6 +577,14 @@ export async function GET(request: Request) {
       }
       #salmon-card-0 > p {
         margin-top: 3vw !important;
+      }
+      /* The phone in the hand photo (left.png) has a 608 px wide frame; the
+         Powerups cards are 540 px in images of the same height, so the photo
+         and its screen scale to 540/608. Scaling from the bottom keeps the arm
+         entering from the card's bottom edge. */
+      #salmon-card-0-phone {
+        transform: scale(.888);
+        transform-origin: 50% 100%;
       }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
@@ -963,6 +980,7 @@ export async function GET(request: Request) {
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
+        #hero .card-content-screen,
         #program .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
         #program .card-content-screen::before {
