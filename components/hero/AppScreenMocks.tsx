@@ -5,6 +5,7 @@ import {
   ActionColumn,
   BottomFade,
   COLORS,
+  FleshBackground,
   IconBubble,
   KeyValueRow,
   PrimaryButton,
@@ -16,12 +17,13 @@ import {
   cardStyle,
   tabular,
 } from './mock-kit';
-import { ArrowRightIcon, ArrowUpRightIcon, CaretDownIcon } from './wallet-icons';
+import { ArrowDownLeftIcon, ArrowRightIcon, ArrowUpRightIcon, CaretDownIcon, CopyIcon, WarningIcon } from './wallet-icons';
 
 /**
  * The app screens the landing shows besides Home, rebuilt from
  * salmon-wallet-frontend: core's TransactionConfirmation (swap review),
- * PaymentRequestSheet, send/review.tsx, NftsTab and token/[id].tsx.
+ * PaymentRequestSheet, ReceiveSheet, activity.tsx, send/review.tsx, NftsTab
+ * and token/[id].tsx.
  *
  * The data is invented but consistent with the Home mock's account: 8.2 SOL
  * at $163.50, 350 USDC. The NFTs are generative pieces from made-up
@@ -133,7 +135,8 @@ function DecoyQr() {
 }
 
 /** The Payments Powerup's request sheet, risen over a dimmed Home. */
-export function PaymentRequestMock() {
+/** BottomSheetContainer over the Home: the dimmed screen, the handle and the title. */
+function SheetOverHome({ title, top, children }: { title: string; top: number; children: ReactNode }) {
   return (
     <Screen>
       <div className="relative z-10">
@@ -143,7 +146,7 @@ export function PaymentRequestMock() {
       <div
         className="absolute inset-x-0 bottom-0 z-30 flex flex-col"
         style={{
-          top: u(52),
+          top: u(top),
           borderTopLeftRadius: u(24),
           borderTopRightRadius: u(24),
           border: `0.75px solid ${COLORS.borderDefault}`,
@@ -158,47 +161,206 @@ export function PaymentRequestMock() {
           className="text-center font-semibold"
           style={{ fontSize: u(24), lineHeight: 1.25, letterSpacing: u(-0.12), color: COLORS.textPrimary }}
         >
-          Payment request
+          {title}
         </p>
-        <div className="flex flex-col" style={{ paddingInline: u(12), paddingTop: u(12), gap: u(20) }}>
-          <div
-            className="relative self-center overflow-hidden"
-            style={{ width: u(416), height: u(416), borderRadius: u(16), border: `${u(22)} solid ${COLORS.textPrimary}` }}
+        {children}
+      </div>
+    </Screen>
+  );
+}
+
+/** The app's QRCode with brandKnockout, full width inside the sheet's gutter. */
+function BrandQr() {
+  return (
+    <div
+      className="relative self-center overflow-hidden"
+      style={{ width: u(416), height: u(416), borderRadius: u(16), border: `${u(22)} solid ${COLORS.textPrimary}` }}
+    >
+      <DecoyQr />
+      {/* The brand knockout: 24% of the code, the mark at 66% of that */}
+      <span
+        className="absolute left-1/2 top-1/2 flex items-center justify-center"
+        style={{
+          width: u(89),
+          height: u(89),
+          marginLeft: u(-44.5),
+          marginTop: u(-44.5),
+          borderRadius: u(22),
+          backgroundColor: COLORS.textPrimary,
+        }}
+      >
+        <Image src="/images/logo.svg" alt="" width={118} height={118} style={{ width: u(59), height: u(59), filter: 'brightness(0)' }} />
+      </span>
+    </div>
+  );
+}
+
+export function PaymentRequestMock() {
+  return (
+    <SheetOverHome title="Payment request" top={52}>
+      <div className="flex flex-col" style={{ paddingInline: u(12), paddingTop: u(12), gap: u(20) }}>
+        <BrandQr />
+        <div className="text-center font-bold" style={{ ...cardStyle, ...tabular, fontSize: u(48), color: COLORS.textPrimary }}>
+          25.00 USDC
+        </div>
+        <div className="flex flex-col" style={{ ...cardStyle, gap: u(12) }}>
+          <KeyValueRow label="For" value="Design review, March" />
+          <KeyValueRow label="Expires in" value="23 h 59 min" />
+          <KeyValueRow label="Status" value="Waiting for payment" />
+        </div>
+        <SecondaryButton label="Copy request" />
+        <SecondaryButton label="Remove request" danger />
+      </div>
+    </SheetOverHome>
+  );
+}
+
+/** ReceiveSheet — the chain badge over the QR, the wrong-network warning, Copy address. */
+export function ReceiveMock() {
+  return (
+    <SheetOverHome title="Receive" top={150}>
+      <div className="flex flex-col items-center" style={{ paddingInline: u(12), paddingTop: u(12), gap: u(20) }}>
+        <div className="flex flex-col items-center" style={{ gap: u(12) }}>
+          <span
+            className="font-semibold"
+            style={{
+              paddingBlock: u(4),
+              paddingInline: u(12),
+              borderRadius: u(4),
+              border: `1px solid ${COLORS.borderRaised}`,
+              backgroundColor: COLORS.surfaceCrest,
+              fontSize: u(12),
+              letterSpacing: u(0.3),
+              color: COLORS.textPrimary,
+            }}
           >
-            <DecoyQr />
-            {/* The brand knockout: 24% of the code, the mark at 66% of that */}
-            <span
-              className="absolute left-1/2 top-1/2 flex items-center justify-center"
-              style={{
-                width: u(89),
-                height: u(89),
-                marginLeft: u(-44.5),
-                marginTop: u(-44.5),
-                borderRadius: u(22),
-                backgroundColor: COLORS.textPrimary,
-              }}
-            >
-              <Image
-                src="/images/logo.svg"
-                alt=""
-                width={118}
-                height={118}
-                style={{ width: u(59), height: u(59), filter: 'brightness(0)' }}
-              />
-            </span>
+            Solana Address
+          </span>
+          <BrandQr />
+        </div>
+        <div
+          className="flex w-full items-start"
+          style={{
+            padding: u(12),
+            gap: u(8),
+            borderRadius: u(12),
+            border: `1px solid ${COLORS.warning}`,
+            backgroundColor: 'rgba(255, 171, 0, 0.1)',
+          }}
+        >
+          <WarningIcon size={u(20)} color={COLORS.warning} />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold" style={{ fontSize: u(12), lineHeight: u(20), marginBottom: u(2), color: COLORS.warning }}>
+              Solana network only
+            </p>
+            <p style={{ fontSize: u(12), lineHeight: 1.45, color: COLORS.textPrimary }}>
+              Only send assets on the Solana network to this address. Anything sent on another network is lost and cannot be recovered.
+            </p>
           </div>
-          <div className="text-center font-bold" style={{ ...cardStyle, ...tabular, fontSize: u(48), color: COLORS.textPrimary }}>
-            25.00 USDC
+        </div>
+        <span
+          className="relative flex items-center justify-center overflow-hidden font-bold"
+          style={{
+            minWidth: u(180),
+            minHeight: u(42),
+            paddingBlock: u(4),
+            paddingInline: u(16),
+            gap: u(4),
+            borderRadius: u(12),
+            backgroundColor: COLORS.accentFill,
+            fontSize: u(16),
+            color: COLORS.accentOnFill,
+          }}
+        >
+          <FleshBackground width={180} height={42} scale={1} />
+          <span className="relative flex items-center" style={{ gap: u(4) }}>
+            <CopyIcon size={u(23)} color={COLORS.accentOnFill} bold />
+            Copy address
+          </span>
+        </span>
+      </div>
+    </SheetOverHome>
+  );
+}
+
+/**
+ * Invented history, consistent with the other screens: the 0.5 SOL send to
+ * Lucía and the 25 USDC payment request are today's.
+ */
+const ACTIVITY: { group?: string; type: 'send' | 'receive'; logo: string; who: string; amount: string; when: string }[] = [
+  { group: 'Today', type: 'send', logo: '/images/tokens/sol.png', who: 'Lucía', amount: '- 0.5 SOL', when: '2h ago' },
+  { type: 'receive', logo: '/images/tokens/usdc.png', who: '7Hx2…Qa9P', amount: '+ 25.00 USDC', when: '5h ago' },
+  { group: 'Earlier', type: 'receive', logo: '/images/tokens/jup.png', who: 'Mateo', amount: '+ 120 JUP', when: '2d ago' },
+  { type: 'send', logo: '/images/tokens/sol.png', who: '4kPm…T8vW', amount: '- 1.2 SOL', when: '3d ago' },
+  { type: 'receive', logo: '/images/tokens/bonk.png', who: 'Bc3r…Lm7Y', amount: '+ 1.5M BONK', when: '5d ago' },
+  { type: 'send', logo: '/images/tokens/usdc.png', who: 'Ana', amount: '- 40.00 USDC', when: '6d ago' },
+];
+
+/** app/(app)/activity.tsx — CORE 08: filters, day groups, one row per transaction. */
+export function ActivityMock() {
+  return (
+    <Screen>
+      <div className="relative z-10 flex flex-col">
+        <ScreenHeader title="Activity" subtitle="Tap to view transaction details" />
+        <div className="flex flex-col" style={{ paddingInline: u(12) }}>
+          <div className="flex items-start" style={{ gap: u(20) }}>
+            {['All', 'Sent', 'Received', 'Other'].map((label, index) => (
+              <UnderlineTab key={label} label={label} active={index === 0} size={12} />
+            ))}
           </div>
-          <div className="flex flex-col" style={{ ...cardStyle, gap: u(12) }}>
-            <KeyValueRow label="For" value="Design review, March" />
-            <KeyValueRow label="Expires in" value="23 h 59 min" />
-            <KeyValueRow label="Status" value="Waiting for payment" />
-          </div>
-          <SecondaryButton label="Copy request" />
-          <SecondaryButton label="Remove request" danger />
+          {ACTIVITY.map((row) => {
+            const sent = row.type === 'send';
+            const ink = sent ? COLORS.changeNegative : COLORS.changePositive;
+            const Glyph = sent ? ArrowUpRightIcon : ArrowDownLeftIcon;
+            return (
+              <div key={row.who + row.when} className="flex flex-col">
+                {row.group && (
+                  <p className="font-bold" style={{ marginTop: u(20), fontSize: u(12), lineHeight: 1.4, color: COLORS.textSecondary }}>
+                    {row.group}
+                  </p>
+                )}
+                <div className="flex items-center" style={{ ...cardStyle, padding: u(12), marginTop: u(20), gap: u(12) }}>
+                  {/* TransactionMark: the token, its type riding the corner */}
+                  <span className="relative shrink-0" style={{ width: u(40), height: u(40) }}>
+                    <Image src={row.logo} alt="" width={80} height={80} style={{ width: u(40), height: u(40), borderRadius: '9999px' }} />
+                    <span
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        top: u(-2),
+                        right: u(-2),
+                        width: u(18),
+                        height: u(18),
+                        borderRadius: '9999px',
+                        border: `${u(2)} solid ${COLORS.depthAbyss}`,
+                        backgroundColor: ink,
+                      }}
+                    >
+                      <Glyph size={u(10)} color={COLORS.textPrimary} />
+                    </span>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold" style={{ fontSize: u(16), lineHeight: 1.4, color: COLORS.textPrimary }}>
+                      {sent ? 'Sent' : 'Received'}
+                    </p>
+                    <p className="truncate font-medium" style={{ fontSize: u(14), lineHeight: 1.4, color: COLORS.textSecondary }}>
+                      {row.who}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end" style={{ minWidth: u(104), gap: u(2) }}>
+                    <span className="whitespace-nowrap font-bold" style={{ ...tabular, fontSize: u(12), lineHeight: 1.4, color: ink }}>
+                      {row.amount}
+                    </span>
+                    <span className="font-medium" style={{ ...tabular, fontSize: u(10), lineHeight: 1.4, color: COLORS.textSecondary }}>
+                      {row.when}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
+      <BottomFade />
     </Screen>
   );
 }

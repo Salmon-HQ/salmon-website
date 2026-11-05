@@ -70,10 +70,10 @@ export function EyeIcon({ size, color }: IconProps) {
   );
 }
 
-export function CopyIcon({ size, color }: IconProps) {
+export function CopyIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
   return (
     <svg {...svgProps(size)} viewBox="0 0 256 256">
-      <g {...strokeProps(color)}>
+      <g {...strokeProps(color, bold ? 24 : 16)}>
         <rect x="88" y="88" width="128" height="128" rx="12" />
         <path d="M168,88V48a8,8,0,0,0-8-8H48a8,8,0,0,0-8,8V160a8,8,0,0,0,8,8H88" />
       </g>
@@ -194,6 +194,19 @@ export function ArrowRightIcon({ size, color }: IconProps) {
         <line x1="40" y1="128" x2="216" y2="128" />
         <polyline points="144 56 216 128 144 200" />
       </g>
+    </svg>
+  );
+}
+
+/** Phosphor Warning — WarningNotice's mark. */
+export function WarningIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" />
+        <line x1="128" y1="104" x2="128" y2="144" />
+      </g>
+      <circle cx="128" cy="180" r="12" fill={color} />
     </svg>
   );
 }

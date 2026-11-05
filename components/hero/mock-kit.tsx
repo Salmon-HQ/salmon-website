@@ -31,6 +31,8 @@ export const COLORS = {
   accentOnFill: '#070911',
   changePositive: '#33D6A6',
   changeNegative: '#FF6B85',
+  /** status.warning — warning-500. */
+  warning: '#FFB020',
   surfaceCrest: '#1B2233',
   /** overlay.backdrop */
   backdrop: 'rgba(7, 9, 17, 0.84)',

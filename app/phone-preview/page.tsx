@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PaymentRequestMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
+import { ActivityMock, PaymentRequestMock, ReceiveMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
 import HomeScreenMock, { STEP_PROGRESS, flowState, type MockStep } from '@/components/hero/HomeScreenMock';
 import PowerupsFlowMock from '@/components/hero/PowerupsFlowMock';
 
@@ -7,6 +7,8 @@ const SCREENS: Record<string, ReactNode> = {
   nfts: <HomeScreenMock tab="nfts" />,
   'swap-review': <SwapReviewMock />,
   payments: <PaymentRequestMock />,
+  receive: <ReceiveMock />,
+  activity: <ActivityMock />,
   send: <SendReviewMock />,
   token: <TokenDetailMock />,
 };
