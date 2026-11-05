@@ -410,6 +410,14 @@ export async function GET(request: Request) {
       #program-card-content-intro {
         color: #10131c !important;
       }
+      /* The grid is a single row, half the template's three-row height, so the
+         phone lands in its empty centre slot. Margins stay as in the template. */
+      .shim-not-null #program-card-content-grid {
+        height: 83.61111vw !important;
+      }
+      .shim-null #program-card-content-grid {
+        height: 100vh !important;
+      }
       #program-card-content-intro span {
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%) !important;
         background-clip: text !important;
@@ -955,7 +963,7 @@ export async function GET(request: Request) {
 
         var powerupsGridImage = document.querySelector('#program-card-content-grid img');
         if (powerupsGridImage) {
-          powerupsGridImage.src = '/images/reference/powerups-01.png';
+          powerupsGridImage.src = '/powerups/row.png';
           powerupsGridImage.alt = 'Salmon Powerups';
         }
 
