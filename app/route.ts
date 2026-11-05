@@ -234,9 +234,8 @@ const footerHtml = `
 // Stake, Swap and Pay: each word and its tile are one list item, so the word
 // is centred on its tile by layout. The tile is the site's section icon tile
 // (.section-rectangle) laid in perspective. The glyphs are the app's Phosphor
-// marks, the same geometry as StackIcon, ArrowsLeftRightIcon and QrCodeIcon
-// in components/hero/wallet-icons (a route handler cannot render React to
-// markup). Pay is the Payments QR.
+// marks, the same geometry as components/hero/wallet-icons (a route handler
+// cannot render React to markup). Pay is the Payments QR, NFTs the app's Image.
 const INTRO_ITEMS = [
   {
     word: 'Stake',
@@ -253,12 +252,29 @@ const INTRO_ITEMS = [
     glyph:
       '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
   },
+  {
+    word: 'Send',
+    glyph: '<line x1="64" y1="192" x2="192" y2="64"/><polyline points="94 64 192 64 192 162"/>',
+  },
+  {
+    word: 'Receive',
+    glyph: '<line x1="192" y1="64" x2="64" y2="192"/><polyline points="162 192 64 192 64 94"/>',
+  },
+  {
+    word: 'NFTs',
+    glyph:
+      '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
+  },
 ];
 
-const introRowHtml = `<ul class=salmon-intro-row>${INTRO_ITEMS.map(
-  ({ word, glyph }) =>
-    `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
-).join('')}</ul>`;
+const introListHtml = (hidden: boolean) =>
+  `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${INTRO_ITEMS.map(
+    ({ word, glyph }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
+  ).join('')}</ul>`;
+
+// The list twice in a row: the track slides one list's width and starts over.
+const introRowHtml = `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(false)}${introListHtml(true)}</div></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -972,18 +988,34 @@ export async function GET(request: Request) {
         white-space: nowrap;
         user-select: none;
       }
-      /* Stake, Swap, Pay: three columns of the same width and gap, each a word
-         over its tile. Every tile carries its own perspective (the transform's
-         perspective(), not a shared one on the row), so its vanishing point is
-         its own centre: the three read as the same slab, symmetric under their
-         words. Each tile floats on its own beat, lifts on hover and dips when
-         pressed. */
+      /* The features as an endless strip of columns of the same width and gap,
+         each a word over its tile. Every tile carries its own perspective (the
+         transform's perspective(), not a shared one on the row), so its
+         vanishing point is its own centre and it reads the same wherever the
+         strip has carried it. The strip stops under the pointer; each tile
+         floats on its own beat, lifts on hover and dips when pressed. */
+      .salmon-intro-marquee {
+        overflow: hidden;
+        padding: 0 0 6vw;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      }
+      .salmon-intro-track {
+        display: flex;
+        width: max-content;
+        animation: salmon-intro-slide 48s linear infinite;
+      }
+      .salmon-intro-marquee:hover .salmon-intro-track { animation-play-state: paused; }
+      @keyframes salmon-intro-slide {
+        to { transform: translateX(-50%); }
+      }
       .salmon-intro-row {
         display: grid;
-        grid-template-columns: repeat(3, 30vw);
+        grid-auto-flow: column;
+        grid-auto-columns: 30vw;
         column-gap: 12vw;
-        justify-content: center;
-        padding: 0 0 6vw;
+        /* The gap after the last item, so the seam between copies matches. */
+        padding-right: 12vw;
       }
       .salmon-intro-item {
         display: flex;
@@ -1003,8 +1035,8 @@ export async function GET(request: Request) {
         margin-block: -6vw -4vw;
         animation: salmon-tile-float 6s ease-in-out infinite;
       }
-      .salmon-intro-item:nth-child(2) .salmon-intro-tile { animation-delay: -2s; }
-      .salmon-intro-item:nth-child(3) .salmon-intro-tile { animation-delay: -4s; }
+      .salmon-intro-item:nth-child(3n+2) .salmon-intro-tile { animation-delay: -2s; }
+      .salmon-intro-item:nth-child(3n) .salmon-intro-tile { animation-delay: -4s; }
       @keyframes salmon-tile-float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-0.8vw); }
@@ -1051,7 +1083,10 @@ export async function GET(request: Request) {
           0 3vw 3vw rgba(16,19,28,.16) !important;
       }
       @media (prefers-reduced-motion: reduce) {
-        .salmon-intro-tile { animation: none; }
+        .salmon-intro-tile,
+        .salmon-intro-track { animation: none; }
+        .salmon-intro-marquee { overflow-x: auto; }
+        .salmon-intro-row[aria-hidden] { display: none; }
         .salmon-intro-face,
         .salmon-intro-face svg { transition: none; }
       }
