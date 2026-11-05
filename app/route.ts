@@ -644,7 +644,15 @@ export async function GET(request: Request) {
         transform: none;
         pointer-events: none;
       }
-      #salmon-card-0-phone img.salmon-fin-back { z-index: 1; }
+      /* The fin runs on past the render's left and bottom edges; fading there
+         hides the straight cut. */
+      #salmon-card-0-phone img.salmon-fin-back {
+        z-index: 1;
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        mask-composite: intersect;
+      }
       #salmon-card-0-phone img.salmon-fin-front { z-index: 3; }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
