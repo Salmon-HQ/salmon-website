@@ -70,10 +70,10 @@ export function EyeIcon({ size, color }: IconProps) {
   );
 }
 
-export function CopyIcon({ size, color }: IconProps) {
+export function CopyIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
   return (
     <svg {...svgProps(size)} viewBox="0 0 256 256">
-      <g {...strokeProps(color)}>
+      <g {...strokeProps(color, bold ? 24 : 16)}>
         <rect x="88" y="88" width="128" height="128" rx="12" />
         <path d="M168,88V48a8,8,0,0,0-8-8H48a8,8,0,0,0-8,8V160a8,8,0,0,0,8,8H88" />
       </g>
@@ -109,6 +109,104 @@ export function FadersIcon({ size, color }: IconProps) {
         <circle cx="128" cy="92" r="20" fill={color} />
         <circle cx="192" cy="140" r="20" fill={color} />
       </g>
+    </svg>
+  );
+}
+
+/** Phosphor ArrowsLeftRight — the Swap Powerup's mark (swap/manifest.ts). */
+export function ArrowsLeftRightIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, bold ? 24 : 16)}>
+        <polyline points="176 144 208 176 176 208" />
+        <line x1="48" y1="176" x2="208" y2="176" />
+        <polyline points="80 112 48 80 80 48" />
+        <line x1="208" y1="80" x2="48" y2="80" />
+      </g>
+    </svg>
+  );
+}
+
+/** Phosphor QrCode — the Payments Powerup's mark (payments/manifest.ts). */
+export function QrCodeIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, bold ? 24 : 16)}>
+        <rect x="48" y="48" width="64" height="64" rx="8" />
+        <rect x="48" y="144" width="64" height="64" rx="8" />
+        <rect x="144" y="48" width="64" height="64" rx="8" />
+        <line x1="144" y1="144" x2="144" y2="176" />
+        <polyline points="144 208 176 208 176 144" />
+        <line x1="176" y1="160" x2="208" y2="160" />
+        <line x1="208" y1="192" x2="208" y2="208" />
+      </g>
+    </svg>
+  );
+}
+
+export function CaretRightIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="96 48 176 128 96 208" />
+      </g>
+    </svg>
+  );
+}
+
+/** The Powerups FAB glyph, bold like every accent-filled control. */
+export function PlusIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, 24)}>
+        <line x1="40" y1="128" x2="216" y2="128" />
+        <line x1="128" y1="40" x2="128" y2="216" />
+      </g>
+    </svg>
+  );
+}
+
+export function CaretLeftIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="160 208 80 128 160 48" />
+      </g>
+    </svg>
+  );
+}
+
+export function CaretDownIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="208 96 128 176 48 96" />
+      </g>
+    </svg>
+  );
+}
+
+/** Bold, like the arrow between the two sides of a swap review. */
+export function ArrowRightIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, 24)}>
+        <line x1="40" y1="128" x2="216" y2="128" />
+        <polyline points="144 56 216 128 144 200" />
+      </g>
+    </svg>
+  );
+}
+
+/** Phosphor Warning — WarningNotice's mark. */
+export function WarningIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <path d="M142.41,40.22l87.46,151.87C236,202.79,228.08,216,215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22C119.89,29.26,136.11,29.26,142.41,40.22Z" />
+        <line x1="128" y1="104" x2="128" y2="144" />
+      </g>
+      <circle cx="128" cy="180" r="12" fill={color} />
     </svg>
   );
 }

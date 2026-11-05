@@ -190,7 +190,7 @@ const footerHtml = `
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
       <p class="salmon-footer-app-title">One wallet.<br>Available today.</p>
       ${downloadsHtml}
-      <div class="salmon-footer-phone"><img src="/images/reference/salmon-card-2.png" alt="Salmon wallet portfolio"></div>
+      <div class="salmon-footer-phone"><iframe src="/phone-preview" title="Salmon wallet home: balance and token list" loading="lazy" tabindex="-1"></iframe></div>
     </aside>
     <div class="salmon-footer-main">
       <div class="salmon-footer-columns">${FOOTER_COLUMNS.map(
@@ -231,6 +231,69 @@ const footerHtml = `
   </div>
   <div class="salmon-footer-wordmark" aria-hidden="true">Salmon</div>`;
 
+// Stake, Swap and Pay: each word and its tile are one list item, so the word
+// is centred on its tile by layout. The tile is the site's section icon tile
+// (.section-rectangle) laid in perspective. The glyphs are the app's Phosphor
+// marks, the same geometry as components/hero/wallet-icons (a route handler
+// cannot render React to markup). Pay is the Payments QR, NFTs the app's Image.
+const INTRO_ITEMS = [
+  {
+    word: 'Stake',
+    glyph:
+      '<polyline points="32 176 128 232 224 176"/><polyline points="32 128 128 184 224 128"/><polygon points="32 80 128 136 224 80 128 24 32 80"/>',
+  },
+  {
+    word: 'Swap',
+    glyph:
+      '<polyline points="176 144 208 176 176 208"/><line x1="48" y1="176" x2="208" y2="176"/><polyline points="80 112 48 80 80 48"/><line x1="208" y1="80" x2="48" y2="80"/>',
+  },
+  {
+    word: 'Pay',
+    glyph:
+      '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
+  },
+  {
+    word: 'Send',
+    glyph: '<line x1="64" y1="192" x2="192" y2="64"/><polyline points="94 64 192 64 192 162"/>',
+  },
+  {
+    word: 'Receive',
+    glyph: '<line x1="192" y1="64" x2="64" y2="192"/><polyline points="162 192 64 192 64 94"/>',
+  },
+  {
+    word: 'NFTs',
+    glyph:
+      '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
+  },
+];
+
+const introListHtml = (hidden: boolean) =>
+  `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${INTRO_ITEMS.map(
+    ({ word, glyph }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
+  ).join('')}</ul>`;
+
+// The list twice in a row: the track slides one list's width and starts over.
+const introRowHtml = `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(false)}${introListHtml(true)}</div></div>`;
+
+const SCREENS = [
+  { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
+  { screen: 'payments', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
+  { screen: 'receive', title: 'Receive', powerup: false, alt: 'Receive screen in Salmon: Solana address QR code with a network warning', copy: 'Share your address as a QR code. The network is named, so funds arrive on the right chain.' },
+  { screen: 'activity', title: 'Activity', powerup: false, alt: 'Activity in Salmon: sent and received transactions grouped by day', copy: 'Every transaction, grouped by day and filtered by type.' },
+  { screen: 'nfts', title: 'NFTs', powerup: false, alt: 'NFT grid in Salmon showing generative art collectibles', copy: 'Your collectibles in one grid, right next to your tokens.' },
+  { screen: 'token', title: 'Token details', powerup: false, alt: 'Solana token detail in Salmon: price chart and market data', copy: 'Price chart, market data and an overview for every token you hold.' },
+];
+
+const screensSectionHtml = `<section id=screens class=section aria-labelledby=screens-title>
+  <div class=section-rectangle><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 1.5h10A2.5 2.5 0 0 1 19.5 4v16a2.5 2.5 0 0 1-2.5 2.5H7A2.5 2.5 0 0 1 4.5 20V4A2.5 2.5 0 0 1 7 1.5Zm3 2a.75.75 0 0 0 0 1.5h4a.75.75 0 0 0 0-1.5h-4Z"/></svg></div>
+  <h2 id=screens-title>Inside the app</h2>
+  <p class=salmon-screens-intro>A look inside Salmon. <span>The screens you’ll actually use.</span></p>
+  <ul class=salmon-screens-list>${SCREENS.map(
+    (screen) => `<li><figure><div class=salmon-screens-phone><iframe src="/phone-preview?screen=${screen.screen}" title="${screen.alt}" loading="lazy" tabindex="-1"></iframe></div><figcaption>${screen.powerup ? '<span class=salmon-screens-tag>Powerup</span>' : ''}<strong>${screen.title}</strong><span>${screen.copy}</span></figcaption></figure></li>`,
+  ).join('')}</ul>
+</section>`;
+
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   let html: string;
@@ -249,7 +312,7 @@ export async function GET(request: Request) {
     '<h1> <span class="salmon-h1-strong">One wallet.</span><br> Only what you need. </h1>',
   );
   const withSalmonPhone = withHeadline.replace(
-    /<div class="card-content-screen"><video[\s\S]*?<\/video><\/div>/,
+    /<div class=card-content-screen><video[^>]*hero\/00\.mp4[\s\S]*?<\/video><\/div>/,
     '<div class="card-content-screen salmon-phone-screen"><iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe></div>',
   );
   const withSalmonLogo = withSalmonPhone.replace(
@@ -271,8 +334,16 @@ export async function GET(request: Request) {
     /<section id=shop[\s\S]*?<\/section>\s*<div class=separator><\/div>/,
     '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
   );
+  const withScreens = withoutShop
+    .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
+    .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
+    .replace(
+      /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
+      () => `<div id=salmon-card-1 class=salmon-get-card>${getSalmonCardHtml}</div> `,
+    )
+    .replace(/<footer>[\s\S]*?<\/footer>/, () => `<footer>${footerHtml}</footer>`);
   const validatorSection = renderValidatorSection(await getValidatorStats());
-  const withValidator = withoutShop.replace(
+  const withValidator = withScreens.replace(
     /<section id=faq>[\s\S]*?<\/section>/,
     () => validatorSection,
   );
@@ -476,7 +547,8 @@ export async function GET(request: Request) {
         display: none !important;
       }
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         background: #161c2d;
         box-shadow:
           0 0 0 .9vw #080a0f,
@@ -488,23 +560,27 @@ export async function GET(request: Request) {
          shrunk by --bezel, the outer box-shadow width. The hero phone uses the
          same size for continuity. */
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         --bezel: 1.02vw;
       }
       .shim-not-null #hero .card-content-screen,
-      .shim-not-null #program .card-content-screen {
+      .shim-not-null #program .card-content-screen,
+      .shim-not-null #salmon-card-0 .card-content-screen {
         width: calc(18.75vw - 2 * var(--bezel));
         height: calc(39.93vw - 2 * var(--bezel));
         border-radius: calc(2.78vw - var(--bezel));
       }
       .shim-null #hero .card-content-screen,
-      .shim-null #program .card-content-screen {
+      .shim-null #program .card-content-screen,
+      .shim-null #salmon-card-0 .card-content-screen {
         width: calc(22.43vh - 2 * var(--bezel));
         height: calc(47.76vh - 2 * var(--bezel));
         border-radius: calc(3.32vh - var(--bezel));
       }
       #hero .card-content-screen::before,
-      #program .card-content-screen::before {
+      #program .card-content-screen::before,
+      #salmon-card-0 .card-content-screen::before {
         content: "";
         position: absolute;
         z-index: 7;
@@ -516,43 +592,15 @@ export async function GET(request: Request) {
         background: #080a0f;
         transform: translateX(-50%);
       }
+      #salmon-card-0 .card-content-screen iframe,
       .salmon-phone-screen iframe {
         width: 100%;
         height: 100%;
         border: 0;
         pointer-events: none;
       }
-      #salmon-card-0 .card-content-screen > * {
-        visibility: hidden !important;
-      }
-      /* Powerup screens sit above the placeholder, which shows only while an image is missing. */
-      #program .card-content-screen::after {
-        z-index: 0 !important;
-      }
-      #program .card-content-screen > img {
-        z-index: 1;
-        height: 100%;
-        object-fit: cover;
-      }
-      #program .card-content-screen::after,
-      #salmon-card-0 .card-content-screen::after {
-        content: "Mobile placeholder";
-        position: absolute;
-        inset: 0;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        border: 1px solid rgba(255,255,255,.1);
-        background: #161c2d;
-        color: #8a8d98;
-        font-family: "DM Sans", system-ui, sans-serif;
-        font-size: clamp(8px, .82vw, 12px);
-        font-weight: 500;
-        letter-spacing: .16em;
-        text-transform: uppercase;
-      }
+      /* Empty markers the template fades per step; the phone mock reads them. */
+      .salmon-step-marker { display: none; }
       #shop, #shop * {
         position: static !important;
         height: 0 !important;
@@ -580,14 +628,44 @@ export async function GET(request: Request) {
       #salmon-card-0 > p {
         margin-top: 3vw !important;
       }
-      /* The phone in the hand photo (left.png) has a 608 px wide frame; the
-         Powerups cards are 540 px in images of the same height, so the photo
-         and its screen scale to 540/608. Scaling from the bottom keeps the arm
-         entering from the card's bottom edge. */
+      /* The salmon fin holding the phone: two renders from blender/fin.py
+         (docs/fin-preproduction.md), the back one under the CSS phone and the
+         front one over its live screen. The numbers are the script's "FIN CSS"
+         output divided by the phone's 18.75vw width, so the fin follows the
+         phone in both template sizings. */
       #salmon-card-0-phone {
-        transform: scale(.888);
-        transform-origin: 50% 100%;
+        --phone-w: 18.75vw;
+        /* Phone and fin float as one piece: a slow rise and a slight sway
+           around the phone's centre. */
+        animation: salmon-fin-float 7s ease-in-out infinite;
       }
+      @keyframes salmon-fin-float {
+        0%, 100% { translate: 0 0; rotate: 0deg; }
+        50% { translate: 0 calc(-.06 * var(--phone-w)); rotate: -.8deg; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #salmon-card-0-phone { animation: none; }
+      }
+      .shim-null #salmon-card-0-phone { --phone-w: 22.43vh; }
+      #salmon-card-0-phone img.salmon-fin-back,
+      #salmon-card-0-phone img.salmon-fin-front {
+        top: calc(50% - 1.79429 * var(--phone-w));
+        left: calc(50% - 2.34357 * var(--phone-w));
+        width: calc(4.68720 * var(--phone-w));
+        height: calc(3.90352 * var(--phone-w));
+        transform: none;
+        pointer-events: none;
+      }
+      /* The fin runs on past the render's left and bottom edges; fading there
+         hides the straight cut. */
+      #salmon-card-0-phone img.salmon-fin-back {
+        z-index: 1;
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        mask-composite: intersect;
+      }
+      #salmon-card-0-phone img.salmon-fin-front { z-index: 3; }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
         min-height: 38vw;
@@ -854,7 +932,7 @@ export async function GET(request: Request) {
         transform: translateX(-50%);
         overflow: hidden;
       }
-      .salmon-footer-phone img { width: 100%; height: 100%; object-fit: cover; }
+      .salmon-footer-phone iframe { position: absolute; inset: 0; border: 0; pointer-events: none; }
       .salmon-footer-main {
         display: flex;
         flex-direction: column;
@@ -947,6 +1025,192 @@ export async function GET(request: Request) {
         white-space: nowrap;
         user-select: none;
       }
+      /* The features as an endless strip of columns of the same width and gap,
+         each a word over its tile. Every tile carries its own perspective (the
+         transform's perspective(), not a shared one on the row), so its
+         vanishing point is its own centre and it reads the same wherever the
+         strip has carried it. The strip stops while the pointer is on a tile; each tile
+         floats on its own beat, lifts on hover and dips when pressed. */
+      .salmon-intro-marquee {
+        overflow: hidden;
+        padding: 0 0 6vw;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      }
+      .salmon-intro-track {
+        display: flex;
+        width: max-content;
+        animation: salmon-intro-slide 48s linear infinite;
+      }
+      /* Only a tile stops the strip, not the gaps around it. */
+      .salmon-intro-track:has(.salmon-intro-face:hover) { animation-play-state: paused; }
+      @keyframes salmon-intro-slide {
+        to { transform: translateX(-50%); }
+      }
+      .salmon-intro-row {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 30vw;
+        column-gap: 12vw;
+        /* The gap after the last item, so the seam between copies matches. */
+        padding-right: 12vw;
+      }
+      .salmon-intro-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .salmon-intro-word {
+        font-size: 9.79167vw;
+        line-height: 110%;
+        letter-spacing: -.0575em;
+        color: #f0f0f0;
+        white-space: nowrap;
+      }
+      .salmon-intro-tile {
+        display: block;
+        /* The slab is laid out 30vw tall but lies flat, so it claims less room. */
+        margin-block: -6vw -4vw;
+        animation: salmon-tile-float 6s ease-in-out infinite;
+      }
+      .salmon-intro-item:nth-child(3n+2) .salmon-intro-tile { animation-delay: -2s; }
+      .salmon-intro-item:nth-child(3n) .salmon-intro-tile { animation-delay: -4s; }
+      @keyframes salmon-tile-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-0.8vw); }
+      }
+      .salmon-intro-face {
+        width: 30vw !important;
+        height: 30vw !important;
+        border-radius: 22%;
+        background: linear-gradient(160deg, #fff7f4 0%, #fbeeee 100%) !important;
+        box-shadow:
+          0 1.1vw 0 #ffffff,
+          0 1.3vw 0 rgba(16,19,28,.05),
+          0 7vw 6vw rgba(16,19,28,.16) !important;
+        transform: perspective(50vw) rotateX(64deg);
+        transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1), background .5s;
+        cursor: pointer;
+      }
+      .salmon-intro-face svg {
+        width: 34% !important;
+        height: 34% !important;
+        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
+      }
+      @media (hover: hover) {
+        .salmon-intro-face:hover {
+          transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
+          background: linear-gradient(160deg, #ffffff 0%, #ffe9e4 100%) !important;
+          box-shadow:
+            0 1.1vw 0 #ffffff,
+            0 0 0 .15vw rgba(255,92,69,.35),
+            0 1.3vw 0 rgba(16,19,28,.05),
+            0 11vw 9vw rgba(16,19,28,.12),
+            0 0 6vw rgba(255,92,69,.22) !important;
+        }
+        .salmon-intro-face:hover svg {
+          transform: scale(1.08);
+          filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
+        }
+      }
+      .salmon-intro-face:active {
+        transform: perspective(50vw) rotateX(64deg) translateZ(-1vw);
+        transition-duration: .12s;
+        box-shadow:
+          0 .4vw 0 #ffffff,
+          0 3vw 3vw rgba(16,19,28,.16) !important;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .salmon-intro-tile,
+        .salmon-intro-track { animation: none; }
+        .salmon-intro-marquee { overflow-x: auto; }
+        .salmon-intro-row[aria-hidden] { display: none; }
+        .salmon-intro-face,
+        .salmon-intro-face svg { transition: none; }
+      }
+      #screens.section { padding-top: 6vw !important; }
+      #screens .section-rectangle {
+        width: 9vw !important;
+        height: 9vw !important;
+        box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
+        background-color: #fff7f4 !important;
+      }
+      #screens .section-rectangle svg { width: 3.6vw; height: 3.6vw; fill: #ff5c45; }
+      #screens > h2 {
+        padding-top: 1.8vw !important;
+        font-size: 7vw !important;
+        line-height: 1 !important;
+        color: #10131c;
+      }
+      .salmon-screens-intro {
+        margin: 3vw auto 0;
+        color: #10131c;
+        font-size: 3.2vw;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: -.04em;
+        text-align: center;
+      }
+      .salmon-screens-intro span {
+        display: block;
+        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+      /* Same bezel as the hero and Powerups phones, a size smaller. */
+      .salmon-screens-list {
+        --bezel: .82vw;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4vw 3vw;
+        max-width: 72vw;
+        margin: 6vw auto 0;
+        padding: 0;
+        list-style: none;
+      }
+      .salmon-screens-list figure { margin: 0; }
+      .salmon-screens-phone {
+        overflow: hidden;
+        width: calc(100% - 2 * var(--bezel));
+        margin: var(--bezel) auto 0;
+        aspect-ratio: 720 / 1564;
+        border-radius: calc(2.2vw - var(--bezel));
+        background: #161c2d;
+        box-shadow:
+          0 0 0 calc(var(--bezel) * .88) #080a0f,
+          0 0 0 var(--bezel) #ff7e6d,
+          0 1.8vw 4vw rgba(16,19,28,.22);
+      }
+      .salmon-screens-phone { position: relative; }
+      .salmon-screens-phone iframe { position: absolute; inset: 0; border: 0; pointer-events: none; }
+      .salmon-screens-list figcaption {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: calc(1.6vw + var(--bezel));
+        color: #5d6170;
+        font-size: clamp(14px, 1.1vw, 17px);
+        line-height: 1.4;
+        letter-spacing: -.01em;
+      }
+      .salmon-screens-list figcaption strong {
+        color: #10131c;
+        font-size: clamp(18px, 1.5vw, 24px);
+        font-weight: 600;
+        letter-spacing: -.03em;
+      }
+      .salmon-screens-tag {
+        align-self: flex-start;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #fff7f4;
+        color: #ff5c45;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .02em;
+      }
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #footer-top.salmon-footer { grid-template-columns: 1fr; gap: 64px; padding: 48px 6.15vw 0 !important; }
@@ -961,6 +1225,29 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
+        #screens.section { padding-top: 14vw !important; }
+        #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
+        #screens .section-rectangle svg { width: 8vw; height: 8vw; }
+        #screens > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        .salmon-screens-intro { margin-top: 8vw; font-size: 8.5vw; }
+        /* One phone per swipe, with the next one peeking in. */
+        .salmon-screens-list {
+          --bezel: 2.2vw;
+          grid-template-columns: none;
+          grid-auto-flow: column;
+          grid-auto-columns: 62vw;
+          gap: 7vw;
+          max-width: none;
+          margin-top: 10vw;
+          padding: 0 6.15vw 4vw;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scroll-padding: 0 6.15vw;
+          scrollbar-width: none;
+        }
+        .salmon-screens-list::-webkit-scrollbar { display: none; }
+        .salmon-screens-list li { scroll-snap-align: start; }
+        .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
         #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
@@ -976,16 +1263,19 @@ export async function GET(request: Request) {
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
         #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
-        #program .card-content-screen {
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen {
           box-shadow:
             0 0 0 2.2vw #080a0f,
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
         #hero .card-content-screen,
-        #program .card-content-screen { --bezel: 2.55vw; }
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
-        #program .card-content-screen::before {
+        #program .card-content-screen::before,
+        #salmon-card-0 .card-content-screen::before {
           top: 1.6vw;
           width: 13vw;
           height: 3vw;
@@ -1002,41 +1292,9 @@ export async function GET(request: Request) {
       // so copy is swapped as soon as the DOM is parsed and only the nodes the
       // template caches (percent counter) wait for load.
       function applySalmonCopy() {
-        var heroScreen = document.querySelector('#hero .card-content-screen');
-        if (heroScreen) {
-          heroScreen.classList.add('salmon-phone-screen');
-          heroScreen.innerHTML = '<iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe>';
-        }
-
-        var heroWords = document.querySelectorAll('#hero-txt > div');
-        ['make', 'it', 'yours'].forEach(function (word, index) {
-          if (heroWords[index]) heroWords[index].textContent = word;
-        });
-
-        var heroClosing = document.querySelector('#hero .p p');
-        if (heroClosing) {
-          heroClosing.innerHTML = 'A community-driven Solana wallet that expands through optional Powerups. <span class="salmon-copy-accent">Lightweight by default.</span> <span class="salmon-copy-soft">Modular when useful.</span> <span class="salmon-copy-deep">Open where it matters.</span>';
-        }
-
-        var introItems = document.querySelectorAll('#intro-list > li');
-        ['Stake', 'Swap', 'Pay'].forEach(function (label, index) {
-          if (introItems[index]) introItems[index].textContent = label;
-        });
-
-        var introClosing = document.querySelector('#intro > p');
-        if (introClosing) introClosing.textContent = 'Add more when you need more.';
-
-        var powerupsHeading = document.querySelector('#program > h2');
-        if (powerupsHeading) powerupsHeading.textContent = 'Powerups';
-
         var powerupsIcon = document.querySelector('#program .section-rectangle');
         if (powerupsIcon) {
           powerupsIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 1.8 3.6 13.5h7.1l-1 8.7 10.7-12.5h-7.2l.5-7.9Z"/></svg>';
-        }
-
-        var powerupsIntro = document.querySelector('#program-card-content-intro');
-        if (powerupsIntro) {
-          powerupsIntro.innerHTML = "Wallets became mega-apps, complicated to navigate and understand. <span>Let's fix that.</span>";
         }
 
         var powerupsGridImage = document.querySelector('#program-card-content-grid img');
@@ -1045,49 +1303,64 @@ export async function GET(request: Request) {
           powerupsGridImage.alt = 'Salmon Powerups';
         }
 
-        // One image per scroll step. The template calls play()/pause() on the
-        // first two screens, so the images get no-op versions of both.
-        var powerupsScreens = document.querySelectorAll('#program .card-content-screen > *');
-        [
-          { src: '/powerups/step1.png', alt: 'Powerups list in Salmon' },
-          { src: '/powerups/step2.png', alt: 'Swap Powerup turned on' },
-          { src: '/powerups/step3.png', alt: 'Swap tab added to the wallet' }
-        ].forEach(function (screen, index) {
-          var current = powerupsScreens[index];
-          if (!current) return;
-          var img = document.createElement('img');
-          img.src = screen.src;
-          img.alt = screen.alt;
-          img.onerror = function () { img.style.display = 'none'; };
-          img.play = img.pause = function () {};
-          current.replaceWith(img);
-        });
+        // The template fades one child of the screen per scroll step and calls
+        // play()/pause() on the first two; they become empty markers with no-op
+        // media methods. The phone is a mock that draws the Powerups flow at the
+        // section's scroll progress, sent from here on every frame it changes.
+        var powerupsScreen = document.querySelector('#program .card-content-screen');
+        var powerupsList = document.querySelector('#program .card-content-list');
+        if (powerupsScreen && powerupsList) {
+          Array.prototype.slice.call(powerupsScreen.children, 0, 3).forEach(function (current) {
+            var marker = document.createElement('div');
+            marker.className = 'salmon-step-marker';
+            marker.play = marker.pause = function () {};
+            current.replaceWith(marker);
+          });
+          powerupsScreen.classList.add('salmon-phone-screen');
+          var flowFrame = document.createElement('iframe');
+          flowFrame.src = '/phone-preview?flow=powerups';
+          flowFrame.title = 'Turning on the Swap Powerup in Salmon';
+          flowFrame.tabIndex = -1;
+          powerupsScreen.appendChild(flowFrame);
 
-        var powerupsSteps = document.querySelectorAll('#program .card-content-list-sticky-copy p');
-        [
-          'Find the Powerup you need. Add only the capabilities that fit your wallet.',
-          'Turn it on when you need it. You decide what becomes part of your experience.',
-          'Keep your wallet lean. The core stays focused; everything else remains optional.'
-        ].forEach(function (copy, index) {
-          if (powerupsSteps[index]) powerupsSteps[index].textContent = copy;
-        });
-
-        // The template measures this block to end the phone animation, so it is
-        // emptied rather than removed.
-        var powerupsClosing = document.querySelector('#program .p');
-        if (powerupsClosing) powerupsClosing.innerHTML = '';
-
-        var salmonClosing = document.querySelector('#salmon > .p');
-        if (salmonClosing) salmonClosing.remove();
+          // p is 0 when the copy list's top crosses the middle of the viewport
+          // and 1 when its bottom does. A mouse wheel jumps, so the drawn
+          // progress eases toward it; touch scrolling is already smooth and maps
+          // directly. Reduced motion shows one still screen per copy step.
+          var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var directScroll = reduceMotion || window.matchMedia('(pointer: coarse)').matches;
+          var target = -1, drawn = -1, sent = null, frame = 0;
+          var measure = function () {
+            var rect = powerupsList.getBoundingClientRect();
+            var p = (window.innerHeight / 2 - rect.top) / rect.height;
+            if (reduceMotion) p = p < 0 ? -1 : p < 0.35 ? 0.27 : p < 0.6 ? 0.57 : 1;
+            target = Math.max(-1, Math.min(1.05, p));
+          };
+          var post = function () {
+            var p = Math.round(drawn * 2000) / 2000;
+            if (p === sent || !flowFrame.contentWindow) return;
+            sent = p;
+            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-progress', progress: p }, window.location.origin);
+          };
+          var tick = function () {
+            frame = 0;
+            drawn = directScroll ? target : drawn + (target - drawn) * 0.12;
+            if (Math.abs(target - drawn) < 0.0005) drawn = target;
+            post();
+            if (drawn !== target) frame = requestAnimationFrame(tick);
+          };
+          var onScroll = function () {
+            measure();
+            if (!frame) frame = requestAnimationFrame(tick);
+          };
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onScroll);
+          flowFrame.addEventListener('load', function () { measure(); drawn = target; sent = null; post(); });
+        }
 
         var salmonHeading = document.querySelector('#salmon > h2');
-        if (salmonHeading) salmonHeading.textContent = 'Real ownership';
-
         var ownershipIcon = document.querySelector('#salmon .section-rectangle');
         if (ownershipIcon) ownershipIcon.innerHTML = '<img src="/images/logo.svg" alt="Salmon">';
-
-        var ownershipIntro = document.querySelector('#salmon-card-0 > p');
-        if (ownershipIntro) ownershipIntro.innerHTML = 'Own it twice. <span>Own the wallet. Own the experience.</span>';
 
         var ownershipCard = document.querySelector('#salmon-card-0');
         if (ownershipCard && salmonHeading) ownershipCard.prepend(salmonHeading);
@@ -1095,22 +1368,10 @@ export async function GET(request: Request) {
 
         var parallaxCard = document.querySelector('#salmon-card-2');
         if (parallaxCard) parallaxCard.remove();
-
-        var getSalmonCard = document.querySelector('#salmon-card-1');
-        if (getSalmonCard) {
-          getSalmonCard.classList.add('salmon-get-card');
-          getSalmonCard.innerHTML = ${JSON.stringify(getSalmonCardHtml)};
-        }
-
-        applySalmonFooter();
       }
       function initSalmonStandalone() {
         var powerupsPercent = document.querySelector('#program-card-content-percent-w');
         if (powerupsPercent) powerupsPercent.remove();
-      }
-      function applySalmonFooter() {
-        var footer = document.querySelector('footer');
-        if (footer) footer.innerHTML = ${JSON.stringify(footerHtml)};
       }
       applySalmonCopy();
       if (document.readyState !== 'complete') {
