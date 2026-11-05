@@ -126,8 +126,7 @@ def material(name, color, roughness=0.5, transmission=0.0, thin=False):
 
 def membrane_material():
     """Real pectoral colour, pigment pushed so it reads on the dark section:
-    translucent and pale near the base, dusky and denser toward the margin,
-    the pigment gathering along the rays first."""
+    translucent and pale near the base, dusky and denser toward the margin."""
     # A single surface with a low IOR, not Thin Wall: Cycles counts Thin Wall
     # transmission as diffuse, so it never reaches the render's alpha and the
     # membrane comes out opaque on a transparent film.
@@ -139,8 +138,6 @@ def membrane_material():
 
     v = nodes.new("ShaderNodeAttribute")
     v.attribute_name = "v"
-    w = nodes.new("ShaderNodeAttribute")
-    w.attribute_name = "w"
     ramp = nodes.new("ShaderNodeValToRGB")
     stops = ramp.color_ramp.elements
     stops[0].color = (0.86, 0.80, 0.74, 1)
@@ -151,39 +148,7 @@ def membrane_material():
         stops.new(position).color = (grey, grey, grey * 1.04, 1)
     links.new(v.outputs["Fac"], ramp.inputs["Fac"])
 
-    # Distance to the nearest ray: 0 on a ray, 1 halfway between two.
-    near_ray = nodes.new("ShaderNodeMath")
-    near_ray.operation = "MULTIPLY"
-    near_ray.inputs[1].default_value = math.pi * (RAYS - 1)
-    links.new(w.outputs["Fac"], near_ray.inputs[0])
-    sine = nodes.new("ShaderNodeMath")
-    sine.operation = "SINE"
-    links.new(near_ray.outputs[0], sine.inputs[0])
-    between = nodes.new("ShaderNodeMath")
-    between.operation = "ABSOLUTE"
-    links.new(sine.outputs[0], between.inputs[0])
-    on_ray = nodes.new("ShaderNodeMath")
-    on_ray.operation = "SUBTRACT"
-    on_ray.inputs[0].default_value = 1.0
-    links.new(between.outputs[0], on_ray.inputs[1])
-    # Only a thin line beside each ray carries pigment.
-    thin_line = nodes.new("ShaderNodeMath")
-    thin_line.operation = "POWER"
-    thin_line.inputs[1].default_value = 4.0
-    links.new(on_ray.outputs[0], thin_line.inputs[0])
-    on_ray = thin_line
-    # Pigment = closeness to a ray x how far out along it.
-    pigment = nodes.new("ShaderNodeMath")
-    pigment.operation = "MULTIPLY"
-    links.new(on_ray.outputs[0], pigment.inputs[0])
-    links.new(v.outputs["Fac"], pigment.inputs[1])
-    mix = nodes.new("ShaderNodeMix")
-    mix.data_type = "RGBA"
-    mix.blend_type = "MULTIPLY"
-    links.new(pigment.outputs[0], mix.inputs["Factor"])
-    links.new(ramp.outputs["Color"], mix.inputs["A"])
-    mix.inputs["B"].default_value = (0.18, 0.17, 0.17, 1)
-    links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
+    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
 
     # Pigment also blocks light: the membrane is clear near the base and
     # denser toward the margin.
@@ -230,45 +195,143 @@ def build_phone():
     screen.data.materials.append(material("Screen", (0.01, 0.012, 0.018), 0.15))
 
 
-def build_fin(membrane_mat, ray_mat):
-    samples_t = 160
-    columns = (RAYS - 1) * 4 + 1
-    verts, faces = [], []
+SAMPLES_T = 400
+BRANCH_T = (0.55, 0.78)  # where the rays fork, then fork again
+BRANCH_SPREAD = 0.2  # how much of t a fork takes to open
+JOINTS = 75  # segment joints along the distal part, about 4 mm apart
+MEMBRANE_END = 0.975  # the membrane stops short of the ray tips
+FIBRES = 3  # actinotrichia past each tip
+
+
+def smoothstep(edge0, edge1, x):
+    f = min(max((x - edge0) / (edge1 - edge0), 0.0), 1.0)
+    return f * f * (3 - 2 * f)
+
+
+def jitter(n):
+    """A stable pseudo-random number in 0..1 for an integer."""
+    return math.modf(math.sin(n * 12.9898) * 43758.5453)[0] % 1.0
+
+
+def fan_normal(w, t, eps=1e-3):
+    a = ray_point(min(w + eps, 1), t) - ray_point(max(w - eps, 0), t)
+    b = ray_point(w, min(t + eps, 1)) - ray_point(w, max(t - eps, 0))
+    return a.cross(b).normalized()
+
+
+def build_membrane(material):
+    """The membrane, ending in a scallop between the ray tips and bowing into
+    small pleats between the rays where they crowd together near the base."""
+    dw = 1 / (RAYS - 1)
+    columns = (RAYS - 1) * 24 + 1  # six columns between neighbouring tips, so the scallops round
+    verts, faces, ws, vs = [], [], [], []
     for c in range(columns):
         w = c / (columns - 1)
-        for k in range(samples_t):
-            verts.append(ray_point(w, k / (samples_t - 1)))
+        # The finest tips sit on a grid dw/4 apart, offset by dw/8.
+        notch = math.cos(math.pi * w / (dw / 4)) ** 2  # round scallops, not teeth
+        end = MEMBRANE_END - (0.008 + 0.01 * jitter(c)) * notch
+        pleat_between = abs(math.sin(math.pi * w / dw))
+        for k in range(SAMPLES_T):
+            t = end * k / (SAMPLES_T - 1)
+            p = ray_point(w, t)
+            pleat = 0.7 * (1 - smoothstep(0.1, 0.3, t)) * pleat_between
+            if pleat > 1e-4:
+                p = p + fan_normal(w, t) * pleat
+            verts.append(p)
+            ws.append(w)
+            vs.append(t)
     for c in range(columns - 1):
-        for k in range(samples_t - 1):
-            a = c * samples_t + k
-            b = (c + 1) * samples_t + k
+        for k in range(SAMPLES_T - 1):
+            a = c * SAMPLES_T + k
+            b = (c + 1) * SAMPLES_T + k
             faces.append((a, a + 1, b + 1, b))
     mesh = bpy.data.meshes.new("Membrane")
     mesh.from_pydata([tuple(v) for v in verts], [], faces)
     mesh.shade_smooth()
     # The fan parameters for the shader: w across the rays, v along them.
-    for name, value in (("w", lambda i: (i // samples_t) / (columns - 1)), ("v", lambda i: (i % samples_t) / (samples_t - 1))):
+    for name, values in (("w", ws), ("v", vs)):
         attribute = mesh.attributes.new(name, "FLOAT", "POINT")
-        attribute.data.foreach_set("value", [value(i) for i in range(len(verts))])
-    membrane = bpy.data.objects.new("Membrane", mesh)
-    bpy.context.collection.objects.link(membrane)
-    membrane.data.materials.append(membrane_mat)
+        attribute.data.foreach_set("value", values)
+    obj = bpy.data.objects.new("Membrane", mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(material)
 
-    curve = bpy.data.curves.new("Rays", "CURVE")
-    curve.dimensions = "3D"
-    curve.bevel_depth = 0.55
-    curve.bevel_resolution = 3
+
+def add_strand(curve, w_of_t, t0, t1, radius_of_t):
+    steps = max(int((t1 - t0) * SAMPLES_T), 2)
+    spline = curve.splines.new("POLY")
+    spline.points.add(steps)
+    for k, point in enumerate(spline.points):
+        t = t0 + (t1 - t0) * k / steps
+        point.co = (*ray_point(w_of_t(t), t), 1)
+        point.radius = radius_of_t(t)
+
+
+def build_rays(material):
+    """Lepidotrichia: smooth and stiff at the base, jointed and tapering
+    distally, forking twice (all but the leading ray), each tip a little
+    longer or shorter than its neighbour, with a fringe of fibres past it."""
+    dw = 1 / (RAYS - 1)
+    rays = bpy.data.curves.new("Rays", "CURVE")
+    rays.dimensions = "3D"
+    rays.bevel_depth = 0.55
+    rays.bevel_resolution = 3
+    fibres = bpy.data.curves.new("Fibres", "CURVE")
+    fibres.dimensions = "3D"
+    fibres.bevel_depth = 0.06
+    fibres.bevel_resolution = 1
+
+    def radius(t, level):
+        taper = lerp(1.6, 0.5, t) * (1.0, 0.8, 0.65)[level]
+        if t > 0.45:  # a joint narrows the ray a little every few mm
+            phase = math.modf(t * JOINTS)[0] - 0.5
+            taper *= 1 - 0.22 * math.exp(-((phase / 0.07) ** 2))
+        return taper
+
+    def opening(t, at):
+        return smoothstep(at, at + BRANCH_SPREAD * (1 - at), t)
+
+    tip = 0
     for i in range(RAYS):
-        w = i / (RAYS - 1)
-        spline = curve.splines.new("POLY")
-        spline.points.add(samples_t - 1)
-        for k, point in enumerate(spline.points):
-            t = k / (samples_t - 1)
-            point.co = (*ray_point(w, t), 1)
-            point.radius = lerp(1.6, 0.25, t)
-    rays = bpy.data.objects.new("Rays", curve)
-    bpy.context.collection.objects.link(rays)
-    rays.data.materials.append(ray_mat)
+        w0 = i / (RAYS - 1)
+        if i == 0:  # the leading ray is unbranched
+            end = 1 - 0.02 * jitter(tip)
+            add_strand(rays, lambda t, w0=w0: w0, 0, end, lambda t: radius(t, 0))
+            tips = [(lambda t, w0=w0: w0, end, 0)]
+            tip += 1
+        else:
+            add_strand(rays, lambda t, w0=w0: w0, 0, BRANCH_T[0], lambda t: radius(t, 0))
+            tips = []
+            for side in (-1, 1):
+                w1 = lambda t, w0=w0, side=side: min(w0 + side * dw / 4 * opening(t, BRANCH_T[0]), 1)
+                add_strand(rays, w1, BRANCH_T[0], BRANCH_T[1], lambda t: radius(t, 1))
+                for side2 in (-1, 1):
+                    w2 = lambda t, w1=w1, side2=side2: min(w1(t) + side2 * dw / 8 * opening(t, BRANCH_T[1]), 1)
+                    end = 1 - 0.035 * jitter(tip)
+                    add_strand(rays, w2, BRANCH_T[1], end, lambda t: radius(t, 2))
+                    tips.append((w2, end, 2))
+                    tip += 1
+        # Actinotrichia: hair-fine fibres fanning a touch past each tip.
+        for w_tip, end, _ in tips:
+            for f in range(FIBRES):
+                spread = (f - (FIBRES - 1) / 2) * dw / 60
+                add_strand(
+                    fibres,
+                    lambda t, w_tip=w_tip, spread=spread, end=end: min(max(w_tip(t) + spread * smoothstep(end - 0.05, end, t), 0), 1),
+                    end - 0.05,
+                    min(end + 0.012, 1),
+                    lambda t: 1.0,
+                )
+    for curve in (rays, fibres):
+        obj = bpy.data.objects.new(curve.name, curve)
+        bpy.context.collection.objects.link(obj)
+        obj.data.materials.append(material)
+    print(f"FIN rays: {tip} tips")
+
+
+def build_fin(membrane_mat, ray_mat):
+    build_membrane(membrane_mat)
+    build_rays(ray_mat)
 
 
 def aim(obj, target=Vector((0, 0, 0))):
