@@ -300,6 +300,8 @@ export async function GET(request: Request) {
       /* Without the black section the page background shows; keep it white
          rather than leaving it to the browser's default canvas. */
       html { background: #fff; }
+      /* The template's gray band between the hero claim and the intro. */
+      .separator { display: none !important; }
       html, body, button, input, textarea, select,
       h1, h2, h3, h4, h5, h6, p, a, li, div, span {
         font-family: "DM Sans", system-ui, sans-serif !important;
