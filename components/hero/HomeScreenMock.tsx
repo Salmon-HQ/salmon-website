@@ -6,7 +6,6 @@ import {
   CapsLabel,
   COLORS,
   IconBubble,
-  MOTION,
   PowerupRow,
   ScreenGround,
   TOKENS,
@@ -16,7 +15,6 @@ import {
   cardStyle,
   changeColor,
   tabular,
-  transition,
 } from './mock-kit';
 import {
   ArrowDownLeftIcon,
@@ -51,39 +49,47 @@ import {
  */
 export type MockStep = 0 | 1 | 2 | 3;
 
-/** Where the screen is inside the flow; each beat changes one thing. */
+/**
+ * Where the screen is inside the flow. The numbers run 0..1 so the scroll can
+ * hold the screen anywhere in between; the presses go 0 → 1 → 0.
+ */
 export interface MockState {
-  /** A finger is on the Powerups FAB. */
-  fabTapping: boolean;
-  catalogOpen: boolean;
+  fabPress: number;
+  catalog: number;
   swapOn: boolean;
-  swapAdded: boolean;
-  /** A finger is on the Swap tab. */
-  tapping: boolean;
-  swapSelected: boolean;
+  swapAdded: number;
+  tabPress: number;
+  swapSelected: number;
 }
 
-const HOME: MockState = { fabTapping: false, catalogOpen: false, swapOn: false, swapAdded: false, tapping: false, swapSelected: false };
+const clamp = (t: number) => Math.min(1, Math.max(0, t));
+const ease = (p: number, from: number, to: number) => {
+  const t = clamp((p - from) / (to - from));
+  return t * t * (3 - 2 * t);
+};
+const press = (p: number, from: number, to: number) => Math.sin(Math.PI * clamp((p - from) / (to - from)));
 
 /**
- * The flow as beats, in order, with how long each waits after the one before
- * when walking forward: Home at rest, a tap on the FAB, the catalog rising,
- * the toggle, its tab arriving behind the dim, the sheet closing, a tap on
- * the new tab, and the tab opening.
+ * The flow along the section's scroll progress p, one action per segment with
+ * a hold between them: FAB press, catalog rises, toggle, Swap tab arrives,
+ * sheet closes, tab press, tab opens. Steps 2 and 3 of the copy start at 0.35
+ * and 0.60.
  */
-export const FLOW_BEATS: { state: MockState; delay: number }[] = [
-  { state: HOME, delay: 0 },
-  { state: { ...HOME, fabTapping: true }, delay: 1100 },
-  { state: { ...HOME, catalogOpen: true }, delay: 380 },
-  { state: { ...HOME, catalogOpen: true, swapOn: true }, delay: 250 },
-  { state: { ...HOME, catalogOpen: true, swapOn: true, swapAdded: true }, delay: 650 },
-  { state: { ...HOME, swapOn: true, swapAdded: true }, delay: 900 },
-  { state: { ...HOME, swapOn: true, swapAdded: true, tapping: true }, delay: 900 },
-  { state: { ...HOME, swapOn: true, swapAdded: true, swapSelected: true }, delay: 380 },
-];
+export function flowState(p: number): MockState {
+  return {
+    fabPress: press(p, 0, 0.05),
+    catalog: ease(p, 0.05, 0.17) - ease(p, 0.62, 0.7),
+    swapOn: p >= 0.41,
+    swapAdded: ease(p, 0.46, 0.52),
+    tabPress: press(p, 0.72, 0.75),
+    swapSelected: ease(p, 0.75, 0.83),
+  };
+}
 
-/** The beat each landing step settles on. */
-export const STEP_BEAT: Record<MockStep, number> = { 0: 0, 1: 2, 2: 4, 3: 7 };
+/** A progress inside each step's hold, for a still screen of that step. */
+export const STEP_PROGRESS: Record<MockStep, number> = { 0: -1, 1: 0.27, 2: 0.57, 3: 1 };
+
+const HOME = flowState(-1);
 
 function SwapForm() {
   return (
@@ -153,8 +159,11 @@ export default function HomeScreenMock({
   /** Which sub-tab the Home shows when no Powerup tab is selected. */
   tab?: 'assets' | 'nfts';
 }) {
-  const { fabTapping, catalogOpen, swapOn, swapAdded, tapping } = state;
-  const swapTab = state.swapSelected;
+  const { fabPress, catalog, swapOn, swapAdded, tabPress, swapSelected } = state;
+  const swapTab = swapSelected > 0.5;
+  // The outgoing surface leaves faster than the incoming one arrives.
+  const leaving = clamp(swapSelected * 1.5);
+  const arriving = clamp((swapSelected - 0.33) * 1.5);
 
   return (
     <div aria-hidden="true" className="wallet-mock absolute inset-0 overflow-hidden">
@@ -169,9 +178,8 @@ export default function HomeScreenMock({
           <div
             className="grid"
             style={{
-              gridTemplateRows: swapTab ? '0fr' : '1fr',
-              opacity: swapTab ? 0 : 1,
-              ...transition(['grid-template-rows', 'opacity'], MOTION.rise, MOTION.current),
+              gridTemplateRows: `${1 - swapSelected}fr`,
+              opacity: 1 - leaving,
             }}
           >
             <div className="min-h-0 overflow-hidden">
@@ -235,20 +243,15 @@ export default function HomeScreenMock({
                 className="relative"
                 style={{
                   overflowX: 'clip',
-                  marginLeft: swapAdded ? u(20) : 0,
-                  maxWidth: swapAdded ? u(60) : 0,
-                  opacity: swapAdded ? 1 : 0,
-                  transform: swapAdded ? 'none' : `translateY(${u(8)}) scale(0.95)`,
-                  ...transition(['margin-left', 'max-width', 'opacity', 'transform'], MOTION.rise, MOTION.settle),
+                  marginLeft: u(20 * swapAdded),
+                  maxWidth: u(60 * swapAdded),
+                  opacity: swapAdded,
+                  transform: `translateY(${u(8 * (1 - swapAdded))}) scale(${0.95 + 0.05 * swapAdded})`,
                 }}
               >
                 <span
                   className="block"
-                  style={{
-                    transform: tapping ? 'scale(0.88)' : 'none',
-                    opacity: tapping ? 0.7 : 1,
-                    ...transition(['transform', 'opacity'], MOTION.swell, MOTION.current),
-                  }}
+                  style={{ transform: `scale(${1 - 0.12 * tabPress})`, opacity: 1 - 0.3 * tabPress }}
                 >
                   <UnderlineTab label="Swap" active={swapTab} />
                 </span>
@@ -267,9 +270,8 @@ export default function HomeScreenMock({
             style={{
               paddingInline: u(12),
               gap: u(12),
-              opacity: swapTab ? 0 : 1,
-              transform: swapTab ? `translateY(${u(8)}) scale(0.96)` : 'none',
-              ...transition(['opacity', 'transform'], swapTab ? 360 : 560, swapTab ? MOTION.sink : MOTION.settle),
+              opacity: 1 - leaving,
+              transform: `translateY(${u(8 * leaving)}) scale(${1 - 0.04 * leaving})`,
             }}
           >
             {tab === 'nfts' ? <NftGrid /> : TOKENS.map((token) => (
@@ -323,9 +325,8 @@ export default function HomeScreenMock({
           <div
             className="absolute inset-x-0 top-0"
             style={{
-              opacity: swapTab ? 1 : 0,
-              transform: swapTab ? 'none' : `translateY(${u(8)}) scale(0.96)`,
-              ...transition(['opacity', 'transform'], swapTab ? 560 : 360, swapTab ? MOTION.settle : MOTION.sink),
+              opacity: arriving,
+              transform: `translateY(${u(8 * (1 - arriving))}) scale(${0.96 + 0.04 * arriving})`,
             }}
           >
             <SwapForm />
@@ -344,9 +345,8 @@ export default function HomeScreenMock({
           className="block"
           style={{
             // The press reads on the control itself: it sinks and dims a touch.
-            transform: fabTapping ? 'scale(0.86)' : 'none',
-            filter: fabTapping ? 'brightness(0.85)' : 'none',
-            ...transition(['transform', 'filter'], MOTION.swell, MOTION.current),
+            transform: `scale(${1 - 0.14 * fabPress})`,
+            filter: `brightness(${1 - 0.15 * fabPress})`,
           }}
         >
           <IconBubble size={48} tone="accent">
@@ -360,8 +360,7 @@ export default function HomeScreenMock({
         className="absolute inset-0 z-30"
         style={{
           backgroundColor: COLORS.backdrop,
-          opacity: catalogOpen ? 1 : 0,
-          ...transition(['opacity'], MOTION.rise, catalogOpen ? MOTION.settle : MOTION.current),
+          opacity: catalog,
         }}
       />
 
@@ -377,9 +376,7 @@ export default function HomeScreenMock({
           borderBottom: 0,
           backgroundColor: COLORS.sheetFill,
           boxShadow: '0 -3px 15px rgba(0, 0, 0, 0.8)',
-          transform: catalogOpen ? 'none' : 'translateY(105%)',
-          // The app closes in 180ms; here it takes the open's 500 so the eye can follow it.
-          ...transition(['transform'], MOTION.rise, catalogOpen ? MOTION.settle : MOTION.current),
+          transform: `translateY(${105 * (1 - catalog)}%)`,
         }}
       >
         <div className="flex justify-center" style={{ paddingTop: u(12), paddingBottom: u(8) }}>

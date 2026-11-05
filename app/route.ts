@@ -1228,17 +1228,17 @@ export async function GET(request: Request) {
         }
 
         // The template fades one child of the screen per scroll step and calls
-        // play()/pause() on the first two. The children become empty markers
-        // with no-op media methods, and the step whose marker is shown is sent
-        // to the phone mock, which animates the Powerups flow to that state.
+        // play()/pause() on the first two; they become empty markers with no-op
+        // media methods. The phone is a mock that draws the Powerups flow at the
+        // section's scroll progress, sent from here on every frame it changes.
         var powerupsScreen = document.querySelector('#program .card-content-screen');
-        if (powerupsScreen) {
-          var markers = Array.prototype.slice.call(powerupsScreen.children, 0, 3).map(function (current) {
+        var powerupsList = document.querySelector('#program .card-content-list');
+        if (powerupsScreen && powerupsList) {
+          Array.prototype.slice.call(powerupsScreen.children, 0, 3).forEach(function (current) {
             var marker = document.createElement('div');
             marker.className = 'salmon-step-marker';
             marker.play = marker.pause = function () {};
             current.replaceWith(marker);
-            return marker;
           });
           powerupsScreen.classList.add('salmon-phone-screen');
           var flowFrame = document.createElement('iframe');
@@ -1247,26 +1247,39 @@ export async function GET(request: Request) {
           flowFrame.tabIndex = -1;
           powerupsScreen.appendChild(flowFrame);
 
-          // The flow starts from Home only once the phone is actually in view.
-          var phoneInView = false;
-          var sentStep = -1;
-          var sendStep = function () {
-            var step = 0;
-            if (phoneInView) {
-              markers.forEach(function (marker, index) {
-                if (marker.style.opacity === '1') step = index + 1;
-              });
-            }
-            if (step === sentStep || !flowFrame.contentWindow) return;
-            sentStep = step;
-            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-step', step: step }, window.location.origin);
+          // p is 0 when the copy list's top crosses the middle of the viewport
+          // and 1 when its bottom does. A mouse wheel jumps, so the drawn
+          // progress eases toward it; touch scrolling is already smooth and maps
+          // directly. Reduced motion shows one still screen per copy step.
+          var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var directScroll = reduceMotion || window.matchMedia('(pointer: coarse)').matches;
+          var target = -1, drawn = -1, sent = null, frame = 0;
+          var measure = function () {
+            var rect = powerupsList.getBoundingClientRect();
+            var p = (window.innerHeight / 2 - rect.top) / rect.height;
+            if (reduceMotion) p = p < 0 ? -1 : p < 0.35 ? 0.27 : p < 0.6 ? 0.57 : 1;
+            target = Math.max(-1, Math.min(1.05, p));
           };
-          new MutationObserver(sendStep).observe(powerupsScreen, { attributes: true, subtree: true, attributeFilter: ['style'] });
-          flowFrame.addEventListener('load', function () { sentStep = -1; sendStep(); });
-          new IntersectionObserver(function (entries) {
-            phoneInView = entries[0].isIntersecting;
-            sendStep();
-          }, { threshold: 0.6 }).observe(powerupsScreen);
+          var post = function () {
+            var p = Math.round(drawn * 2000) / 2000;
+            if (p === sent || !flowFrame.contentWindow) return;
+            sent = p;
+            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-progress', progress: p }, window.location.origin);
+          };
+          var tick = function () {
+            frame = 0;
+            drawn = directScroll ? target : drawn + (target - drawn) * 0.12;
+            if (Math.abs(target - drawn) < 0.0005) drawn = target;
+            post();
+            if (drawn !== target) frame = requestAnimationFrame(tick);
+          };
+          var onScroll = function () {
+            measure();
+            if (!frame) frame = requestAnimationFrame(tick);
+          };
+          window.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onScroll);
+          flowFrame.addEventListener('load', function () { measure(); drawn = target; sent = null; post(); });
         }
 
         var salmonHeading = document.querySelector('#salmon > h2');

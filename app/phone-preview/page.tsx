@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { PaymentRequestMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
-import HomeScreenMock, { FLOW_BEATS, STEP_BEAT, type MockStep } from '@/components/hero/HomeScreenMock';
+import HomeScreenMock, { STEP_PROGRESS, flowState, type MockStep } from '@/components/hero/HomeScreenMock';
 import PowerupsFlowMock from '@/components/hero/PowerupsFlowMock';
 
 const SCREENS: Record<string, ReactNode> = {
@@ -21,7 +21,7 @@ export default async function PhonePreview({
   const { flow, step, screen } = await searchParams;
   const pinned = [1, 2, 3].includes(Number(step)) ? (Number(step) as MockStep) : 0;
 
-  let content: ReactNode = <HomeScreenMock state={FLOW_BEATS[STEP_BEAT[pinned]].state} />;
+  let content: ReactNode = <HomeScreenMock state={flowState(STEP_PROGRESS[pinned])} />;
   if (flow === 'powerups') content = <PowerupsFlowMock initialStep={pinned} />;
   else if (screen && SCREENS[screen]) content = SCREENS[screen];
 
