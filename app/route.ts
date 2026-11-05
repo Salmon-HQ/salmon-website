@@ -547,7 +547,8 @@ export async function GET(request: Request) {
         display: none !important;
       }
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         background: #161c2d;
         box-shadow:
           0 0 0 .9vw #080a0f,
@@ -559,23 +560,27 @@ export async function GET(request: Request) {
          shrunk by --bezel, the outer box-shadow width. The hero phone uses the
          same size for continuity. */
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         --bezel: 1.02vw;
       }
       .shim-not-null #hero .card-content-screen,
-      .shim-not-null #program .card-content-screen {
+      .shim-not-null #program .card-content-screen,
+      .shim-not-null #salmon-card-0 .card-content-screen {
         width: calc(18.75vw - 2 * var(--bezel));
         height: calc(39.93vw - 2 * var(--bezel));
         border-radius: calc(2.78vw - var(--bezel));
       }
       .shim-null #hero .card-content-screen,
-      .shim-null #program .card-content-screen {
+      .shim-null #program .card-content-screen,
+      .shim-null #salmon-card-0 .card-content-screen {
         width: calc(22.43vh - 2 * var(--bezel));
         height: calc(47.76vh - 2 * var(--bezel));
         border-radius: calc(3.32vh - var(--bezel));
       }
       #hero .card-content-screen::before,
-      #program .card-content-screen::before {
+      #program .card-content-screen::before,
+      #salmon-card-0 .card-content-screen::before {
         content: "";
         position: absolute;
         z-index: 7;
@@ -623,14 +628,24 @@ export async function GET(request: Request) {
       #salmon-card-0 > p {
         margin-top: 3vw !important;
       }
-      /* The phone in the hand photo (left.png) has a 608 px wide frame; the
-         Powerups cards are 540 px in images of the same height, so the photo
-         and its screen scale to 540/608. Scaling from the bottom keeps the arm
-         entering from the card's bottom edge. */
-      #salmon-card-0-phone {
-        transform: scale(.888);
-        transform-origin: 50% 100%;
+      /* The salmon fin holding the phone: two renders from blender/fin.py
+         (docs/fin-preproduction.md), the back one under the CSS phone and the
+         front one over its live screen. The numbers are the script's "FIN CSS"
+         output divided by the phone's 18.75vw width, so the fin follows the
+         phone in both template sizings. */
+      #salmon-card-0-phone { --phone-w: 18.75vw; }
+      .shim-null #salmon-card-0-phone { --phone-w: 22.43vh; }
+      #salmon-card-0-phone img.salmon-fin-back,
+      #salmon-card-0-phone img.salmon-fin-front {
+        top: calc(50% - 1.79429 * var(--phone-w));
+        left: calc(50% - 2.34357 * var(--phone-w));
+        width: calc(4.68720 * var(--phone-w));
+        height: calc(3.90352 * var(--phone-w));
+        transform: none;
+        pointer-events: none;
       }
+      #salmon-card-0-phone img.salmon-fin-back { z-index: 1; }
+      #salmon-card-0-phone img.salmon-fin-front { z-index: 3; }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
         min-height: 38vw;
@@ -1228,16 +1243,19 @@ export async function GET(request: Request) {
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
         #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
-        #program .card-content-screen {
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen {
           box-shadow:
             0 0 0 2.2vw #080a0f,
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
         #hero .card-content-screen,
-        #program .card-content-screen { --bezel: 2.55vw; }
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
-        #program .card-content-screen::before {
+        #program .card-content-screen::before,
+        #salmon-card-0 .card-content-screen::before {
           top: 1.6vw;
           width: 13vw;
           height: 3vw;

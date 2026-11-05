@@ -1,7 +1,12 @@
 """
 Salmon fin wrapped around the phone, built and rendered headless.
 
-    /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P blender/fin.py -- <out_dir> [white|section]
+    /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P blender/fin.py -- <out_dir> [white|section|layers] [scale %]
+
+white and section are previews with the phone in view. layers renders what
+the site stacks around its CSS phone: fin-back.png under the phone,
+fin-front.png (the fin in front of the screen plus its shadow on the screen)
+over the live screen, and prints the CSS that places them.
 
 Units are millimetres. The phone stands in the XZ plane (X right, Z up) with
 its screen facing -Y, toward the camera. Each ray is a curve of the fan
@@ -22,10 +27,13 @@ OUT_DIR = args[0] if args else "/tmp"
 BACKGROUND = args[1] if len(args) > 1 else "white"
 SCALE = int(args[2]) if len(args) > 2 else 100  # resolution %, 200 for the site's 2x
 
-# The phone: the site's CSS phone (screen 240x510 px plus a 14.7 px bezel at a
-# 1440 px viewport) at 77 mm wide.
-PHONE_W, PHONE_H, PHONE_T = 77.0, 154.0, 8.0
-CORNER = 11.4
+# The phone: the site's CSS phone, 18.75 x 39.93 vw with a 2.78 vw corner and
+# a 1.02 vw bezel, at 77 mm wide.
+PHONE_W, PHONE_T = 77.0, 8.0
+VW_PER_MM = 18.75 / PHONE_W
+PHONE_H = 39.93 / VW_PER_MM
+CORNER = 2.78 / VW_PER_MM
+BEZEL = 1.02 / VW_PER_MM
 EDGE_X = PHONE_W / 2
 WRAP_R = PHONE_T / 2 + 1.0  # half the thickness plus clearance
 
@@ -267,7 +275,7 @@ def build_phone():
     screen = bpy.context.object
     screen.name = "Screen"
     screen.rotation_euler = (math.radians(90), 0, 0)
-    screen.scale = (PHONE_W - 7.4, PHONE_H - 7.4, 1)
+    screen.scale = (PHONE_W - 2 * BEZEL, PHONE_H - 2 * BEZEL, 1)
     screen.location = (0, -PHONE_T / 2 - 0.05, 0)
     screen.data.materials.append(material("Screen", (0.01, 0.012, 0.018), 0.15))
 
@@ -444,7 +452,8 @@ def build_scene():
     bg.inputs["Strength"].default_value = 1.0 if BACKGROUND == "white" else 0.6
 
     build_phone()
-    build_fin(membrane_material(), ray_material())
+    fin_materials = (membrane_material(), ray_material())
+    build_fin(*fin_materials)
 
     # The camera frames exactly the concept image, so the two overlay.
     centre_x, centre_z = from_px(FRAME_PX[0] / 2, FRAME_PX[1] / 2)
@@ -476,6 +485,7 @@ def build_scene():
         # its reflections stay, they are the glassy highlights.
         obj.visible_camera = False
         obj.visible_transmission = False
+    return fin_materials, (centre_x, centre_z, frame_w, distance)
 
 
 def count_inside_phone(samples=200):
@@ -488,7 +498,56 @@ def count_inside_phone(samples=200):
     return inside
 
 
+def keep_side(materials, side):
+    """Make the fin invisible on the other side of the phone's middle plane
+    (y = 0): the back layer keeps y >= 0, the front layer y < 0."""
+    for m in materials:
+        nodes, links = m.node_tree.nodes, m.node_tree.links
+        output = nodes["Material Output"]
+        surface = output.inputs["Surface"].links[0].from_socket
+        position = nodes.new("ShaderNodeNewGeometry")
+        xyz = nodes.new("ShaderNodeSeparateXYZ")
+        links.new(position.outputs["Position"], xyz.inputs["Vector"])
+        behind = math_node(nodes, "GREATER_THAN", None, 0.0)
+        links.new(xyz.outputs["Y"], behind.inputs[0])
+        hidden = behind if side == "front" else math_node(nodes, "SUBTRACT", 1.0)
+        if side == "back":
+            links.new(behind.outputs[0], hidden.inputs[1])
+        mix = nodes.new("ShaderNodeMixShader")
+        links.new(hidden.outputs[0], mix.inputs["Fac"])
+        links.new(surface, mix.inputs[1])
+        links.new(nodes.new("ShaderNodeBsdfTransparent").outputs[0], mix.inputs[2])
+        links.new(mix.outputs[0], output.inputs["Surface"])
+
+
+def site_css(centre_x, centre_z, frame_w, distance):
+    """Where the layers go around the CSS phone, in vw: the render's scale is
+    taken on the screen's plane, which is what has to line up."""
+    width_mm = frame_w * (distance - PHONE_T / 2) / distance
+    height_mm = width_mm * FRAME_PX[1] / FRAME_PX[0]
+    w, h = width_mm * VW_PER_MM, height_mm * VW_PER_MM
+    # The phone's centre inside the image, as a fraction of its size.
+    cx = 0.5 - centre_x * (distance - PHONE_T / 2) / distance / width_mm
+    cy = 0.5 + centre_z * (distance - PHONE_T / 2) / distance / height_mm
+    return f"width: {w:.3f}vw; height: {h:.3f}vw; left: calc(50% - {cx * w:.3f}vw); top: calc(50% - {cy * h:.3f}vw);"
+
+
 print(f"FIN CHECK points inside the phone: {count_inside_phone()}")
-build_scene()
-bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{BACKGROUND}-{SCALE}.png"
-bpy.ops.render.render(write_still=True)
+if BACKGROUND != "layers":
+    build_scene()
+    bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{BACKGROUND}-{SCALE}.png"
+    bpy.ops.render.render(write_still=True)
+else:
+    for side in ("back", "front"):
+        fin_materials, framing = build_scene()
+        keep_side(fin_materials, side)
+        objects = bpy.data.objects
+        # The site draws the phone; here it only blocks light and casts shadow.
+        objects["Phone"].visible_camera = False
+        if side == "back":
+            objects["Screen"].visible_camera = False
+        else:
+            objects["Screen"].is_shadow_catcher = True
+        bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{side}.png"
+        bpy.ops.render.render(write_still=True)
+    print(f"FIN CSS {site_css(*framing)}")
