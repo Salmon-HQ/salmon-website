@@ -994,7 +994,7 @@ export async function GET(request: Request) {
          each a word over its tile. Every tile carries its own perspective (the
          transform's perspective(), not a shared one on the row), so its
          vanishing point is its own centre and it reads the same wherever the
-         strip has carried it. The strip stops under the pointer; each tile
+         strip has carried it. The strip stops while the pointer is on a tile; each tile
          floats on its own beat, lifts on hover and dips when pressed. */
       .salmon-intro-marquee {
         overflow: hidden;
@@ -1007,7 +1007,8 @@ export async function GET(request: Request) {
         width: max-content;
         animation: salmon-intro-slide 48s linear infinite;
       }
-      .salmon-intro-marquee:hover .salmon-intro-track { animation-play-state: paused; }
+      /* Only a tile stops the strip, not the gaps around it. */
+      .salmon-intro-track:has(.salmon-intro-face:hover) { animation-play-state: paused; }
       @keyframes salmon-intro-slide {
         to { transform: translateX(-50%); }
       }
@@ -1062,7 +1063,7 @@ export async function GET(request: Request) {
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
       @media (hover: hover) {
-        .salmon-intro-tile:hover .salmon-intro-face {
+        .salmon-intro-face:hover {
           transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
           background: linear-gradient(160deg, #ffffff 0%, #ffe9e4 100%) !important;
           box-shadow:
@@ -1072,7 +1073,7 @@ export async function GET(request: Request) {
             0 11vw 9vw rgba(16,19,28,.12),
             0 0 6vw rgba(255,92,69,.22) !important;
         }
-        .salmon-intro-tile:hover .salmon-intro-face svg {
+        .salmon-intro-face:hover svg {
           transform: scale(1.08);
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
