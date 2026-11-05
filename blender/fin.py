@@ -171,8 +171,10 @@ def melanophores(nodes, links, v_socket):
 
 
 def membrane_material():
-    """Real pectoral colour, pigment pushed so it reads on the dark section:
-    translucent and pale near the base, dusky and denser toward the margin.
+    """Salmon orange (owner's call, 2026-11-05: "hasta lo transparente tiene
+    que estar anaranjado"): pale salmon at the base, deeper toward the margin.
+    Translucent parts carry the colour too, through subsurface glow, because
+    what a transparent film lets through shows the page untinted.
     The dusk is made of melanophores, the surface carries fine collagen
     striations along the rays, and iridophores give a faint thin-film sheen."""
     # A single surface with a low IOR, not Thin Wall: Cycles counts Thin Wall
@@ -183,6 +185,10 @@ def membrane_material():
     bsdf = nodes["Principled BSDF"]
     bsdf.inputs["IOR"].default_value = 1.1
     bsdf.inputs["Sheen Weight"].default_value = 0.15
+    bsdf.inputs["Sheen Tint"].default_value = (1.0, 0.6, 0.45, 1)
+    bsdf.inputs["Subsurface Weight"].default_value = 0.35
+    bsdf.inputs["Subsurface Radius"].default_value = (1.0, 0.35, 0.2)
+    bsdf.inputs["Subsurface Scale"].default_value = 2.0
     bsdf.inputs["Thin Film Thickness"].default_value = 320
     bsdf.inputs["Thin Film IOR"].default_value = 1.33
 
@@ -192,19 +198,19 @@ def membrane_material():
     w.attribute_name = "w"
     ramp = nodes.new("ShaderNodeValToRGB")
     stops = ramp.color_ramp.elements
-    stops[0].color = (0.88, 0.79, 0.74, 1)  # the pale, faintly fleshy base
+    stops[0].color = (1.0, 0.62, 0.48, 1)  # pale salmon at the base
     stops[1].position = 1.0
-    stops[1].color = (0.09, 0.095, 0.10, 1)
-    # The visible part of the fan sits between v 0.2 and 0.7, so the dusk starts early.
-    for position, grey in ((0.3, 0.36), (0.7, 0.16)):
-        stops.new(position).color = (grey, grey, grey * 1.04, 1)
+    stops[1].color = (0.42, 0.09, 0.05, 1)  # deep red-orange at the margin
+    # The visible part of the fan sits between v 0.2 and 0.7, so it deepens early.
+    for position, color in ((0.3, (1.0, 0.36, 0.22)), (0.7, (0.75, 0.2, 0.11))):
+        stops.new(position).color = (*color, 1)
     links.new(v.outputs["Fac"], ramp.inputs["Fac"])
 
     pigment = melanophores(nodes, links, v.outputs["Fac"])
     speckled = nodes.new("ShaderNodeMix")
     speckled.data_type = "RGBA"
     speckled.blend_type = "MIX"
-    speckled.inputs["B"].default_value = (0.02, 0.018, 0.018, 1)
+    speckled.inputs["B"].default_value = (0.03, 0.012, 0.01, 1)
     links.new(pigment, speckled.inputs["Factor"])
     links.new(ramp.outputs["Color"], speckled.inputs["A"])
     links.new(speckled.outputs["Result"], bsdf.inputs["Base Color"])
@@ -215,10 +221,11 @@ def membrane_material():
     # it, then darkens toward the margin.
     density = nodes.new("ShaderNodeValToRGB")
     clear = density.color_ramp.elements
-    clear[0].color = (0.45, 0.45, 0.45, 1)
+    clear[0].color = (0.3, 0.3, 0.3, 1)
     clear[1].position = 1.0
-    clear[1].color = (0.5, 0.5, 0.5, 1)
-    for position, value in ((0.14, 0.88), (0.35, 0.9)):
+    clear[1].color = (0.35, 0.35, 0.35, 1)
+    # Less clear than a real fin, so the colour holds on the page.
+    for position, value in ((0.14, 0.6), (0.35, 0.6)):
         clear.new(position).color = (value, value, value, 1)
     links.new(v.outputs["Fac"], density.inputs["Fac"])
     blocked = math_node(nodes, "MULTIPLY", None, 0.6)
@@ -245,7 +252,7 @@ def membrane_material():
 def ray_material():
     """Glassy bone: denser than the membrane, so slightly darker, with a lit
     rim and the same faint iridophore sheen."""
-    m = material("Ray", (0.62, 0.60, 0.58), 0.06, transmission=0.8)
+    m = material("Ray", (1.0, 0.6, 0.45), 0.06, transmission=0.6)
     bsdf = m.node_tree.nodes["Principled BSDF"]
     bsdf.inputs["IOR"].default_value = 1.45
     bsdf.inputs["Coat Weight"].default_value = 0.5

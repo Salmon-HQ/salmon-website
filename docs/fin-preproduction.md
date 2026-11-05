@@ -5,6 +5,7 @@ Reemplaza la mano que sostiene el celular en la sección "Real ownership" (`#sal
 ## Decisiones del dueño (2026-11-05)
 
 - Colores de una aleta real, no los del concepto (el concepto tiene base naranja y punta gris azulada con manchas, que no existe en el salmón).
+- Cambio (2026-11-05, después de verla en el sitio): tono naranja salmón en toda la aleta, "hasta lo transparente tiene que estar anaranjado". La anatomía (radios, bifurcaciones, borde, pigmento) sigue siendo la real; el color es de marca. Lo translúcido lleva color propio (subsurface) porque lo que deja pasar un fondo transparente muestra la página sin teñir.
 - Reemplaza la única mano del sitio.
 - Arranca quieta. Después, movimiento de flotación.
 
