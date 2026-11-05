@@ -180,7 +180,7 @@ const downloadsHtml = `<div class="salmon-downloads">${STORES.map(
     `<a class="salmon-download" href="${store.href}"${externalAttrs(store.href)} aria-label="${store.label}">${store.icon}</a>`,
 ).join('')}</div>`;
 
-const getSalmonCardHtml = `<h3 class="salmon-get-title">Get Salmon</h3>${downloadsHtml}`;
+const getSalmonCardHtml = `<h3 class="salmon-get-title">Get Salmon</h3><p class="salmon-get-subtitle"><span>A reason to arrive.</span> <span>A wallet designed to stay.</span></p>${downloadsHtml}`;
 
 // Layout follows hims.com: app card on the left, link columns, socials,
 // legal row and an oversized wordmark closing the page.
@@ -188,7 +188,7 @@ const footerHtml = `
   <div id="footer-top" class="salmon-footer">
     <aside class="salmon-footer-app">
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
-      <p class="salmon-footer-app-title">One wallet.<br>Only what you need.</p>
+      <p class="salmon-footer-app-title">One wallet.<br>Available today.</p>
       ${downloadsHtml}
       <div class="salmon-footer-phone"><img src="/images/reference/salmon-card-2.png" alt="Salmon wallet portfolio"></div>
     </aside>
@@ -436,10 +436,13 @@ export async function GET(request: Request) {
         font-size: 3.2vw !important;
         line-height: 1.1 !important;
       }
-      #program.section {
+      /* Real ownership (#salmon) shares the Powerups header sizes. */
+      #program.section,
+      #salmon.section {
         padding-top: 6vw !important;
       }
-      #program .section-rectangle {
+      #program .section-rectangle,
+      #salmon .section-rectangle {
         width: 9vw !important;
         height: 9vw !important;
         box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
@@ -448,12 +451,14 @@ export async function GET(request: Request) {
         width: 3.6vw !important;
         height: 3.6vw !important;
       }
-      #program > h2 {
+      #program > h2,
+      #salmon > h2 {
         padding-top: 1.8vw !important;
         font-size: 7vw !important;
         line-height: 1 !important;
       }
-      #program .card {
+      #program .card,
+      #salmon-card-0 {
         margin-top: 5vw !important;
       }
       #program .card-content-screen > video:first-child {
@@ -470,6 +475,22 @@ export async function GET(request: Request) {
           0 0 0 .9vw #080a0f,
           0 0 0 1.02vw #ff7e6d,
           0 2.2vw 5vw rgba(16,19,28,.28);
+      }
+      /* The Powerups phone, bezel included, matches a card in the row image
+         (540x1150 px, 80 px corners, in a 2880x2408 image), so the screen is
+         shrunk by --bezel, the outer box-shadow width. */
+      #program .card-content-screen {
+        --bezel: 1.02vw;
+      }
+      .shim-not-null #program .card-content-screen {
+        width: calc(18.75vw - 2 * var(--bezel));
+        height: calc(39.93vw - 2 * var(--bezel));
+        border-radius: calc(2.78vw - var(--bezel));
+      }
+      .shim-null #program .card-content-screen {
+        width: calc(22.43vh - 2 * var(--bezel));
+        height: calc(47.76vh - 2 * var(--bezel));
+        border-radius: calc(3.32vh - var(--bezel));
       }
       #hero .card-content-screen::before,
       #program .card-content-screen::before {
@@ -539,8 +560,8 @@ export async function GET(request: Request) {
         background-image: linear-gradient(120deg, #161c2d 0%, #10131c 58%, #321b20 100%) !important;
       }
       #salmon .section-rectangle img {
-        width: 45%;
-        height: 45%;
+        width: 40%;
+        height: 40%;
         object-fit: contain;
         filter: brightness(0);
       }
@@ -553,13 +574,29 @@ export async function GET(request: Request) {
         -webkit-text-fill-color: transparent;
       }
       #salmon-card-1 .salmon-get-title {
-        margin: 0 0 5vw;
+        margin: 0 0 1.4vw;
         color: #fff;
         font-size: clamp(34px, 4.6vw, 72px);
         font-weight: 600;
         line-height: 1;
         letter-spacing: -.055em;
         text-align: center;
+      }
+      /* Resets the template's #salmon-card-1 p padding and fixed width. */
+      #salmon-card-1 .salmon-get-subtitle {
+        width: auto;
+        padding: 0;
+        margin: 0 0 5vw;
+        color: rgba(255,255,255,.62);
+        font-size: clamp(17px, 1.6vw, 26px);
+        font-weight: 400;
+        line-height: 1.3;
+        letter-spacing: -.02em;
+        text-align: center;
+      }
+      /* Wraps between the two sentences, never inside one. */
+      #salmon-card-1 .salmon-get-subtitle span {
+        display: inline-block;
       }
       .salmon-downloads {
         display: flex;
@@ -889,14 +926,14 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #program.section { padding-top: 14vw !important; }
-        #program .section-rectangle { width: 20vw !important; height: 20vw !important; }
+        #program.section, #salmon.section { padding-top: 14vw !important; }
+        #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
-        #program > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
-        #salmon > h2 { font-size: 20vw; line-height: 20vw; }
-        #program .card { margin-top: 10vw !important; }
+        #program > h2, #salmon > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #program .card, #salmon-card-0 { margin-top: 10vw !important; }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
-        #salmon-card-1 .salmon-get-title { margin-bottom: 48px; }
+        #salmon-card-1 .salmon-get-title { margin-bottom: 14px; }
+        #salmon-card-1 .salmon-get-subtitle { margin-bottom: 48px; }
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
         #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
@@ -906,6 +943,7 @@ export async function GET(request: Request) {
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
+        #program .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
         #program .card-content-screen::before {
           top: 1.6vw;
