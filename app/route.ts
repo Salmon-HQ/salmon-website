@@ -231,6 +231,21 @@ const footerHtml = `
   </div>
   <div class="salmon-footer-wordmark" aria-hidden="true">Salmon</div>`;
 
+// Stake, Swap and Pay as the site's icon tiles (.section-rectangle) laid in
+// perspective. The glyphs are the app's Phosphor marks, the same geometry as
+// StackIcon, ArrowsLeftRightIcon and QrCodeIcon in components/hero/wallet-icons
+// (a route handler cannot render React to markup). Pay is the Payments QR.
+const INTRO_GLYPHS = [
+  '<polyline points="32 176 128 232 224 176"/><polyline points="32 128 128 184 224 128"/><polygon points="32 80 128 136 224 80 128 24 32 80"/>',
+  '<polyline points="176 144 208 176 176 208"/><line x1="48" y1="176" x2="208" y2="176"/><polyline points="80 112 48 80 80 48"/><line x1="208" y1="80" x2="48" y2="80"/>',
+  '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
+];
+
+const introTilesHtml = `<div id=intro-img class=salmon-intro-tiles aria-hidden=true>${INTRO_GLYPHS.map(
+  (glyph) =>
+    `<div class=salmon-intro-tile><div class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></div></div>`,
+).join('')}</div>`;
+
 const SCREENS = [
   { src: '/screens/swap.webp', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
   { src: '/screens/payments.webp', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
@@ -288,6 +303,7 @@ export async function GET(request: Request) {
     '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
   );
   const withScreens = withoutShop
+    .replace(/<div id=intro-img>[\s\S]*?<\/div>/, () => introTilesHtml)
     .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     .replace(
       /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
@@ -940,6 +956,76 @@ export async function GET(request: Request) {
         text-align: center;
         white-space: nowrap;
         user-select: none;
+      }
+      /* The intro tiles: the section icon tile, three times, lying in
+         perspective. Each one floats on its own beat, lifts toward the
+         reader on hover and dips like a key when pressed. */
+      #intro-img.salmon-intro-tiles {
+        display: flex;
+        justify-content: center;
+        gap: 12vw;
+        height: auto;
+        margin-top: -4vw !important;
+        padding: 0 0 6vw;
+        perspective: 70vw;
+        perspective-origin: 50% -20%;
+      }
+      .salmon-intro-tile {
+        flex: 0 0 30vw;
+        transform-style: preserve-3d;
+        animation: salmon-tile-float 6s ease-in-out infinite;
+      }
+      .salmon-intro-tile:nth-child(2) { animation-delay: -2s; }
+      .salmon-intro-tile:nth-child(3) { animation-delay: -4s; }
+      @keyframes salmon-tile-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-0.8vw); }
+      }
+      .salmon-intro-tile .salmon-intro-face {
+        width: 30vw !important;
+        height: 30vw !important;
+        border-radius: 22%;
+        background: linear-gradient(160deg, #fff7f4 0%, #fbeeee 100%) !important;
+        box-shadow:
+          0 1.1vw 0 #ffffff,
+          0 1.3vw 0 rgba(16,19,28,.05),
+          0 7vw 6vw rgba(16,19,28,.16) !important;
+        transform: rotateX(68deg);
+        transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1), background .5s;
+        cursor: pointer;
+      }
+      .salmon-intro-tile .salmon-intro-face svg {
+        width: 34% !important;
+        height: 34% !important;
+        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
+      }
+      @media (hover: hover) {
+        .salmon-intro-tile:hover .salmon-intro-face {
+          transform: rotateX(60deg) translateZ(2.2vw);
+          background: linear-gradient(160deg, #ffffff 0%, #ffe9e4 100%) !important;
+          box-shadow:
+            0 1.1vw 0 #ffffff,
+            0 0 0 .15vw rgba(255,92,69,.35),
+            0 1.3vw 0 rgba(16,19,28,.05),
+            0 11vw 9vw rgba(16,19,28,.12),
+            0 0 6vw rgba(255,92,69,.22) !important;
+        }
+        .salmon-intro-tile:hover .salmon-intro-face svg {
+          transform: scale(1.08);
+          filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
+        }
+      }
+      .salmon-intro-tile .salmon-intro-face:active {
+        transform: rotateX(68deg) translateZ(-1vw);
+        transition-duration: .12s;
+        box-shadow:
+          0 .4vw 0 #ffffff,
+          0 3vw 3vw rgba(16,19,28,.16) !important;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .salmon-intro-tile { animation: none; }
+        .salmon-intro-tile .salmon-intro-face,
+        .salmon-intro-tile .salmon-intro-face svg { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
