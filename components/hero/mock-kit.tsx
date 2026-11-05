@@ -445,9 +445,12 @@ export function KeyValueRow({
   value,
   action,
   tone = 'primary',
+  wrap = false,
 }: {
   label: string;
   value: string;
+  /** Let a long value break onto more lines instead of truncating. */
+  wrap?: boolean;
   /** labelAction, e.g. "Change" beside "Amount". */
   action?: string;
   tone?: 'primary' | 'secondary' | 'success' | 'danger';
@@ -459,7 +462,7 @@ export function KeyValueRow({
     danger: COLORS.changeNegative,
   }[tone];
   return (
-    <div className="flex items-center justify-between" style={{ gap: u(12) }}>
+    <div className={`flex justify-between ${wrap ? 'items-start' : 'items-center'}`} style={{ gap: u(12) }}>
       <span className="flex shrink-0 items-center" style={{ gap: u(8) }}>
         <span className="font-medium" style={{ fontSize: u(14), lineHeight: u(19.6), color: COLORS.textSecondary }}>
           {label}
@@ -471,7 +474,7 @@ export function KeyValueRow({
         )}
       </span>
       <span
-        className="truncate text-right font-bold"
+        className={`${wrap ? '' : 'truncate '}text-right font-bold`}
         style={{ ...tabular, fontSize: u(14), lineHeight: u(19.6), color: toneColor }}
       >
         {value}

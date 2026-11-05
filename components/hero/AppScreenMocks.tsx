@@ -79,14 +79,22 @@ export function SwapReviewMock() {
         </div>
         <div className="flex flex-col" style={{ ...cardStyle, gap: u(12), marginBottom: u(20) }}>
           <KeyValueRow label="Rate" value="1 SOL ≈ 163.50 USDC" />
-          <KeyValueRow label="Salmon fee" value="0.82 USDC (0.5%), taken from what you receive" />
+          <KeyValueRow label="Salmon fee" value="0.82 USDC (0.5%), taken from what you receive" wrap />
+          <KeyValueRow label="Provider fee" value="0.1%" />
           <KeyValueRow label="Minimum received" value="161.87 USDC" />
           <div className="flex items-center justify-between">
             <span className="font-medium" style={{ fontSize: u(14), lineHeight: u(19.6), color: COLORS.textSecondary }}>
               Details
             </span>
-            <CaretDownIcon size={u(16)} color={COLORS.textSecondary} />
+            <span style={{ display: 'flex', transform: 'rotate(180deg)' }}>
+              <CaretDownIcon size={u(16)} color={COLORS.textSecondary} />
+            </span>
           </div>
+          <KeyValueRow label="Max slippage" value="0.5%" />
+          <KeyValueRow label="Price impact" value="0.02%" />
+          <KeyValueRow label="Route" value="Jupiter" />
+          <KeyValueRow label="Pay mint" value="So1111...111112" />
+          <KeyValueRow label="Receive mint" value="EPjFWd...yTDt1v" />
         </div>
         <p className="text-center font-medium" style={{ fontSize: u(12), color: COLORS.textTertiary }}>
           Powered by Jupiter

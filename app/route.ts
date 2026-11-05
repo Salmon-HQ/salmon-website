@@ -279,7 +279,6 @@ const introRowHtml = `<div class=salmon-intro-marquee><div class=salmon-intro-tr
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
   { screen: 'payments', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
-  { screen: 'receive', title: 'Receive', powerup: false, alt: 'Receive screen in Salmon: Solana address QR code with a network warning', copy: 'Share your address as a QR code. The network is named, so funds arrive on the right chain.' },
   { screen: 'activity', title: 'Activity', powerup: false, alt: 'Activity in Salmon: sent and received transactions grouped by day', copy: 'Every transaction, grouped by day and filtered by type.' },
   { screen: 'nfts', title: 'NFTs', powerup: false, alt: 'NFT grid in Salmon showing generative art collectibles', copy: 'Your collectibles in one grid, right next to your tokens.' },
   { screen: 'token', title: 'Token details', powerup: false, alt: 'Solana token detail in Salmon: price chart and market data', copy: 'Price chart, market data and an overview for every token you hold.' },
@@ -1163,7 +1162,7 @@ export async function GET(request: Request) {
       .salmon-screens-list {
         --bezel: .82vw;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 4vw 3vw;
         max-width: 72vw;
         margin: 6vw auto 0;
@@ -1171,6 +1170,9 @@ export async function GET(request: Request) {
         list-style: none;
       }
       .salmon-screens-list figure { margin: 0; }
+      /* Five screens: three on top, two centred under them. */
+      .salmon-screens-list li { grid-column: span 2; }
+      .salmon-screens-list li:nth-child(4) { grid-column: 2 / span 2; }
       .salmon-screens-phone {
         overflow: hidden;
         width: calc(100% - 2 * var(--bezel));
@@ -1246,7 +1248,7 @@ export async function GET(request: Request) {
           scrollbar-width: none;
         }
         .salmon-screens-list::-webkit-scrollbar { display: none; }
-        .salmon-screens-list li { scroll-snap-align: start; }
+        .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
         #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
