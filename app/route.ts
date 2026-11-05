@@ -929,7 +929,7 @@ export async function GET(request: Request) {
 
         var heroClosing = document.querySelector('#hero .p p');
         if (heroClosing) {
-          heroClosing.innerHTML = 'A community-owned Solana wallet that expands through optional Powerups. <span class="salmon-copy-accent">Lightweight by default.</span> <span class="salmon-copy-soft">Modular when useful.</span> <span class="salmon-copy-deep">Open where it matters.</span>';
+          heroClosing.innerHTML = 'A community-driven Solana wallet that expands through optional Powerups. <span class="salmon-copy-accent">Lightweight by default.</span> <span class="salmon-copy-soft">Modular when useful.</span> <span class="salmon-copy-deep">Open where it matters.</span>';
         }
 
         var introItems = document.querySelectorAll('#intro-list > li');
