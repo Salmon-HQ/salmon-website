@@ -545,33 +545,8 @@ export async function GET(request: Request) {
         border: 0;
         pointer-events: none;
       }
-      /* Powerup screens sit above the placeholder, which shows only while an image is missing. */
-      #program .card-content-screen::after {
-        z-index: 0 !important;
-      }
-      #program .card-content-screen > img {
-        z-index: 1;
-        height: 100%;
-        object-fit: cover;
-      }
-      #program .card-content-screen::after {
-        content: "Mobile placeholder";
-        position: absolute;
-        inset: 0;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        border: 1px solid rgba(255,255,255,.1);
-        background: #161c2d;
-        color: #8a8d98;
-        font-family: "DM Sans", system-ui, sans-serif;
-        font-size: clamp(8px, .82vw, 12px);
-        font-weight: 500;
-        letter-spacing: .16em;
-        text-transform: uppercase;
-      }
+      /* Empty markers the template fades per step; the phone mock reads them. */
+      .salmon-step-marker { display: none; }
       #shop, #shop * {
         position: static !important;
         height: 0 !important;
@@ -1137,23 +1112,39 @@ export async function GET(request: Request) {
           powerupsGridImage.alt = 'Salmon Powerups';
         }
 
-        // One image per scroll step. The template calls play()/pause() on the
-        // first two screens, so the images get no-op versions of both.
-        var powerupsScreens = document.querySelectorAll('#program .card-content-screen > *');
-        [
-          { src: '/powerups/step1.png', alt: 'Powerups list in Salmon' },
-          { src: '/powerups/step2.png', alt: 'Swap Powerup turned on' },
-          { src: '/powerups/step3.png', alt: 'Swap tab added to the wallet' }
-        ].forEach(function (screen, index) {
-          var current = powerupsScreens[index];
-          if (!current) return;
-          var img = document.createElement('img');
-          img.src = screen.src;
-          img.alt = screen.alt;
-          img.onerror = function () { img.style.display = 'none'; };
-          img.play = img.pause = function () {};
-          current.replaceWith(img);
-        });
+        // The template fades one child of the screen per scroll step and calls
+        // play()/pause() on the first two. The children become empty markers
+        // with no-op media methods, and the step whose marker is shown is sent
+        // to the phone mock, which animates the Powerups flow to that state.
+        var powerupsScreen = document.querySelector('#program .card-content-screen');
+        if (powerupsScreen) {
+          var markers = Array.prototype.slice.call(powerupsScreen.children, 0, 3).map(function (current) {
+            var marker = document.createElement('div');
+            marker.className = 'salmon-step-marker';
+            marker.play = marker.pause = function () {};
+            current.replaceWith(marker);
+            return marker;
+          });
+          powerupsScreen.classList.add('salmon-phone-screen');
+          var flowFrame = document.createElement('iframe');
+          flowFrame.src = '/phone-preview?flow=powerups';
+          flowFrame.title = 'Turning on the Swap Powerup in Salmon';
+          flowFrame.tabIndex = -1;
+          powerupsScreen.appendChild(flowFrame);
+
+          var sentStep = -1;
+          var sendStep = function () {
+            var step = 0;
+            markers.forEach(function (marker, index) {
+              if (marker.style.opacity === '1') step = index + 1;
+            });
+            if (step === sentStep || !flowFrame.contentWindow) return;
+            sentStep = step;
+            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-step', step: step }, window.location.origin);
+          };
+          new MutationObserver(sendStep).observe(powerupsScreen, { attributes: true, subtree: true, attributeFilter: ['style'] });
+          flowFrame.addEventListener('load', function () { sentStep = -1; sendStep(); });
+        }
 
         var salmonHeading = document.querySelector('#salmon > h2');
         var ownershipIcon = document.querySelector('#salmon .section-rectangle');

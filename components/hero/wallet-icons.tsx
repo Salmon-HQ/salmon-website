@@ -112,3 +112,56 @@ export function FadersIcon({ size, color }: IconProps) {
     </svg>
   );
 }
+
+/** Phosphor ArrowsLeftRight — the Swap Powerup's mark (swap/manifest.ts). */
+export function ArrowsLeftRightIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, bold ? 24 : 16)}>
+        <polyline points="176 144 208 176 176 208" />
+        <line x1="48" y1="176" x2="208" y2="176" />
+        <polyline points="80 112 48 80 80 48" />
+        <line x1="208" y1="80" x2="48" y2="80" />
+      </g>
+    </svg>
+  );
+}
+
+/** Phosphor QrCode — the Payments Powerup's mark (payments/manifest.ts). */
+export function QrCodeIcon({ size, color, bold }: IconProps & { bold?: boolean }) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, bold ? 24 : 16)}>
+        <rect x="48" y="48" width="64" height="64" rx="8" />
+        <rect x="48" y="144" width="64" height="64" rx="8" />
+        <rect x="144" y="48" width="64" height="64" rx="8" />
+        <line x1="144" y1="144" x2="144" y2="176" />
+        <polyline points="144 208 176 208 176 144" />
+        <line x1="176" y1="160" x2="208" y2="160" />
+        <line x1="208" y1="192" x2="208" y2="208" />
+      </g>
+    </svg>
+  );
+}
+
+export function CaretRightIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color)}>
+        <polyline points="96 48 176 128 96 208" />
+      </g>
+    </svg>
+  );
+}
+
+/** The Powerups FAB glyph, bold like every accent-filled control. */
+export function PlusIcon({ size, color }: IconProps) {
+  return (
+    <svg {...svgProps(size)} viewBox="0 0 256 256">
+      <g {...strokeProps(color, 24)}>
+        <line x1="40" y1="128" x2="216" y2="128" />
+        <line x1="128" y1="40" x2="128" y2="216" />
+      </g>
+    </svg>
+  );
+}
