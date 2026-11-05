@@ -28,7 +28,7 @@ La base de la aleta (donde nacen los radios) apoya sobre la pantalla cerca del b
 2. Doblez: una curva guía que nace en la pantalla, rodea el borde con margen y barre por detrás. Cada punto se ubica sobre la curva (Sample Curve) con un ancho y un giro que dependen de `v`.
 3. Los radios arrancan sobre un arco de 2–3 mm, no en un punto, y un pequeño volumen carnoso tapa el arranque. El giro entra suave.
 4. Sin choques: el celular es una caja con medidas exactas; un control de distancia (Geometry Proximity) empuja hacia afuera lo que quede a menos del margen.
-5. Material: membrana con Principled BSDF `Thin Wall` (entrada verificada), transmisión alta; radios como tubos vidriosos con capa brillante; pigmento oscuro por `v` y a lo largo de los radios.
+5. Material: membrana como una sola superficie con transmisión alta e IOR bajo (1.1). `Thin Wall` existe pero Cycles cuenta su transmisión como difusa y la membrana sale opaca sobre fondo transparente (probado: opacidad 0.79 con Thin Wall, 0.55 sin); radios como tubos vidriosos con capa brillante; pigmento oscuro por `v` y a lo largo de los radios.
 6. Render Cycles con GPU Metal, fondo transparente y `film_transparent_glass` (verificado), AgX, ruido adaptativo, rebotes de transmisión altos. Comparar siempre con el render sin quitar ruido.
 7. Capas para la web, de atrás hacia adelante: aleta de atrás, celular (pantalla viva en iframe), sombra sobre la pantalla (`mix-blend-mode: multiply`), aleta de adelante. Cada una es un view layer con el celular como holdout o recibidor de sombra.
 8. Cámara de lente larga con distancia y desplazamiento calculados para que la pantalla del render calce al píxel con la del sitio. Render al doble de resolución; salida WebP con alfa.

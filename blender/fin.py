@@ -124,6 +124,76 @@ def material(name, color, roughness=0.5, transmission=0.0, thin=False):
     return m
 
 
+def membrane_material():
+    """Real pectoral colour: translucent and pale near the base, dusky toward
+    the margin, the pigment gathering along the rays first."""
+    # A single surface with a low IOR, not Thin Wall: Cycles counts Thin Wall
+    # transmission as diffuse, so it never reaches the render's alpha and the
+    # membrane comes out opaque on a transparent film.
+    m = material("Membrane", (1, 1, 1), 0.08, transmission=0.95)
+    nodes, links = m.node_tree.nodes, m.node_tree.links
+    bsdf = nodes["Principled BSDF"]
+    bsdf.inputs["IOR"].default_value = 1.1
+    bsdf.inputs["Sheen Weight"].default_value = 0.15
+
+    v = nodes.new("ShaderNodeAttribute")
+    v.attribute_name = "v"
+    w = nodes.new("ShaderNodeAttribute")
+    w.attribute_name = "w"
+    ramp = nodes.new("ShaderNodeValToRGB")
+    stops = ramp.color_ramp.elements
+    stops[0].color = (0.86, 0.80, 0.74, 1)
+    stops[1].position = 1.0
+    stops[1].color = (0.16, 0.17, 0.19, 1)
+    middle = stops.new(0.55)
+    middle.color = (0.52, 0.51, 0.51, 1)
+    links.new(v.outputs["Fac"], ramp.inputs["Fac"])
+
+    # Distance to the nearest ray: 0 on a ray, 1 halfway between two.
+    near_ray = nodes.new("ShaderNodeMath")
+    near_ray.operation = "MULTIPLY"
+    near_ray.inputs[1].default_value = math.pi * (RAYS - 1)
+    links.new(w.outputs["Fac"], near_ray.inputs[0])
+    sine = nodes.new("ShaderNodeMath")
+    sine.operation = "SINE"
+    links.new(near_ray.outputs[0], sine.inputs[0])
+    between = nodes.new("ShaderNodeMath")
+    between.operation = "ABSOLUTE"
+    links.new(sine.outputs[0], between.inputs[0])
+    on_ray = nodes.new("ShaderNodeMath")
+    on_ray.operation = "SUBTRACT"
+    on_ray.inputs[0].default_value = 1.0
+    links.new(between.outputs[0], on_ray.inputs[1])
+    # Only a thin line beside each ray carries pigment.
+    thin_line = nodes.new("ShaderNodeMath")
+    thin_line.operation = "POWER"
+    thin_line.inputs[1].default_value = 8.0
+    links.new(on_ray.outputs[0], thin_line.inputs[0])
+    on_ray = thin_line
+    # Pigment = closeness to a ray x how far out along it.
+    pigment = nodes.new("ShaderNodeMath")
+    pigment.operation = "MULTIPLY"
+    links.new(on_ray.outputs[0], pigment.inputs[0])
+    links.new(v.outputs["Fac"], pigment.inputs[1])
+    mix = nodes.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    mix.blend_type = "MULTIPLY"
+    links.new(pigment.outputs[0], mix.inputs["Factor"])
+    links.new(ramp.outputs["Color"], mix.inputs["A"])
+    mix.inputs["B"].default_value = (0.35, 0.33, 0.33, 1)
+    links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
+    return m
+
+
+def ray_material():
+    """Glassy bone: denser than the membrane, so slightly darker, with a lit rim."""
+    m = material("Ray", (0.42, 0.40, 0.39), 0.12, transmission=0.55)
+    bsdf = m.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["IOR"].default_value = 1.45
+    bsdf.inputs["Coat Weight"].default_value = 0.4
+    return m
+
+
 def build_phone():
     bpy.ops.mesh.primitive_cube_add(size=1)
     body = bpy.context.object
@@ -150,7 +220,7 @@ def build_phone():
     screen.data.materials.append(material("Screen", (0.01, 0.012, 0.018), 0.15))
 
 
-def build_fin(fin_material):
+def build_fin(membrane_mat, ray_mat):
     samples_t = 160
     columns = (RAYS - 1) * 4 + 1
     verts, faces = [], []
@@ -166,9 +236,13 @@ def build_fin(fin_material):
     mesh = bpy.data.meshes.new("Membrane")
     mesh.from_pydata([tuple(v) for v in verts], [], faces)
     mesh.shade_smooth()
+    # The fan parameters for the shader: w across the rays, v along them.
+    for name, value in (("w", lambda i: (i // samples_t) / (columns - 1)), ("v", lambda i: (i % samples_t) / (samples_t - 1))):
+        attribute = mesh.attributes.new(name, "FLOAT", "POINT")
+        attribute.data.foreach_set("value", [value(i) for i in range(len(verts))])
     membrane = bpy.data.objects.new("Membrane", mesh)
     bpy.context.collection.objects.link(membrane)
-    membrane.data.materials.append(fin_material)
+    membrane.data.materials.append(membrane_mat)
 
     curve = bpy.data.curves.new("Rays", "CURVE")
     curve.dimensions = "3D"
@@ -184,7 +258,7 @@ def build_fin(fin_material):
             point.radius = lerp(1.6, 0.25, t)
     rays = bpy.data.objects.new("Rays", curve)
     bpy.context.collection.objects.link(rays)
-    rays.data.materials.append(fin_material)
+    rays.data.materials.append(ray_mat)
 
 
 def aim(obj, target=Vector((0, 0, 0))):
@@ -201,13 +275,16 @@ def build_scene():
     prefs.get_devices()
     for device in prefs.devices:
         device.use = True
-    scene.cycles.samples = 96
+    scene.cycles.samples = 256
+    scene.cycles.transmission_bounces = 16
+    scene.cycles.transparent_max_bounces = 24
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = FRAME_PX
     scene.render.image_settings.media_type = "IMAGE"
     scene.render.image_settings.file_format = "PNG"
     scene.render.film_transparent = True
     scene.cycles.film_transparent_glass = True
+    scene.cycles.film_transparent_roughness = 0.3
 
     world = bpy.data.worlds.new("World")
     scene.world = world
@@ -216,7 +293,7 @@ def build_scene():
     bg.inputs["Strength"].default_value = 1.0 if BACKGROUND == "white" else 0.6
 
     build_phone()
-    build_fin(material("Clay", (0.72, 0.72, 0.72), 0.55))
+    build_fin(membrane_material(), ray_material())
 
     # The camera frames exactly the concept image, so the two overlay.
     centre_x, centre_z = from_px(FRAME_PX[0] / 2, FRAME_PX[1] / 2)
@@ -235,7 +312,7 @@ def build_scene():
 
     for name, location, energy, size in (
         ("Key", (-300, -500, 350), 9e6, 400),
-        ("Rim", (250, 450, 200), 6e6, 300),
+        ("Rim", (150, 600, 50), 1.4e7, 400),
         ("Fill", (400, -400, -200), 2.5e6, 500),
     ):
         light = bpy.data.lights.new(name, "AREA")
@@ -259,5 +336,5 @@ def count_inside_phone(samples=200):
 
 print(f"FIN CHECK points inside the phone: {count_inside_phone()}")
 build_scene()
-bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-stage1-{BACKGROUND}.png"
+bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{BACKGROUND}.png"
 bpy.ops.render.render(write_still=True)
