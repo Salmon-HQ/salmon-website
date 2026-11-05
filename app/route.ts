@@ -247,55 +247,6 @@ const screensSectionHtml = `<section id=screens class=section aria-labelledby=sc
   ).join('')}</ul>
 </section>`;
 
-// Visible answers matter more than markup for search and AI answers: Google
-// retired FAQ rich results in May 2026, so there is no FAQPage JSON-LD.
-const FAQ = [
-  ['What is Salmon?', 'Salmon is an open-source, self-custodial Solana wallet for mobile and browser. It starts lightweight and expands through optional Powerups.'],
-  ['Where can I get Salmon?', `Salmon is available as a <a href="${STORES[0].href}" target="_blank" rel="noopener noreferrer">browser extension for Chrome</a> and as an app for <a href="${STORES[1].href}" target="_blank" rel="noopener noreferrer">iOS</a>, <a href="${STORES[2].href}" target="_blank" rel="noopener noreferrer">Android</a> and the Solana Seeker.`],
-  ['What is a Powerup?', 'A Powerup is an optional capability, such as Swap or Payments, that extends Salmon only when you choose to turn it on.'],
-  ['Who holds my keys?', 'You do. Salmon is self-custodial: only you hold your recovery phrase and private keys.'],
-  ['Is Salmon open source?', 'Yes. Salmon’s code is public on <a href="https://github.com/Salmon-HQ" target="_blank" rel="noopener noreferrer">GitHub</a>, and product development happens in the open.'],
-];
-
-const faqSectionHtml = `<section id=faq> <h2>Salmon FAQs</h2> <ul>${FAQ.map(
-  ([question, answer], index) =>
-    `<li class="faq-li${index === 0 ? ' on' : ''}"> <h3 class=faq-list-title> ${question} <span class=faq-list-arrow> <svg> <use xlink:href=#svg-faq-arrow></use> </svg> </span> </h3> <p class=faq-list-p>${answer}</p> </li>`,
-).join('')}</ul> </section>`;
-
-const SITE_URL = 'https://www.salmonwallet.io';
-
-const structuredData = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: 'Salmon Wallet',
-      url: SITE_URL,
-      logo: `${SITE_URL}/images/app-icon.png`,
-      sameAs: [...SOCIALS.map((social) => social.href), ...STORES.slice(0, 3).map((store) => store.href)],
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      name: 'Salmon',
-      url: SITE_URL,
-      publisher: { '@id': `${SITE_URL}/#organization` },
-    },
-    {
-      '@type': 'MobileApplication',
-      name: 'Salmon',
-      description: 'An open-source, self-custodial Solana wallet for mobile and browser that expands through optional Powerups.',
-      applicationCategory: 'FinanceApplication',
-      operatingSystem: 'iOS, Android, Chrome',
-      url: SITE_URL,
-      downloadUrl: STORES.slice(0, 3).map((store) => store.href),
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-      publisher: { '@id': `${SITE_URL}/#organization` },
-    },
-  ],
-};
-
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   let html: string;
@@ -346,24 +297,21 @@ export async function GET(request: Request) {
   const validatorSection = renderValidatorSection(await getValidatorStats());
   const withValidator = withScreens.replace(
     /<section id=faq>[\s\S]*?<\/section>/,
-    () => `${validatorSection}${faqSectionHtml}`,
+    () => validatorSection,
   );
   const overrides = `
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5">
     <meta name="theme-color" content="#ff5c45">
-    <meta name="description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
+    <meta name="description" content="A lightweight Solana wallet that expands through optional Powerups.">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Salmon — One wallet. Only what you need.">
-    <meta property="og:description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
+    <meta property="og:description" content="A lightweight Solana wallet that expands through optional Powerups.">
     <meta property="og:image" content="${origin}/images/sharing-og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Salmon — One wallet. Only what you need.">
-    <meta name="twitter:description" content="Salmon is an open-source, self-custodial Solana wallet for iOS, Android and Chrome that expands through optional Powerups.">
+    <meta name="twitter:description" content="A lightweight Solana wallet that expands through optional Powerups.">
     <meta name="twitter:image" content="${origin}/images/sharing-og.png">
-    <link rel="canonical" href="${SITE_URL}/">
-    <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">
-    <script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, '\\u003c')}</script>
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
     <title>Salmon — One wallet. Only what you need.</title>
@@ -1100,8 +1048,6 @@ export async function GET(request: Request) {
         font-weight: 600;
         letter-spacing: .02em;
       }
-      #faq .faq-list-title { margin: 0; font-weight: inherit; }
-      #faq .faq-list-p a { color: #ff5c45; }
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #footer-top.salmon-footer { grid-template-columns: 1fr; gap: 64px; padding: 48px 6.15vw 0 !important; }
