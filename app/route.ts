@@ -961,10 +961,26 @@ export async function GET(request: Request) {
       /* The intro tiles: the section icon tile, three times, lying in
          perspective. Each one floats on its own beat, lifts toward the
          reader on hover and dips like a key when pressed. */
+      /* Each word sits on its tile's column: same widths, same gap, centred. */
+      #intro-list {
+        display: grid !important;
+        grid-template-columns: repeat(3, 26vw);
+        column-gap: 6vw;
+        justify-content: center;
+      }
+      #intro-list li {
+        position: static !important;
+        text-align: center;
+        white-space: nowrap;
+      }
+      /* In perspective a side tile's face centre (where its icon sits) lands
+         0.37vw inside its column; the word follows the face. */
+      #intro-list li:first-child { transform: translateX(-0.37vw); }
+      #intro-list li:last-child { transform: translateX(0.37vw); }
       #intro-img.salmon-intro-tiles {
         display: flex;
         justify-content: center;
-        gap: 12vw;
+        gap: 6vw;
         height: auto;
         margin-top: -4vw !important;
         padding: 0 0 6vw;
@@ -972,7 +988,7 @@ export async function GET(request: Request) {
         perspective-origin: 50% -20%;
       }
       .salmon-intro-tile {
-        flex: 0 0 30vw;
+        flex: 0 0 26vw;
         transform-style: preserve-3d;
         animation: salmon-tile-float 6s ease-in-out infinite;
       }
@@ -983,8 +999,8 @@ export async function GET(request: Request) {
         50% { transform: translateY(-0.8vw); }
       }
       .salmon-intro-tile .salmon-intro-face {
-        width: 30vw !important;
-        height: 30vw !important;
+        width: 26vw !important;
+        height: 26vw !important;
         border-radius: 22%;
         background: linear-gradient(160deg, #fff7f4 0%, #fbeeee 100%) !important;
         box-shadow:
