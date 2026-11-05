@@ -297,6 +297,9 @@ export async function GET(request: Request) {
       @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-500.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
       @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-600.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
       @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-700.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+      /* Without the black section the page background shows; keep it white
+         rather than leaving it to the browser's default canvas. */
+      html { background: #fff; }
       html, body, button, input, textarea, select,
       h1, h2, h3, h4, h5, h6, p, a, li, div, span {
         font-family: "DM Sans", system-ui, sans-serif !important;
@@ -327,11 +330,9 @@ export async function GET(request: Request) {
         letter-spacing: -0.04em;
         transition: color .2s cubic-bezier(.215,.61,.355,1);
       }
-      /* The template toggles .fx over the black #salmon section and .hide over
-         the footer; the original SVG logo handled both, the custom one did not. */
+      /* The template toggles .fx over #salmon (no longer black, so it changes
+         nothing) and .hide over the footer. */
       #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
-      #nav-logo.fx::after { color: #fff; }
-      #nav-logo.fx .salmon-reference-wordmark { filter: invert(1); }
       #nav-logo.hide { opacity: 0; pointer-events: none; }
       #nav-logo .salmon-reference-mark {
         display: block;
@@ -452,13 +453,12 @@ export async function GET(request: Request) {
         height: 3.6vw !important;
       }
       #program > h2,
-      #salmon > h2 {
+      #salmon-card-0 > h2 {
         padding-top: 1.8vw !important;
         font-size: 7vw !important;
         line-height: 1 !important;
       }
-      #program .card,
-      #salmon-card-0 {
+      #program .card {
         margin-top: 5vw !important;
       }
       #program .card-content-screen > video:first-child {
@@ -550,8 +550,24 @@ export async function GET(request: Request) {
         overflow: hidden !important;
         visibility: hidden !important;
       }
+      /* Real ownership is no longer a black section: the icon and title move
+         into the Own it twice card and Get Salmon sits below as its own card. */
       #salmon {
+        margin-top: 0 !important;
         padding-bottom: calc(64px + 24px);
+        background-color: transparent !important;
+        color: #10131c !important;
+      }
+      #salmon .card-content {
+        background-color: transparent !important;
+      }
+      #salmon-card-0 {
+        margin-top: 0 !important;
+        padding-top: 6vw !important;
+        color: #fff;
+      }
+      #salmon-card-0 > p {
+        margin-top: 3vw !important;
       }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
@@ -929,8 +945,12 @@ export async function GET(request: Request) {
         #program.section, #salmon.section { padding-top: 14vw !important; }
         #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
-        #program > h2, #salmon > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
-        #program .card, #salmon-card-0 { margin-top: 10vw !important; }
+        #program > h2, #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #program .card { margin-top: 10vw !important; }
+        #salmon-card-0 { padding-top: 12vw !important; }
+        /* The card is narrower than the page, so the title shrinks to stay on one line. */
+        #salmon-card-0 > h2 { font-size: 13vw !important; }
+        #salmon-card-0 > p { margin-top: 8vw !important; }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
         #salmon-card-1 .salmon-get-title { margin-bottom: 14px; }
         #salmon-card-1 .salmon-get-subtitle { margin-bottom: 48px; }
@@ -1048,6 +1068,10 @@ export async function GET(request: Request) {
 
         var ownershipIntro = document.querySelector('#salmon-card-0 > p');
         if (ownershipIntro) ownershipIntro.innerHTML = 'Own it twice. <span>Own the wallet. Own the experience.</span>';
+
+        var ownershipCard = document.querySelector('#salmon-card-0');
+        if (ownershipCard && salmonHeading) ownershipCard.prepend(salmonHeading);
+        if (ownershipCard && ownershipIcon) ownershipCard.prepend(ownershipIcon);
 
         var parallaxCard = document.querySelector('#salmon-card-2');
         if (parallaxCard) parallaxCard.remove();
