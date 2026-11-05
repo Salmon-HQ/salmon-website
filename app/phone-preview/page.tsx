@@ -1,4 +1,4 @@
-import HomeScreenMock, { type MockStep } from '@/components/hero/HomeScreenMock';
+import HomeScreenMock, { FLOW_BEATS, STEP_BEAT, type MockStep } from '@/components/hero/HomeScreenMock';
 import PowerupsFlowMock from '@/components/hero/PowerupsFlowMock';
 
 // ?flow=powerups is the Powerups phone, driven by the landing's scroll;
@@ -13,7 +13,7 @@ export default async function PhonePreview({
 
   return (
     <main className="@container fixed inset-0 overflow-hidden bg-[#10131c]">
-      {flow === 'powerups' ? <PowerupsFlowMock initialStep={pinned} /> : <HomeScreenMock step={pinned} />}
+      {flow === 'powerups' ? <PowerupsFlowMock initialStep={pinned} /> : <HomeScreenMock state={FLOW_BEATS[STEP_BEAT[pinned]].state} />}
     </main>
   );
 }
