@@ -633,7 +633,19 @@ export async function GET(request: Request) {
          front one over its live screen. The numbers are the script's "FIN CSS"
          output divided by the phone's 18.75vw width, so the fin follows the
          phone in both template sizings. */
-      #salmon-card-0-phone { --phone-w: 18.75vw; }
+      #salmon-card-0-phone {
+        --phone-w: 18.75vw;
+        /* Phone and fin float as one piece: a slow rise and a slight sway
+           around the phone's centre. */
+        animation: salmon-fin-float 7s ease-in-out infinite;
+      }
+      @keyframes salmon-fin-float {
+        0%, 100% { translate: 0 0; rotate: 0deg; }
+        50% { translate: 0 calc(-.06 * var(--phone-w)); rotate: -.8deg; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #salmon-card-0-phone { animation: none; }
+      }
       .shim-null #salmon-card-0-phone { --phone-w: 22.43vh; }
       #salmon-card-0-phone img.salmon-fin-back,
       #salmon-card-0-phone img.salmon-fin-front {
