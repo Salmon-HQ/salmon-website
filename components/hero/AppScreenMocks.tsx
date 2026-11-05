@@ -8,6 +8,7 @@ import {
   FleshBackground,
   IconBubble,
   KeyValueRow,
+  MOTION,
   PrimaryButton,
   ScreenGround,
   ScreenHeader,
@@ -653,3 +654,60 @@ export function TokenDetailMock() {
   );
 }
 
+
+// The app's wait (packages/ui LoadingScreen), looping for as long as it is on
+// screen: the mark sinks on `flick` and recovers on `tide`, and the crest is
+// thrown at the trough. Timing and paint are the dark theme's resolved values
+// from @salmon/shared motion/wavefront and motion/crest.
+const MARK_PATHS = [
+  'M189.676 53.962C177.731 46.79 165.138 41.69 152.196 38.81L138.484 8.296C138.484 8.296 134.876 0 126.323 0C117.771 0 114.516 8.296 114.516 8.296L100.804 38.791C87.839 41.69 75.208 46.809 63.247 53.981C39.474 100.136 33.034 145.129 36.254 189.494C50.181 202.986 108.376 237 126.323 237C144.271 237 202.819 202.986 216.746 189.494C219.966 145.129 213.522 100.136 189.753 53.981L189.676 53.962ZM101.277 147.338C93.79 147.338 87.604 138.411 87.604 127.421C87.604 116.427 93.575 107.427 101.239 107.427C108.899 107.427 115.047 116.427 114.908 127.421C114.774 138.411 108.88 147.338 101.258 147.338L101.277 147.338ZM151.684 147.338C144.178 147.338 138.03 138.411 138.03 127.421C138.03 116.427 144.001 107.427 151.684 107.427C159.364 107.427 165.454 116.427 165.315 127.421C165.181 138.411 159.306 147.338 151.684 147.338Z',
+  'M251.919 167.526L234.356 112.174C232.196 105.4 225.929 100.793 218.817 100.793C216.696 100.793 214.633 101.206 212.727 101.974C220.742 128.656 223.964 157.444 221.45 188.812L236.36 188.812C247.401 188.812 255.239 178.061 251.9 167.526L251.919 167.526Z',
+  'M1.081 167.526L18.644 112.174C20.804 105.4 27.071 100.793 34.183 100.793C36.304 100.793 38.367 101.206 40.273 101.974C32.258 128.656 29.036 157.444 31.55 188.812L16.64 188.812C5.599 188.812 -2.239 178.061 1.1 167.526L1.081 167.526Z',
+];
+
+const CREST_GRADIENT =
+  'radial-gradient(circle closest-side, transparent 0%, rgba(255, 92, 69, 0.000) 70.00%, rgba(255, 92, 69, 0.050) 70.85%, rgba(255, 92, 69, 0.050) 72.15%, rgba(255, 92, 69, 0.050) 73.55%, rgba(255, 92, 69, 0.220) 74.20%, rgba(255, 92, 69, 0.050) 74.85%, rgba(255, 92, 69, 0.031) 76.25%, rgba(7, 9, 17, 0.558) 76.90%, rgba(255, 92, 69, 0.031) 77.55%, rgba(255, 92, 69, 0.031) 78.95%, rgba(255, 92, 69, 0.136) 79.60%, rgba(255, 92, 69, 0.031) 80.25%, rgba(255, 92, 69, 0.019) 81.65%, rgba(7, 9, 17, 0.346) 82.30%, rgba(255, 92, 69, 0.019) 82.95%, rgba(255, 92, 69, 0.019) 84.35%, rgba(255, 92, 69, 0.085) 85.00%, rgba(255, 92, 69, 0.019) 85.65%, rgba(255, 92, 69, 0.012) 87.05%, rgba(7, 9, 17, 0.214) 87.70%, rgba(255, 92, 69, 0.012) 88.35%, rgba(255, 92, 69, 0.012) 89.75%, rgba(255, 92, 69, 0.052) 90.40%, rgba(255, 92, 69, 0.012) 91.05%, rgba(255, 92, 69, 0.007) 92.45%, rgba(7, 9, 17, 0.133) 93.10%, rgba(255, 92, 69, 0.007) 93.75%, rgba(255, 92, 69, 0.007) 95.15%, rgba(255, 92, 69, 0.033) 95.80%, rgba(255, 92, 69, 0.007) 96.45%, rgba(255, 92, 69, 0.007) 97.85%, rgba(7, 9, 17, 0.133) 98.50%, rgba(255, 92, 69, 0.007) 99.15%, rgba(255, 92, 69, 0.000) 100.00%)';
+
+// period 2600 = cross 2000 + rest 600; sink 90, recover 720; crest fades from 0.85 of the cross.
+const WAIT_CSS = `
+@keyframes salmon-wait-sink {
+  0% { transform: scale(1); opacity: 1; animation-timing-function: ${MOTION.sink}; }
+  3.4615% { transform: scale(0.95); opacity: 0.88; animation-timing-function: ${MOTION.settle}; }
+  31.1538%, 100% { transform: scale(1); opacity: 1; }
+}
+@keyframes salmon-wait-crest {
+  0% { transform: translate(-50%, -50%) scale(0.02); opacity: 0; }
+  3.0769% { opacity: 1; }
+  65.3846% { opacity: 1; }
+  76.9231%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+.salmon-wait-mark { animation: salmon-wait-sink 2600ms linear infinite; }
+.salmon-wait-crest { animation: salmon-wait-crest 2600ms linear 90ms infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .salmon-wait-mark, .salmon-wait-crest { animation: none; }
+}`;
+
+/** The app's wait, mark only — no words, no tips. */
+export function LoadingMock() {
+  // The front reaches the farthest corner of the 440×956 screen: 2·hypot(220, 478).
+  const ring = u(1052.4);
+  return (
+    <Screen>
+      <style>{WAIT_CSS}</style>
+      <div
+        className="salmon-wait-crest absolute left-1/2 top-1/2 rounded-full"
+        style={{ width: ring, height: ring, background: CREST_GRADIENT, opacity: 0, transform: 'translate(-50%, -50%) scale(0)' }}
+      />
+      <div
+        className="salmon-wait-mark absolute left-1/2 top-1/2"
+        style={{ width: u(96), height: u(96), marginLeft: `calc(-1 * ${u(48)})`, marginTop: `calc(-1 * ${u(48)})`, color: COLORS.accentFill }}
+      >
+        <svg viewBox="0 0 253 237" fill="currentColor" className="block size-full">
+          {MARK_PATHS.map((d) => (
+            <path key={d} d={d} />
+          ))}
+        </svg>
+      </div>
+    </Screen>
+  );
+}

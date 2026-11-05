@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ActivityMock, PaymentRequestMock, ReceiveMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
+import { ActivityMock, LoadingMock, PaymentRequestMock, ReceiveMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
 import HomeScreenMock, { STEP_PROGRESS, flowState, type MockStep } from '@/components/hero/HomeScreenMock';
 import PowerupsFlowMock from '@/components/hero/PowerupsFlowMock';
 
@@ -10,6 +10,7 @@ const SCREENS: Record<string, ReactNode> = {
   receive: <ReceiveMock />,
   activity: <ActivityMock />,
   send: <SendReviewMock />,
+  loading: <LoadingMock />,
   token: <TokenDetailMock />,
 };
 
