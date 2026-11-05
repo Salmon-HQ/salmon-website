@@ -973,24 +973,22 @@ export async function GET(request: Request) {
         user-select: none;
       }
       /* Stake, Swap, Pay: three columns of the same width and gap, each a word
-         over its tile. The tiles share one perspective, so the side ones fan
-         out like the template's photo; a face turns about its own centre, so
-         its icon stays on the column's centre line, under its word. Each tile
-         floats on its own beat, lifts on hover and dips when pressed. */
+         over its tile. Every tile carries its own perspective (the transform's
+         perspective(), not a shared one on the row), so its vanishing point is
+         its own centre: the three read as the same slab, symmetric under their
+         words. Each tile floats on its own beat, lifts on hover and dips when
+         pressed. */
       .salmon-intro-row {
         display: grid;
         grid-template-columns: repeat(3, 30vw);
         column-gap: 12vw;
         justify-content: center;
         padding: 0 0 6vw;
-        perspective: 70vw;
-        perspective-origin: 50% 2.35vw;
       }
       .salmon-intro-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        transform-style: preserve-3d;
       }
       .salmon-intro-word {
         font-size: 9.79167vw;
@@ -1001,8 +999,8 @@ export async function GET(request: Request) {
       }
       .salmon-intro-tile {
         display: block;
-        margin-top: -1.22vw;
-        transform-style: preserve-3d;
+        /* The slab is laid out 30vw tall but lies flat, so it claims less room. */
+        margin-block: -6vw -4vw;
         animation: salmon-tile-float 6s ease-in-out infinite;
       }
       .salmon-intro-item:nth-child(2) .salmon-intro-tile { animation-delay: -2s; }
@@ -1020,7 +1018,7 @@ export async function GET(request: Request) {
           0 1.1vw 0 #ffffff,
           0 1.3vw 0 rgba(16,19,28,.05),
           0 7vw 6vw rgba(16,19,28,.16) !important;
-        transform: rotateX(68deg);
+        transform: perspective(50vw) rotateX(64deg);
         transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1), background .5s;
         cursor: pointer;
       }
@@ -1031,7 +1029,7 @@ export async function GET(request: Request) {
       }
       @media (hover: hover) {
         .salmon-intro-tile:hover .salmon-intro-face {
-          transform: rotateX(60deg) translateZ(2.2vw);
+          transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
           background: linear-gradient(160deg, #ffffff 0%, #ffe9e4 100%) !important;
           box-shadow:
             0 1.1vw 0 #ffffff,
@@ -1046,7 +1044,7 @@ export async function GET(request: Request) {
         }
       }
       .salmon-intro-face:active {
-        transform: rotateX(68deg) translateZ(-1vw);
+        transform: perspective(50vw) rotateX(64deg) translateZ(-1vw);
         transition-duration: .12s;
         box-shadow:
           0 .4vw 0 #ffffff,
