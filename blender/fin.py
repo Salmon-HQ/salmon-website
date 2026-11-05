@@ -20,6 +20,7 @@ from mathutils import Vector
 args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 OUT_DIR = args[0] if args else "/tmp"
 BACKGROUND = args[1] if len(args) > 1 else "white"
+SCALE = int(args[2]) if len(args) > 2 else 100  # resolution %, 200 for the site's 2x
 
 # The phone: the site's CSS phone (screen 240x510 px plus a 14.7 px bezel at a
 # 1440 px viewport) at 77 mm wide.
@@ -124,9 +125,48 @@ def material(name, color, roughness=0.5, transmission=0.0, thin=False):
     return m
 
 
+def math_node(nodes, operation, a=None, b=None):
+    node = nodes.new("ShaderNodeMath")
+    node.operation = operation
+    for i, value in enumerate((a, b)):
+        if isinstance(value, (int, float)):
+            node.inputs[i].default_value = value
+    return node
+
+
+def melanophores(nodes, links, v_socket):
+    """Pigment cells: dark specks about 1 mm apart, isotropic on the fin's
+    surface, varying in size, rarer near the base and denser toward the
+    margin. Returns a 0..1 coverage socket."""
+    coords = nodes.new("ShaderNodeTexCoord")
+    cells = nodes.new("ShaderNodeTexVoronoi")
+    cells.voronoi_dimensions = "3D"
+    cells.inputs["Scale"].default_value = 0.8  # the scene is in mm
+    links.new(coords.outputs["Object"], cells.inputs["Vector"])
+    # Each cell's own random size, scaled up as the fin darkens outward.
+    size = math_node(nodes, "MULTIPLY")
+    links.new(cells.outputs["Color"], size.inputs[0])
+    reach = nodes.new("ShaderNodeMapRange")
+    reach.inputs["To Min"].default_value = 0.05
+    reach.inputs["To Max"].default_value = 0.42
+    links.new(v_socket, reach.inputs["Value"])
+    links.new(reach.outputs["Result"], size.inputs[1])
+    # Soft edge: full pigment well inside the radius, none outside it.
+    inside = math_node(nodes, "SUBTRACT")
+    links.new(size.outputs[0], inside.inputs[0])
+    links.new(cells.outputs["Distance"], inside.inputs[1])
+    soft = nodes.new("ShaderNodeMapRange")
+    soft.inputs["From Min"].default_value = 0.0
+    soft.inputs["From Max"].default_value = 0.06
+    links.new(inside.outputs[0], soft.inputs["Value"])
+    return soft.outputs["Result"]
+
+
 def membrane_material():
     """Real pectoral colour, pigment pushed so it reads on the dark section:
-    translucent and pale near the base, dusky and denser toward the margin."""
+    translucent and pale near the base, dusky and denser toward the margin.
+    The dusk is made of melanophores, the surface carries fine collagen
+    striations along the rays, and iridophores give a faint thin-film sheen."""
     # A single surface with a low IOR, not Thin Wall: Cycles counts Thin Wall
     # transmission as diffuse, so it never reaches the render's alpha and the
     # membrane comes out opaque on a transparent film.
@@ -135,37 +175,74 @@ def membrane_material():
     bsdf = nodes["Principled BSDF"]
     bsdf.inputs["IOR"].default_value = 1.1
     bsdf.inputs["Sheen Weight"].default_value = 0.15
+    bsdf.inputs["Thin Film Thickness"].default_value = 320
+    bsdf.inputs["Thin Film IOR"].default_value = 1.33
 
     v = nodes.new("ShaderNodeAttribute")
     v.attribute_name = "v"
+    w = nodes.new("ShaderNodeAttribute")
+    w.attribute_name = "w"
     ramp = nodes.new("ShaderNodeValToRGB")
     stops = ramp.color_ramp.elements
-    stops[0].color = (0.86, 0.80, 0.74, 1)
+    stops[0].color = (0.88, 0.79, 0.74, 1)  # the pale, faintly fleshy base
     stops[1].position = 1.0
-    stops[1].color = (0.05, 0.055, 0.06, 1)
+    stops[1].color = (0.09, 0.095, 0.10, 1)
     # The visible part of the fan sits between v 0.2 and 0.7, so the dusk starts early.
-    for position, grey in ((0.3, 0.30), (0.7, 0.10)):
+    for position, grey in ((0.3, 0.36), (0.7, 0.16)):
         stops.new(position).color = (grey, grey, grey * 1.04, 1)
     links.new(v.outputs["Fac"], ramp.inputs["Fac"])
 
-    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    pigment = melanophores(nodes, links, v.outputs["Fac"])
+    speckled = nodes.new("ShaderNodeMix")
+    speckled.data_type = "RGBA"
+    speckled.blend_type = "MIX"
+    speckled.inputs["B"].default_value = (0.02, 0.018, 0.018, 1)
+    links.new(pigment, speckled.inputs["Factor"])
+    links.new(ramp.outputs["Color"], speckled.inputs["A"])
+    links.new(speckled.outputs["Result"], bsdf.inputs["Base Color"])
 
-    # Pigment also blocks light: the membrane is clear near the base and
-    # denser toward the margin.
-    density = nodes.new("ShaderNodeMapRange")
-    density.inputs["To Min"].default_value = 0.95
-    density.inputs["To Max"].default_value = 0.45
-    links.new(v.outputs["Fac"], density.inputs["Value"])
-    links.new(density.outputs["Result"], bsdf.inputs["Transmission Weight"])
+    # Pigment also blocks light: clear near the base, denser toward the
+    # margin, and each speck nearly opaque.
+    # The base is fleshy and nearly opaque, the membrane clears right after
+    # it, then darkens toward the margin.
+    density = nodes.new("ShaderNodeValToRGB")
+    clear = density.color_ramp.elements
+    clear[0].color = (0.45, 0.45, 0.45, 1)
+    clear[1].position = 1.0
+    clear[1].color = (0.5, 0.5, 0.5, 1)
+    for position, value in ((0.14, 0.88), (0.35, 0.9)):
+        clear.new(position).color = (value, value, value, 1)
+    links.new(v.outputs["Fac"], density.inputs["Fac"])
+    blocked = math_node(nodes, "MULTIPLY", None, 0.6)
+    links.new(pigment, blocked.inputs[0])
+    transmission = math_node(nodes, "SUBTRACT")
+    links.new(density.outputs["Color"], transmission.inputs[0])
+    links.new(blocked.outputs[0], transmission.inputs[1])
+    links.new(transmission.outputs[0], bsdf.inputs["Transmission Weight"])
+
+    # Collagen striations running with the rays: a fine ridge every few
+    # tenths of a millimetre across the fan, felt only in the highlights.
+    across = math_node(nodes, "MULTIPLY", None, 2 * math.pi * 900)
+    links.new(w.outputs["Fac"], across.inputs[0])
+    ridges = math_node(nodes, "SINE")
+    links.new(across.outputs[0], ridges.inputs[0])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.08
+    bump.inputs["Distance"].default_value = 0.02
+    links.new(ridges.outputs[0], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     return m
 
 
 def ray_material():
-    """Glassy bone: denser than the membrane, so slightly darker, with a lit rim."""
-    m = material("Ray", (0.42, 0.40, 0.39), 0.12, transmission=0.55)
+    """Glassy bone: denser than the membrane, so slightly darker, with a lit
+    rim and the same faint iridophore sheen."""
+    m = material("Ray", (0.62, 0.60, 0.58), 0.06, transmission=0.8)
     bsdf = m.node_tree.nodes["Principled BSDF"]
     bsdf.inputs["IOR"].default_value = 1.45
-    bsdf.inputs["Coat Weight"].default_value = 0.4
+    bsdf.inputs["Coat Weight"].default_value = 0.5
+    bsdf.inputs["Thin Film Thickness"].default_value = 320
+    bsdf.inputs["Thin Film IOR"].default_value = 1.33
     return m
 
 
@@ -274,7 +351,7 @@ def build_rays(material):
     dw = 1 / (RAYS - 1)
     rays = bpy.data.curves.new("Rays", "CURVE")
     rays.dimensions = "3D"
-    rays.bevel_depth = 0.55
+    rays.bevel_depth = 0.6
     rays.bevel_resolution = 3
     fibres = bpy.data.curves.new("Fibres", "CURVE")
     fibres.dimensions = "3D"
@@ -282,7 +359,7 @@ def build_rays(material):
     fibres.bevel_resolution = 1
 
     def radius(t, level):
-        taper = lerp(1.6, 0.5, t) * (1.0, 0.8, 0.65)[level]
+        taper = lerp(0.85, 0.42, t) * (1.0, 0.85, 0.72)[level]
         if t > 0.45:  # a joint narrows the ray a little every few mm
             phase = math.modf(t * JOINTS)[0] - 0.5
             taper *= 1 - 0.22 * math.exp(-((phase / 0.07) ** 2))
@@ -353,6 +430,7 @@ def build_scene():
     scene.cycles.transparent_max_bounces = 24
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = FRAME_PX
+    scene.render.resolution_percentage = SCALE
     scene.render.image_settings.media_type = "IMAGE"
     scene.render.image_settings.file_format = "PNG"
     scene.render.film_transparent = True
@@ -394,10 +472,10 @@ def build_scene():
         bpy.context.collection.objects.link(obj)
         obj.location = location
         aim(obj, Vector((-60, 0, -20)))
-        # Light the fin without showing the lamp itself through the membrane.
+        # Light the fin without showing the lamp itself through the membrane;
+        # its reflections stay, they are the glassy highlights.
         obj.visible_camera = False
         obj.visible_transmission = False
-        obj.visible_glossy = False
 
 
 def count_inside_phone(samples=200):
@@ -412,5 +490,5 @@ def count_inside_phone(samples=200):
 
 print(f"FIN CHECK points inside the phone: {count_inside_phone()}")
 build_scene()
-bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{BACKGROUND}.png"
+bpy.context.scene.render.filepath = f"{OUT_DIR}/fin-{BACKGROUND}-{SCALE}.png"
 bpy.ops.render.render(write_still=True)
