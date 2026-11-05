@@ -231,20 +231,34 @@ const footerHtml = `
   </div>
   <div class="salmon-footer-wordmark" aria-hidden="true">Salmon</div>`;
 
-// Stake, Swap and Pay as the site's icon tiles (.section-rectangle) laid in
-// perspective. The glyphs are the app's Phosphor marks, the same geometry as
-// StackIcon, ArrowsLeftRightIcon and QrCodeIcon in components/hero/wallet-icons
-// (a route handler cannot render React to markup). Pay is the Payments QR.
-const INTRO_GLYPHS = [
-  '<polyline points="32 176 128 232 224 176"/><polyline points="32 128 128 184 224 128"/><polygon points="32 80 128 136 224 80 128 24 32 80"/>',
-  '<polyline points="176 144 208 176 176 208"/><line x1="48" y1="176" x2="208" y2="176"/><polyline points="80 112 48 80 80 48"/><line x1="208" y1="80" x2="48" y2="80"/>',
-  '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
+// Stake, Swap and Pay: each word and its tile are one list item, so the word
+// is centred on its tile by layout. The tile is the site's section icon tile
+// (.section-rectangle) laid in perspective. The glyphs are the app's Phosphor
+// marks, the same geometry as StackIcon, ArrowsLeftRightIcon and QrCodeIcon
+// in components/hero/wallet-icons (a route handler cannot render React to
+// markup). Pay is the Payments QR.
+const INTRO_ITEMS = [
+  {
+    word: 'Stake',
+    glyph:
+      '<polyline points="32 176 128 232 224 176"/><polyline points="32 128 128 184 224 128"/><polygon points="32 80 128 136 224 80 128 24 32 80"/>',
+  },
+  {
+    word: 'Swap',
+    glyph:
+      '<polyline points="176 144 208 176 176 208"/><line x1="48" y1="176" x2="208" y2="176"/><polyline points="80 112 48 80 80 48"/><line x1="208" y1="80" x2="48" y2="80"/>',
+  },
+  {
+    word: 'Pay',
+    glyph:
+      '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
+  },
 ];
 
-const introTilesHtml = `<div id=intro-img class=salmon-intro-tiles aria-hidden=true>${INTRO_GLYPHS.map(
-  (glyph) =>
-    `<div class=salmon-intro-tile><div class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></div></div>`,
-).join('')}</div>`;
+const introRowHtml = `<ul class=salmon-intro-row>${INTRO_ITEMS.map(
+  ({ word, glyph }) =>
+    `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
+).join('')}</ul>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -303,7 +317,7 @@ export async function GET(request: Request) {
     '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
   );
   const withScreens = withoutShop
-    .replace(/<div id=intro-img>[\s\S]*?<\/div>/, () => introTilesHtml)
+    .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
     .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     .replace(
       /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
@@ -958,49 +972,48 @@ export async function GET(request: Request) {
         white-space: nowrap;
         user-select: none;
       }
-      /* The intro tiles: the section icon tile, three times, lying in
-         perspective. Each one floats on its own beat, lifts toward the
-         reader on hover and dips like a key when pressed. */
-      /* Each word sits on its tile's column: same widths, same gap, centred. */
-      #intro-list {
-        display: grid !important;
-        grid-template-columns: repeat(3, 26vw);
-        column-gap: 6vw;
+      /* Stake, Swap, Pay: three columns of the same width and gap, each a word
+         over its tile. The tiles share one perspective, so the side ones fan
+         out like the template's photo; a face turns about its own centre, so
+         its icon stays on the column's centre line, under its word. Each tile
+         floats on its own beat, lifts on hover and dips when pressed. */
+      .salmon-intro-row {
+        display: grid;
+        grid-template-columns: repeat(3, 30vw);
+        column-gap: 12vw;
         justify-content: center;
-      }
-      #intro-list li {
-        position: static !important;
-        text-align: center;
-        white-space: nowrap;
-      }
-      /* In perspective a side tile's face centre (where its icon sits) lands
-         0.37vw inside its column; the word follows the face. */
-      #intro-list li:first-child { transform: translateX(-0.37vw); }
-      #intro-list li:last-child { transform: translateX(0.37vw); }
-      #intro-img.salmon-intro-tiles {
-        display: flex;
-        justify-content: center;
-        gap: 6vw;
-        height: auto;
-        margin-top: -4vw !important;
         padding: 0 0 6vw;
         perspective: 70vw;
-        perspective-origin: 50% -20%;
+        perspective-origin: 50% 2.35vw;
+      }
+      .salmon-intro-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-style: preserve-3d;
+      }
+      .salmon-intro-word {
+        font-size: 9.79167vw;
+        line-height: 110%;
+        letter-spacing: -.0575em;
+        color: #f0f0f0;
+        white-space: nowrap;
       }
       .salmon-intro-tile {
-        flex: 0 0 26vw;
+        display: block;
+        margin-top: -1.22vw;
         transform-style: preserve-3d;
         animation: salmon-tile-float 6s ease-in-out infinite;
       }
-      .salmon-intro-tile:nth-child(2) { animation-delay: -2s; }
-      .salmon-intro-tile:nth-child(3) { animation-delay: -4s; }
+      .salmon-intro-item:nth-child(2) .salmon-intro-tile { animation-delay: -2s; }
+      .salmon-intro-item:nth-child(3) .salmon-intro-tile { animation-delay: -4s; }
       @keyframes salmon-tile-float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-0.8vw); }
       }
-      .salmon-intro-tile .salmon-intro-face {
-        width: 26vw !important;
-        height: 26vw !important;
+      .salmon-intro-face {
+        width: 30vw !important;
+        height: 30vw !important;
         border-radius: 22%;
         background: linear-gradient(160deg, #fff7f4 0%, #fbeeee 100%) !important;
         box-shadow:
@@ -1011,7 +1024,7 @@ export async function GET(request: Request) {
         transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1), background .5s;
         cursor: pointer;
       }
-      .salmon-intro-tile .salmon-intro-face svg {
+      .salmon-intro-face svg {
         width: 34% !important;
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
@@ -1032,7 +1045,7 @@ export async function GET(request: Request) {
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
       }
-      .salmon-intro-tile .salmon-intro-face:active {
+      .salmon-intro-face:active {
         transform: rotateX(68deg) translateZ(-1vw);
         transition-duration: .12s;
         box-shadow:
@@ -1041,8 +1054,8 @@ export async function GET(request: Request) {
       }
       @media (prefers-reduced-motion: reduce) {
         .salmon-intro-tile { animation: none; }
-        .salmon-intro-tile .salmon-intro-face,
-        .salmon-intro-tile .salmon-intro-face svg { transition: none; }
+        .salmon-intro-face,
+        .salmon-intro-face svg { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
