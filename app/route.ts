@@ -963,7 +963,7 @@ export async function GET(request: Request) {
 
         var powerupsGridImage = document.querySelector('#program-card-content-grid img');
         if (powerupsGridImage) {
-          powerupsGridImage.src = '/powerups/row.png';
+          powerupsGridImage.src = '/powerups/row.webp';
           powerupsGridImage.alt = 'Salmon Powerups';
         }
 
