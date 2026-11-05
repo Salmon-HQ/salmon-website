@@ -125,8 +125,9 @@ def material(name, color, roughness=0.5, transmission=0.0, thin=False):
 
 
 def membrane_material():
-    """Real pectoral colour: translucent and pale near the base, dusky toward
-    the margin, the pigment gathering along the rays first."""
+    """Real pectoral colour, pigment pushed so it reads on the dark section:
+    translucent and pale near the base, dusky and denser toward the margin,
+    the pigment gathering along the rays first."""
     # A single surface with a low IOR, not Thin Wall: Cycles counts Thin Wall
     # transmission as diffuse, so it never reaches the render's alpha and the
     # membrane comes out opaque on a transparent film.
@@ -144,9 +145,10 @@ def membrane_material():
     stops = ramp.color_ramp.elements
     stops[0].color = (0.86, 0.80, 0.74, 1)
     stops[1].position = 1.0
-    stops[1].color = (0.16, 0.17, 0.19, 1)
-    middle = stops.new(0.55)
-    middle.color = (0.52, 0.51, 0.51, 1)
+    stops[1].color = (0.05, 0.055, 0.06, 1)
+    # The visible part of the fan sits between v 0.2 and 0.7, so the dusk starts early.
+    for position, grey in ((0.3, 0.30), (0.7, 0.10)):
+        stops.new(position).color = (grey, grey, grey * 1.04, 1)
     links.new(v.outputs["Fac"], ramp.inputs["Fac"])
 
     # Distance to the nearest ray: 0 on a ray, 1 halfway between two.
@@ -167,7 +169,7 @@ def membrane_material():
     # Only a thin line beside each ray carries pigment.
     thin_line = nodes.new("ShaderNodeMath")
     thin_line.operation = "POWER"
-    thin_line.inputs[1].default_value = 8.0
+    thin_line.inputs[1].default_value = 4.0
     links.new(on_ray.outputs[0], thin_line.inputs[0])
     on_ray = thin_line
     # Pigment = closeness to a ray x how far out along it.
@@ -180,8 +182,16 @@ def membrane_material():
     mix.blend_type = "MULTIPLY"
     links.new(pigment.outputs[0], mix.inputs["Factor"])
     links.new(ramp.outputs["Color"], mix.inputs["A"])
-    mix.inputs["B"].default_value = (0.35, 0.33, 0.33, 1)
+    mix.inputs["B"].default_value = (0.18, 0.17, 0.17, 1)
     links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
+
+    # Pigment also blocks light: the membrane is clear near the base and
+    # denser toward the margin.
+    density = nodes.new("ShaderNodeMapRange")
+    density.inputs["To Min"].default_value = 0.95
+    density.inputs["To Max"].default_value = 0.45
+    links.new(v.outputs["Fac"], density.inputs["Value"])
+    links.new(density.outputs["Result"], bsdf.inputs["Transmission Weight"])
     return m
 
 
@@ -311,9 +321,8 @@ def build_scene():
     scene.camera = camera
 
     for name, location, energy, size in (
-        ("Key", (-300, -500, 350), 9e6, 400),
+        ("Key", (-300, -500, 350), 4.5e6, 400),
         ("Rim", (150, 600, 50), 1.4e7, 400),
-        ("Fill", (400, -400, -200), 2.5e6, 500),
     ):
         light = bpy.data.lights.new(name, "AREA")
         light.energy = energy
@@ -322,6 +331,10 @@ def build_scene():
         bpy.context.collection.objects.link(obj)
         obj.location = location
         aim(obj, Vector((-60, 0, -20)))
+        # Light the fin without showing the lamp itself through the membrane.
+        obj.visible_camera = False
+        obj.visible_transmission = False
+        obj.visible_glossy = False
 
 
 def count_inside_phone(samples=200):
