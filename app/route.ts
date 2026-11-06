@@ -1127,17 +1127,21 @@ export async function GET(request: Request) {
       }
       /* The second strip runs the other way, at the speed of the first (5 tiles against 6). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
+      /* The template's own pill (nav .soon): white, soft shadow, 52px round, 14px type. */
       .salmon-intro-soon {
         width: max-content;
-        margin: 0 auto 2vw;
-        padding: .5vw 1.6vw;
-        border-radius: 999px;
-        background: rgba(255,92,69,.14);
-        color: #ff5c45;
-        font-size: max(13px, 1.6vw);
-        font-weight: 600;
-        letter-spacing: .02em;
-        line-height: 1.4;
+        margin: 6.25vw auto;
+        padding: 16px 22px;
+        border-radius: 52px;
+        background: #fff;
+        box-shadow: 0 8px 30px 0 rgba(0,0,0,.06);
+        color: #000;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: -.0175em;
+      }
+      @media (max-width: 750px) {
+        .salmon-intro-soon { margin-block: 10.25641vw; }
       }
       .salmon-visually-hidden {
         position: absolute;
