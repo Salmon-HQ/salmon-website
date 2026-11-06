@@ -493,6 +493,12 @@ export async function GET(request: Request) {
       #program .section-rectangle {
         background-color: #fff7f4 !important;
       }
+      /* Desktop: the step copy alternates sides around the phone, the middle step mirrored to the right. */
+      @media (min-width: 751px) {
+        #program .card-content-list-sticky li:nth-child(2) {
+          left: calc(100vw - 2 * (64px + 2.5vw) - 23.61111vw);
+        }
+      }
       #program .section-rectangle svg {
         fill: #ff5c45 !important;
       }
