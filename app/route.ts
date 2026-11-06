@@ -287,7 +287,7 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<div class=salmon-intro-soon>Coming soon</div>` +
+  `<p class=salmon-intro-soon>Coming soon</p>` +
   introMarquee(INTRO_ITEMS.filter((item) => item.logo), ' salmon-intro-marquee-soon');
 
 const SCREENS = [
@@ -1127,22 +1127,8 @@ export async function GET(request: Request) {
       }
       /* The second strip runs the other way, at the speed of the first (5 tiles against 6). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
-      /* The template's own pill (nav .soon): white, soft shadow, 52px round, 14px type. */
-      .salmon-intro-soon {
-        width: max-content;
-        margin: 6.25vw auto;
-        padding: 16px 22px;
-        border-radius: 52px;
-        background: #fff;
-        box-shadow: 0 8px 30px 0 rgba(0,0,0,.06);
-        color: #000;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: -.0175em;
-      }
-      @media (max-width: 750px) {
-        .salmon-intro-soon { margin-block: 10.25641vw; }
-      }
+      /* Same type and spacing as "Add more when you need more." (#intro p), in the accent. */
+      #intro p.salmon-intro-soon { color: #ff5c45; }
       .salmon-visually-hidden {
         position: absolute;
         width: 1px;
