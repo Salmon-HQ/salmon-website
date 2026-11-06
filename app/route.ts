@@ -265,12 +265,21 @@ const INTRO_ITEMS = [
     glyph:
       '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
   },
-];
+  { word: 'Cash', logo: 'moneygram', name: 'MoneyGram' },
+  { word: 'Invest', logo: 'cesto', name: 'Cesto' },
+  { word: 'Trade', logo: 'titan', name: 'Titan' },
+  { word: 'Borrow', logo: 'hobba', name: 'Hobba' },
+  { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
+] as { word: string; glyph?: string; logo?: string; name?: string }[];
 
 const introListHtml = (hidden: boolean) =>
   `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${INTRO_ITEMS.map(
-    ({ word, glyph }) =>
-      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
+    ({ word, glyph, logo, name }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-intro-soon>Coming soon with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
+        logo
+          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span>`
+          : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
+      }</span></span></li>`,
   ).join('')}</ul>`;
 
 // The list twice in a row: the track slides one list's width and starts over.
@@ -1039,7 +1048,7 @@ export async function GET(request: Request) {
       .salmon-intro-track {
         display: flex;
         width: max-content;
-        animation: salmon-intro-slide 48s linear infinite;
+        animation: salmon-intro-slide 88s linear infinite;
       }
       /* Only a tile stops the strip, not the gaps around it. */
       .salmon-intro-track:has(.salmon-intro-face:hover) { animation-play-state: paused; }
@@ -1096,6 +1105,32 @@ export async function GET(request: Request) {
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
+      /* Partner marks in one ink, so five brands read as one row of tiles. */
+      .salmon-intro-logo {
+        width: 72%;
+        height: 30%;
+        background: #10131c;
+        -webkit-mask: var(--logo) center / contain no-repeat;
+        mask: var(--logo) center / contain no-repeat;
+        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
+      }
+      .salmon-intro-word { position: relative; }
+      .salmon-intro-soon {
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        z-index: 1;
+        translate: -50% 0;
+        padding: .3vw 1vw;
+        border-radius: 999px;
+        background: rgba(255,92,69,.14);
+        color: #ff5c45;
+        font-size: max(11px, 1vw);
+        font-weight: 600;
+        letter-spacing: .02em;
+        line-height: 1.4;
+        white-space: nowrap;
+      }
       @media (hover: hover) {
         .salmon-intro-face:hover {
           transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
@@ -1107,7 +1142,8 @@ export async function GET(request: Request) {
             0 11vw 9vw rgba(16,19,28,.12),
             0 0 6vw rgba(255,92,69,.22) !important;
         }
-        .salmon-intro-face:hover svg {
+        .salmon-intro-face:hover svg,
+        .salmon-intro-face:hover .salmon-intro-logo {
           transform: scale(1.08);
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
@@ -1125,7 +1161,8 @@ export async function GET(request: Request) {
         .salmon-intro-marquee { overflow-x: auto; }
         .salmon-intro-row[aria-hidden] { display: none; }
         .salmon-intro-face,
-        .salmon-intro-face svg { transition: none; }
+        .salmon-intro-face svg,
+        .salmon-intro-logo { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
