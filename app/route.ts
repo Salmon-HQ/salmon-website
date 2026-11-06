@@ -272,18 +272,23 @@ const INTRO_ITEMS = [
   { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
 ] as { word: string; glyph?: string; logo?: string; name?: string }[];
 
-const introListHtml = (hidden: boolean) =>
-  `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${INTRO_ITEMS.map(
+const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
+  `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${items.map(
     ({ word, glyph, logo, name }) =>
-      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-intro-soon>Coming soon with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-visually-hidden> with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
         logo
           ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span>`
           : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
       }</span></span></li>`,
   ).join('')}</ul>`;
 
-// The list twice in a row: the track slides one list's width and starts over.
-const introRowHtml = `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(false)}${introListHtml(true)}</div></div>`;
+// Each strip holds its list twice: the track slides one list's width and starts over.
+const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
+  `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
+const introRowHtml =
+  introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
+  `<div class=salmon-intro-soon>Coming soon</div>` +
+  introMarquee(INTRO_ITEMS.filter((item) => item.logo), ' salmon-intro-marquee-soon');
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -1048,7 +1053,7 @@ export async function GET(request: Request) {
       .salmon-intro-track {
         display: flex;
         width: max-content;
-        animation: salmon-intro-slide 88s linear infinite;
+        animation: salmon-intro-slide 48s linear infinite;
       }
       /* Only a tile stops the strip, not the gaps around it. */
       .salmon-intro-track:has(.salmon-intro-face:hover) { animation-play-state: paused; }
@@ -1114,21 +1119,26 @@ export async function GET(request: Request) {
         mask: var(--logo) center / contain no-repeat;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      .salmon-intro-word { position: relative; }
+      /* The second strip runs the other way, at the speed of the first (5 tiles against 6). */
+      .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
       .salmon-intro-soon {
-        position: absolute;
-        left: 50%;
-        top: 100%;
-        z-index: 1;
-        translate: -50% 0;
-        padding: .3vw 1vw;
+        width: max-content;
+        margin: 0 auto 2vw;
+        padding: .5vw 1.6vw;
         border-radius: 999px;
         background: rgba(255,92,69,.14);
         color: #ff5c45;
-        font-size: max(11px, 1vw);
+        font-size: max(13px, 1.6vw);
         font-weight: 600;
         letter-spacing: .02em;
         line-height: 1.4;
+      }
+      .salmon-visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
         white-space: nowrap;
       }
       @media (hover: hover) {
