@@ -95,7 +95,7 @@ export const footerHtml = `
   <div id="footer-top" class="salmon-footer">
     <aside class="salmon-footer-app">
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
-      <p class="salmon-footer-app-title">One wallet.<br>Available today.</p>
+      <p class="salmon-footer-app-title">A reason to arrive.<br>A wallet designed to stay.</p>
       ${downloadsHtml}
       <div class="salmon-footer-phone"><iframe src="/phone-preview" title="Salmon wallet home: balance and token list" loading="lazy" tabindex="-1"></iframe></div>
     </aside>
