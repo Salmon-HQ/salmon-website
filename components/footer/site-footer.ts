@@ -68,7 +68,7 @@ const FOOTER_COLUMNS = [
   },
   {
     title: 'Community',
-    links: SOCIALS.map((social) => [social.label, social.href]),
+    links: SOCIALS.filter((social) => social.label !== 'GitHub').map((social) => [social.label, social.href]),
   },
   {
     title: 'Legal',
