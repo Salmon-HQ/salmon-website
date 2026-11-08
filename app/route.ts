@@ -1073,9 +1073,12 @@ export async function GET(request: Request) {
          floats on its own beat, lifts on hover and dips when pressed. */
       .salmon-intro-marquee {
         overflow: hidden;
-        padding: 0 0 6vw;
-        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        padding: 0 0 10vw;
+        /* Sides fade, and so does the bottom: the tiles' long shadow dissolves before the box edge instead of being cut there. */
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, #000 70%, transparent);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, #000 70%, transparent);
+        mask-composite: intersect;
       }
       /* Both strips at 80% of their drawn size; zoom scales the vw sizes, gaps and shadows together. */
       .salmon-intro-marquee { zoom: .8; }
