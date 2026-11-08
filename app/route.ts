@@ -512,6 +512,10 @@ export async function GET(request: Request) {
         background-size: var(--salmon-scales-size) !important;
         background-repeat: repeat !important;
       }
+      /* The Powerups row: each tile casts a soft shadow onto the card, as deep as the feature slabs'. The row is
+         one transparent image, so drop-shadow follows each tile's outline. */
+      #program .salmon-phone-screen,
+      #program-card-content-grid img { filter: drop-shadow(0 2.2vw 2.4vw rgba(16,19,28,.2)) drop-shadow(0 .4vw .6vw rgba(16,19,28,.08)); }
       #program .card-shadow {
         display: none !important;
       }
