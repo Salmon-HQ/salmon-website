@@ -277,7 +277,7 @@ const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-pow
 const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
   ' salmon-intro-marquee-soon',
-)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Add%20a%20Powerup%20to%20Salmon">Add your Powerup</a></p></div>`;
+)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
