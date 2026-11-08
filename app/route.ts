@@ -272,7 +272,7 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add more when you need more.</p>`;
+  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add <span class=salmon-accent>more</span> when you need <span class=salmon-accent>more</span>.</p>`;
 // After the Powerups demo: the "Wallets became mega-apps" sentence (moved out of the card), then the partners.
 const comingSoonHtml = (powerupsCopy: string) =>
   `<div id=coming-soon>${powerupsCopy}<p class=salmon-intro-soon>Coming soon</p>${introMarquee(
@@ -400,8 +400,8 @@ export async function GET(request: Request) {
       #nav-logo::before {
         content: "";
         display: block;
-        width: 23px;
-        height: 23px;
+        width: 32px;
+        height: 32px;
         background: url("/images/logo-orange.svg") center / contain no-repeat;
       }
       #nav-logo::after {
@@ -410,12 +410,16 @@ export async function GET(request: Request) {
         width: auto;
         height: auto;
         color: #10131c;
-        font-size: 20px;
+        font-size: 27px;
         font-weight: 700;
         line-height: 1;
         letter-spacing: -0.04em;
         transition: color .2s cubic-bezier(.215,.61,.355,1);
       }
+      /* Logo sized to the Download now button and centred on it (button: top 24px, 54px tall). */
+      #nav-logo { top: 35px !important; height: 32px !important; }
+      #nav .soon { background: #ff5c45 !important; box-shadow: 0 8px 30px 0 rgba(255,92,69,.3) !important; }
+      #nav .soon-txt { color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 600; }
       /* The template toggles .fx over #salmon (no longer black, so it changes
          nothing) and .hide over the footer. */
       #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
@@ -546,8 +550,11 @@ export async function GET(request: Request) {
         font-size: 7vw !important;
         line-height: 1 !important;
       }
+      #intro p .salmon-accent { color: #ff5c45; }
+      /* Powerups starts right under "Add more when you need more."; the row image carries its own top margin. */
+      #program.section { padding-top: 0 !important; }
       #program .card {
-        margin-top: 5vw !important;
+        margin-top: 0 !important;
       }
       #program .card-content-screen > video:first-child {
         opacity: 1 !important;
@@ -1252,6 +1259,9 @@ export async function GET(request: Request) {
       }
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
+        #nav-logo { top: 21px !important; height: 26px !important; gap: 8px !important; }
+        #nav-logo::before { width: 26px; height: 26px; }
+        #nav-logo::after { font-size: 22px; }
         #footer-top.salmon-footer { grid-template-columns: 1fr; gap: 64px; padding: 48px 6.15vw 0 !important; }
         .salmon-footer-app { min-height: 640px; }
         .salmon-footer-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 24px; }
@@ -1289,10 +1299,9 @@ export async function GET(request: Request) {
         .salmon-screens-list::-webkit-scrollbar { display: none; }
         .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
-        #program.section, #salmon.section { padding-top: 14vw !important; }
+        #salmon.section { padding-top: 14vw !important; }
         #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
         #intro .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
-        #program .card { margin-top: 10vw !important; }
         #salmon-card-0 { padding-top: 12vw !important; }
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
