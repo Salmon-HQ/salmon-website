@@ -250,34 +250,35 @@ const INTRO_ITEMS = [
     glyph:
       '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
   },
+];
+
+// Community Powerups on the way: an index of big words, each signed by the partner building it.
+const SOON_ITEMS = [
   { word: 'Cash', logo: 'moneygram', name: 'MoneyGram' },
   { word: 'Invest', logo: 'cesto', name: 'Cesto' },
   { word: 'Trade', logo: 'titan', name: 'Titan' },
   { word: 'Borrow', logo: 'hobba', name: 'Hobba' },
   { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
-] as { word: string; glyph?: string; logo?: string; name?: string }[];
+];
+const soonListHtml = `<ul class=salmon-soon-list>${SOON_ITEMS.map(
+  ({ word, logo, name }) =>
+    `<li><span class=salmon-soon-word>${word}</span><span class=salmon-soon-by>by <span class=salmon-soon-logo role=img aria-label="${name}" style="--logo:url(/coming-soon/${logo}.svg)"></span></span></li>`,
+).join('')}</ul>`;
 
 const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
   `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${items.map(
-    ({ word, glyph, logo, name }) =>
-      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-visually-hidden> with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
-        logo
-          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span><span class=salmon-soon-back><b>Coming soon</b><small>by ${name}</small></span>`
-          : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
-      }</span></span></li>`,
+    ({ word, glyph }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
   ).join('')}</ul>`;
 
 // Each strip holds its list twice: the track slides one list's width and starts over.
-const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
-  `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
-const introRowHtml = introMarquee(INTRO_ITEMS.filter((item) => !item.logo));
+const introMarquee = (items: typeof INTRO_ITEMS) =>
+  `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
+const introRowHtml = introMarquee(INTRO_ITEMS);
 // Opens the cream Powerups card: title, context and "Add more" on the first screen, then the row and demo.
 const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
-  INTRO_ITEMS.filter((item) => item.logo),
-  ' salmon-intro-marquee-soon',
-)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
+const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${soonListHtml}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -1162,68 +1163,51 @@ export async function GET(request: Request) {
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      /* Partner marks in one ink, so five brands read as one row of tiles. */
-      .salmon-intro-logo {
-        width: 72%;
-        height: 30%;
-        background: #10131c;
-        -webkit-mask: var(--logo) center / contain no-repeat;
-        mask: var(--logo) center / contain no-repeat;
-        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
+      #coming-soon { overflow: hidden; }
+      .salmon-soon-list {
+        width: 76vw;
+        margin: 3.5vw auto 5vw;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid rgba(16,19,28,.1);
       }
-      /* Coming soon: each slab flips like a coin lying on a table, logo on the front and "Coming soon · by <partner>"
-         on the back, in a slow wave along the strip. --flip is registered so it animates inside the transform,
-         which keeps the hover lift working. */
-      @property --flip { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-      .salmon-intro-marquee-soon .salmon-intro-face {
-        position: relative;
-        transform-style: preserve-3d;
-        transform: perspective(50vw) rotateX(64deg) rotateY(var(--flip));
-        animation: salmon-soon-flip 12s infinite;
-      }
-      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+2) .salmon-intro-face { animation-delay: -2.4s; }
-      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+3) .salmon-intro-face { animation-delay: -4.8s; }
-      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+4) .salmon-intro-face { animation-delay: -7.2s; }
-      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n) .salmon-intro-face { animation-delay: -9.6s; }
-      @keyframes salmon-soon-flip {
-        0%, 42% { --flip: 0deg; animation-timing-function: cubic-bezier(.65,0,.35,1); }
-        50%, 92% { --flip: 180deg; animation-timing-function: cubic-bezier(.65,0,.35,1); }
-        100% { --flip: 360deg; }
-      }
-      .salmon-intro-marquee-soon .salmon-intro-logo { backface-visibility: hidden; }
-      .salmon-soon-back {
-        position: absolute;
-        inset: 0;
+      .salmon-soon-list li {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: .6vw;
-        transform: rotateY(180deg);
-        backface-visibility: hidden;
-        letter-spacing: -.04em;
+        justify-content: space-between;
+        gap: 4vw;
+        padding: 1.8vw 0;
+        border-bottom: 1px solid rgba(16,19,28,.1);
       }
-      .salmon-soon-back b {
-        font-size: 4.2vw;
-        font-weight: 600;
+      .salmon-soon-word {
+        font-size: 6.4vw;
+        font-weight: 500;
         line-height: 1;
+        letter-spacing: -.0575em;
+        color: #10131c;
+      }
+      .salmon-soon-list li:hover .salmon-soon-word {
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
       }
-      .salmon-soon-back small { font-size: 2.6vw; font-weight: 500; color: #10131c; }
-      @media (hover: hover) {
-        .salmon-intro-marquee-soon .salmon-intro-face:hover { transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw) rotateY(var(--flip)); }
+      .salmon-soon-by { display: flex; align-items: center; gap: 1vw; color: #9a9ca6; font-size: 1.25vw; font-weight: 500; }
+      /* Partner marks in one ink, so five brands read as one list. */
+      .salmon-soon-logo {
+        width: 13vw;
+        height: 2.6vw;
+        background: #10131c;
+        -webkit-mask: var(--logo) left center / contain no-repeat;
+        mask: var(--logo) left center / contain no-repeat;
       }
-      .salmon-intro-marquee-soon .salmon-intro-face:active { transform: perspective(50vw) rotateX(64deg) translateZ(-1vw) rotateY(var(--flip)); }
-      @media (prefers-reduced-motion: reduce) {
-        .salmon-intro-marquee-soon .salmon-intro-face { animation: none; }
+      /* Rows rise in as they enter the screen, driven by scroll where the browser supports it. */
+      @media (prefers-reduced-motion: no-preference) {
+        @supports (animation-timeline: view()) {
+          .salmon-soon-list li { animation: salmon-soon-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+          @keyframes salmon-soon-in { from { opacity: 0; transform: translateY(2.4vw); } }
+        }
       }
-      /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
-      .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
-      #coming-soon { overflow: hidden; }
-      #coming-soon .salmon-intro-marquee { margin-top: 3.5vw; }
       #coming-soon .salmon-powerups-title { font-size: 5.6vw; }
       /* Builders who want their Powerup in Salmon write to the integrations inbox (SOT, Salmon Website Index). */
       .salmon-soon-cta { margin: 0 0 6vw; text-align: center; }
@@ -1241,14 +1225,6 @@ export async function GET(request: Request) {
       }
       .salmon-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 36px 0 rgba(255,92,69,.4); }
       .salmon-pill:focus-visible { outline: 2px solid #10131c; outline-offset: 3px; }
-      .salmon-visually-hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-      }
       @media (hover: hover) {
         .salmon-intro-face:hover {
           transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
@@ -1260,8 +1236,7 @@ export async function GET(request: Request) {
             0 11vw 9vw rgba(16,19,28,.12),
             0 0 6vw rgba(255,92,69,.22) !important;
         }
-        .salmon-intro-face:hover svg,
-        .salmon-intro-face:hover .salmon-intro-logo {
+        .salmon-intro-face:hover svg {
           transform: scale(1.08);
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
@@ -1279,8 +1254,7 @@ export async function GET(request: Request) {
         .salmon-intro-marquee { overflow-x: auto; }
         .salmon-intro-row[aria-hidden] { display: none; }
         .salmon-intro-face,
-        .salmon-intro-face svg,
-        .salmon-intro-logo { transition: none; }
+        .salmon-intro-face svg { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
@@ -1385,7 +1359,11 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
+        .salmon-soon-list { width: 87.18vw; margin: 8vw auto 10vw; }
+        .salmon-soon-list li { padding: 4vw 0; }
+        .salmon-soon-word { font-size: 11vw; }
+        .salmon-soon-by { gap: 2vw; font-size: 3.2vw; }
+        .salmon-soon-logo { width: 26vw; height: 5.2vw; }
         #coming-soon .salmon-powerups-title { font-size: 12vw; }
         .salmon-soon-cta { margin-bottom: 14vw; }
         #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
