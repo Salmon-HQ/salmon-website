@@ -270,9 +270,9 @@ const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
 // Each strip holds its list twice: the track slides one list's width and starts over.
 const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
-const introRowHtml =
-  introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
+const introRowHtml = introMarquee(INTRO_ITEMS.filter((item) => !item.logo));
+// Opens the cream Powerups card: title, context and "Add more" on the first screen, then the row and demo.
+const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
 const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
@@ -341,11 +341,12 @@ export async function GET(request: Request) {
     .replace(powerupsCopy, '')
     .replace(/<section id=salmon class=section>/, () => `${comingSoonHtml}<section id=salmon class=section>`)
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
+    .replace(/(<section id=program class=section>[\s\S]*?<div class=card-content>)/, (open) => open + powerupsIntroHtml)
     // "Wallets became mega-apps" leaves the Powerups card for the spot between the title and "Add more".
     .replace('<h2 class=salmon-powerups-title>Powerups</h2>', (title) => title + powerupsCopy)
     // "Inside the app" is off for now; uncomment to show it again.
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
-    // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
+    // Powerups loses its icon tile; its title opens the cream card (powerupsIntroHtml).
     .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div> <h2>Powerups<\/h2>/, '$1')
     // Step copy: key words in the accent, so each step reads at a glance.
     .replace('Add only the capabilities', 'Add <span class=salmon-key>only</span> the capabilities')
@@ -533,7 +534,15 @@ export async function GET(request: Request) {
         padding: 0 !important;
         overflow: hidden !important;
       }
-      #intro p {
+      /* The intro lines keep the template's #intro p look now that they sit in the Powerups card. */
+      .salmon-powerups-intro p {
+        margin-left: auto;
+        margin-right: auto;
+        width: 50vw;
+        letter-spacing: -.0475em;
+        text-align: center;
+      }
+      .salmon-powerups-intro p {
         margin-top: 3.5vw !important;
         font-size: 3.2vw !important;
         line-height: 1.1 !important;
@@ -571,9 +580,20 @@ export async function GET(request: Request) {
       }
       /* Powerups intro: title, context (90% of the intro size) and "Add more" fill the first screen; the row and demo follow. */
       .salmon-powerups-intro { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; min-height: 100svh; padding: 84px 0 24px; }
-      .salmon-powerups-intro .salmon-powerups-title { padding-top: 0; }
-      #intro #program-card-content-intro { margin: 3.5vw auto 0 !important; font-size: 2.88vw !important; line-height: 1.1 !important; }
-      #intro p.salmon-add-more span { color: #10131c; }
+      /* "Powerups" is set like the hero's "One wallet.": same size, weight and orange gradient. */
+      .salmon-powerups-intro .salmon-powerups-title {
+        padding-top: 0;
+        font-size: 5.625vw;
+        line-height: 1.04;
+        font-weight: 600;
+        background: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+      #program #program-card-content-intro { width: 50vw; margin: 3.5vw auto 0 !important; font-size: 2.88vw !important; line-height: 1.1 !important; }
+      #program p.salmon-add-more span { color: #10131c; }
       /* "Add more" lights up word by word once, when it comes into view (salmonReveal in the script). */
       .salmon-reveal-w { display: inline-block; opacity: .12; transform: translateY(.12em); transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
       .salmon-reveal-w.on { opacity: 1; transform: none; }
@@ -1298,9 +1318,9 @@ export async function GET(request: Request) {
         .salmon-validator-lead { margin-bottom: 40px; }
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
-        #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
+        .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
         #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
-        #intro #program-card-content-intro { margin-top: 6vw !important; font-size: 7.65vw !important; }
+        #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
@@ -1327,6 +1347,7 @@ export async function GET(request: Request) {
         #salmon.section { padding-top: 14vw !important; }
         #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
         .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
+        .salmon-powerups-intro .salmon-powerups-title { padding-top: 0; font-size: 12.30769vw; letter-spacing: -.0375em; }
         #salmon-card-0 { padding-top: 12vw !important; }
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
