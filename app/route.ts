@@ -561,8 +561,11 @@ export async function GET(request: Request) {
         letter-spacing: -.0575em;
         text-align: center;
       }
+      /* Every card opens its title at Real ownership's distance from the card top: the card's padding plus the title's. */
+      :root { --salmon-card-top: 6vw; --salmon-card-title-top: 1.8vw; }
+      #hero h1 { padding-top: calc(var(--salmon-card-top) + var(--salmon-card-title-top)) !important; }
       #salmon-card-0 > h2 {
-        padding-top: 1.8vw !important;
+        padding-top: var(--salmon-card-title-top) !important;
         font-size: 7vw !important;
         line-height: 1 !important;
       }
@@ -579,11 +582,11 @@ export async function GET(request: Request) {
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
       }
-      /* Powerups intro: title, context (90% of the intro size) and "Add more" fill the first screen; the row and demo follow. */
-      .salmon-powerups-intro { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; min-height: 100svh; padding: 84px 0 24px; }
+      /* Powerups intro: title, context (90% of the intro size) and "Add more", then the row and demo. */
+      .salmon-powerups-intro { padding: var(--salmon-card-top) 0 24px; }
       /* "Powerups" is set like the hero's "One wallet.": same size, weight and orange gradient. */
       .salmon-powerups-intro .salmon-powerups-title {
-        padding-top: 0;
+        padding-top: var(--salmon-card-title-top);
         font-size: 5.625vw;
         line-height: 1.04;
         font-weight: 600;
@@ -689,7 +692,7 @@ export async function GET(request: Request) {
       }
       #salmon-card-0 {
         margin-top: 0 !important;
-        padding-top: 6vw !important;
+        padding-top: var(--salmon-card-top) !important;
         color: #fff;
       }
       #salmon-card-0 > p {
@@ -1391,10 +1394,10 @@ export async function GET(request: Request) {
         .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #salmon.section { padding-top: 14vw !important; }
-        #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        :root { --salmon-card-top: 12vw; --salmon-card-title-top: 4vw; }
+        #salmon-card-0 > h2 { font-size: 15vw !important; }
         .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
-        .salmon-powerups-intro .salmon-powerups-title { padding-top: 0; font-size: 12.30769vw; letter-spacing: -.0375em; }
-        #salmon-card-0 { padding-top: 12vw !important; }
+        .salmon-powerups-intro .salmon-powerups-title { padding-top: var(--salmon-card-title-top); font-size: 12.30769vw; letter-spacing: -.0375em; }
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
         #salmon-card-0 > p { margin-top: 8vw !important; }
