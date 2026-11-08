@@ -334,7 +334,13 @@ export async function GET(request: Request) {
   );
   const withScreens = withoutShop
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
-    .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
+    // "Inside the app" is off for now; uncomment to show it again.
+    // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
+    // Powerups opens on its title, without the icon tile.
+    .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
+    // "Add more when you need more." moves from the features strip to under "Let's fix that."
+    .replace(' <p>Add more when you need more.</p>', '')
+    .replace("<span>Let's fix that.</span> </p>", "<span>Let's fix that.</span><span class=salmon-add-more>Add more when you need more.</span></p>")
     .replace(
       /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
       () => `<div id=salmon-card-1 class=salmon-get-card>${getSalmonCardHtml}</div> `,
@@ -475,17 +481,11 @@ export async function GET(request: Request) {
       #program .card-shadow {
         display: none !important;
       }
-      #program .section-rectangle {
-        background-color: #fff7f4 !important;
-      }
       /* Desktop: the step copy alternates sides around the phone, the middle step mirrored to the right. */
       @media (min-width: 751px) {
         #program .card-content-list-sticky li:nth-child(2) {
           left: calc(100vw - 2 * (64px + 2.5vw) - 23.61111vw);
         }
-      }
-      #program .section-rectangle svg {
-        fill: #ff5c45 !important;
       }
       #program-card-content-percent-w {
         display: none !important;
@@ -501,13 +501,14 @@ export async function GET(request: Request) {
       .shim-null #program-card-content-grid {
         height: 100vh !important;
       }
-      #program-card-content-intro span {
+      #program-card-content-intro span:not(.salmon-add-more) {
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%) !important;
         background-clip: text !important;
         -webkit-background-clip: text !important;
         color: transparent !important;
         -webkit-text-fill-color: transparent !important;
       }
+      #program-card-content-intro .salmon-add-more { display: block; margin-top: .6em; background: none !important; color: #10131c !important; -webkit-text-fill-color: #10131c !important; }
       #program .p {
         height: 0 !important;
         margin: 0 !important;
@@ -524,15 +525,10 @@ export async function GET(request: Request) {
       #salmon.section {
         padding-top: 6vw !important;
       }
-      #program .section-rectangle,
       #salmon .section-rectangle {
         width: 9vw !important;
         height: 9vw !important;
         box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
-      }
-      #program .section-rectangle svg {
-        width: 3.6vw !important;
-        height: 3.6vw !important;
       }
       #program > h2,
       #salmon-card-0 > h2 {
@@ -1279,8 +1275,7 @@ export async function GET(request: Request) {
         .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
-        #program .section-rectangle, #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
-        #program .section-rectangle svg { width: 8vw !important; height: 8vw !important; }
+        #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #program > h2, #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
         #program .card { margin-top: 10vw !important; }
         #salmon-card-0 { padding-top: 12vw !important; }
@@ -1325,11 +1320,6 @@ export async function GET(request: Request) {
       // so copy is swapped as soon as the DOM is parsed and only the nodes the
       // template caches (percent counter) wait for load.
       function applySalmonCopy() {
-        var powerupsIcon = document.querySelector('#program .section-rectangle');
-        if (powerupsIcon) {
-          powerupsIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 1.8 3.6 13.5h7.1l-1 8.7 10.7-12.5h-7.2l.5-7.9Z"/></svg>';
-        }
-
         var powerupsGridImage = document.querySelector('#program-card-content-grid img');
         if (powerupsGridImage) {
           powerupsGridImage.src = '/powerups/row.webp';
