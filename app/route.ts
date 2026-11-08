@@ -272,8 +272,13 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add more when you need more.</p><p class=salmon-intro-soon>Coming soon</p>` +
-  introMarquee(INTRO_ITEMS.filter((item) => item.logo), ' salmon-intro-marquee-soon');
+  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add more when you need more.</p>`;
+// After the Powerups demo: the "Wallets became mega-apps" sentence (moved out of the card), then the partners.
+const comingSoonHtml = (powerupsCopy: string) =>
+  `<div id=coming-soon>${powerupsCopy}<p class=salmon-intro-soon>Coming soon</p>${introMarquee(
+    INTRO_ITEMS.filter((item) => item.logo),
+    ' salmon-intro-marquee-soon',
+  )}</div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -332,7 +337,10 @@ export async function GET(request: Request) {
     /<section id=shop[\s\S]*?<\/section>\s*<div class=separator><\/div>/,
     '<section id=shop aria-hidden=true><div id=shop-card-bg></div><div class=card-content><div class=card-content-phone-shim></div><div class=card-content-screen></div><div class=card-content-list></div></div><div class=p></div></section>',
   );
+  const powerupsCopy = withoutShop.match(/<p id=program-card-content-intro>[\s\S]*?<\/p>/)?.[0] ?? '';
   const withScreens = withoutShop
+    .replace(powerupsCopy, '')
+    .replace(/<section id=salmon class=section>/, () => `${comingSoonHtml(powerupsCopy)}<section id=salmon class=section>`)
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
     // "Inside the app" is off for now; uncomment to show it again.
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
@@ -1113,8 +1121,17 @@ export async function GET(request: Request) {
       }
       /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
-      /* Same type and spacing as "Add more when you need more." (#intro p), in the accent. */
-      #intro p.salmon-intro-soon { color: #ff5c45; }
+      /* Same type as "Add more when you need more." (#intro p), in the accent. */
+      #coming-soon { padding-top: 6vw; overflow: hidden; }
+      #coming-soon p.salmon-intro-soon {
+        width: 50vw;
+        margin: 3.5vw auto 0;
+        color: #ff5c45;
+        font-size: 3.2vw;
+        line-height: 1.1;
+        letter-spacing: -.0475em;
+        text-align: center;
+      }
       .salmon-visually-hidden {
         position: absolute;
         width: 1px;
@@ -1256,6 +1273,8 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
+        #coming-soon { padding-top: 14vw; }
+        #coming-soon p.salmon-intro-soon { width: 87.18vw; margin-top: 8vw; font-size: 8.5vw; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
