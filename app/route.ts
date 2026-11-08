@@ -260,10 +260,14 @@ const SOON_ITEMS = [
   { word: 'Borrow', logo: 'hobba', name: 'Hobba' },
   { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
 ];
-const soonListHtml = `<ul class=salmon-soon-list>${SOON_ITEMS.map(
-  ({ word, logo, name }) =>
-    `<li><span class=salmon-soon-word>${word}</span><span class=salmon-soon-by>by <span class=salmon-soon-logo role=img aria-label="${name}" style="--logo:url(/coming-soon/${logo}.svg)"></span></span></li>`,
-).join('')}</ul>`;
+// Coming soon, after hims' labs card: a curved wall of partner panels turns slowly behind the 3D mascot. The list
+// runs twice so the ring is full; the copy behind the viewer is hidden by backface-visibility.
+const soonPanelsHtml = [...SOON_ITEMS, ...SOON_ITEMS]
+  .map(
+    ({ word, logo, name }, i) =>
+      `<li style="--i:${i}"${i >= SOON_ITEMS.length ? ' aria-hidden=true' : ''}><span class=salmon-soon-chip>Coming soon</span><span class=salmon-soon-word>${word}</span><span class=salmon-soon-by>by <span class=salmon-soon-logo role=img aria-label="${name}" style="--logo:url(/coming-soon/${logo}.svg)"></span></span></li>`,
+  )
+  .join('');
 
 const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
   `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${items.map(
@@ -278,7 +282,7 @@ const introRowHtml = introMarquee(INTRO_ITEMS);
 // Opens the cream Powerups card: title, context and "Add more" on the first screen, then the row and demo.
 const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${soonListHtml}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
+const comingSoonHtml = `<div id=coming-soon><p class=salmon-soon-eyebrow>Powerups by the community</p><h2 class=salmon-soon-title>Coming soon</h2><div class=salmon-soon-stage><ul class=salmon-soon-ring>${soonPanelsHtml}</ul><img class=salmon-soon-mascot src=/mascot/mascot.webp alt="" width=904 height=851 loading=lazy decoding=async></div><p class=salmon-soon-cta><a class="salmon-pill salmon-pill-light" href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -482,21 +486,11 @@ export async function GET(request: Request) {
       #hero h1 .salmon-h1-strong {
         font-weight: 600;
       }
-      /* The brand's scale texture, faint, over every container card (hero, Powerups, Coming soon, Real ownership). */
-      :root { --salmon-scales: url(/images/scales.svg); --salmon-scales-size: 2466px 78px; }
       #hero .card-content {
         background-image:
-          var(--salmon-scales),
           radial-gradient(circle at 50% 68%, rgba(255, 92, 69, .42), transparent 30%),
           radial-gradient(circle at 72% 38%, rgba(255, 126, 109, .24), transparent 24%),
           linear-gradient(180deg, #ffffff 0%, #fff7f4 58%, #10131c 100%) !important;
-        background-size: var(--salmon-scales-size), 100% 100%, 100% 100%, 100% 100% !important;
-        background-repeat: repeat, no-repeat, no-repeat, no-repeat !important;
-        background-position: top left, center, center, center !important;
-      }
-      /* The hero's glow layer is a white sheet over most of the card, so it carries the scales too. */
-      #hero-card-content-gradient {
-        background: #fff var(--salmon-scales) top left / var(--salmon-scales-size) repeat !important;
       }
       #hero-card-content-gradient::after {
         background-image:
@@ -508,9 +502,6 @@ export async function GET(request: Request) {
          and closes back into a rounded card as the demo leaves. Its static shadow stays off (it would not follow the clip). */
       #program .card-content {
         background-color: #fff7f4 !important;
-        background-image: var(--salmon-scales) !important;
-        background-size: var(--salmon-scales-size) !important;
-        background-repeat: repeat !important;
       }
       /* The Powerups row: each tile casts a soft shadow onto the card, as deep as the feature slabs'. The row is
          one transparent image, so drop-shadow follows each tile's outline. */
@@ -708,10 +699,6 @@ export async function GET(request: Request) {
         background-color: transparent !important;
       }
       #salmon-card-0 {
-        background-image: var(--salmon-scales), url(/reference-assets/media/salmon/00.jpg) !important;
-        background-size: var(--salmon-scales-size), cover !important;
-        background-repeat: repeat, no-repeat !important;
-        background-position: top left, top center !important;
         margin-top: 0 !important;
         padding-top: var(--salmon-card-top) !important;
         color: #fff;
@@ -1187,54 +1174,80 @@ export async function GET(request: Request) {
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      #coming-soon { overflow: hidden; }
-      .salmon-soon-list {
-        width: 76vw;
-        margin: 3.5vw auto 5vw;
+      /* Coming soon card: warm orange like hims' labs card, the mascot in front of a turning wall of
+         partner panels. The viewer stands inside the ring, so the wall curves toward the card's sides. */
+      #coming-soon {
+        position: relative;
+        overflow: hidden;
+        margin: 0 64px;
+        padding-top: var(--salmon-card-top);
+        border-radius: 45px;
+        color: #fff;
+        text-align: center;
+        background:
+          radial-gradient(ellipse at 50% 70%, rgba(255,214,200,.55), transparent 55%),
+          linear-gradient(165deg, #ff8f7a 0%, #ff6a52 45%, #d9432f 100%);
+        box-shadow: 0 27px 104px 0 rgba(161,42,42,.25);
+      }
+      .salmon-soon-eyebrow { padding-top: var(--salmon-card-title-top); font-size: 1.4vw; font-weight: 500; opacity: .85; }
+      .salmon-soon-title { margin-top: .4vw; font-size: 5.6vw; font-weight: 500; line-height: 1.04; letter-spacing: -.0575em; }
+      .salmon-soon-stage { position: relative; height: 36vw; margin-top: 1vw; perspective: 70vw; }
+      .salmon-soon-ring {
+        position: absolute;
+        top: 44%;
+        left: 50%;
+        margin: 0;
         padding: 0;
         list-style: none;
-        border-top: 1px solid rgba(16,19,28,.1);
+        transform-style: preserve-3d;
+        animation: salmon-soon-turn 70s linear infinite;
       }
-      .salmon-soon-list li {
+      @keyframes salmon-soon-turn { to { transform: rotateY(-360deg); } }
+      .salmon-soon-ring li {
+        position: absolute;
+        left: -13vw;
+        top: -15vw;
+        box-sizing: border-box;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 4vw;
-        padding: 1.8vw 0;
-        border-bottom: 1px solid rgba(16,19,28,.1);
+        flex-direction: column;
+        align-items: flex-start;
+        width: 26vw;
+        height: 30vw;
+        padding: 2.4vw;
+        border: 1px solid rgba(255,255,255,.28);
+        border-radius: 2.2vw;
+        background: linear-gradient(160deg, rgba(120,30,20,.34), rgba(80,16,12,.46));
+        text-align: left;
+        transform: rotateY(calc(var(--i) * 36deg)) translateZ(-48vw);
+        backface-visibility: hidden;
       }
-      .salmon-soon-word {
-        font-size: 6.4vw;
-        font-weight: 500;
-        line-height: 1;
-        letter-spacing: -.0575em;
-        color: #10131c;
-      }
-      .salmon-soon-list li:hover .salmon-soon-word {
-        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-      .salmon-soon-by { display: flex; align-items: center; gap: 1vw; color: #9a9ca6; font-size: 1.25vw; font-weight: 500; }
-      /* Partner marks in one ink, so five brands read as one list. */
+      .salmon-soon-chip { padding: .5vw 1.1vw; border-radius: 99px; background: #ff5c45; font-size: 1.2vw; font-weight: 600; }
+      .salmon-soon-word { margin-top: auto; font-size: 5.4vw; font-weight: 500; line-height: 1; letter-spacing: -.0575em; }
+      .salmon-soon-by { display: flex; align-items: center; gap: 1vw; margin-top: 1.4vw; font-size: 1.5vw; font-weight: 500; opacity: .8; }
       .salmon-soon-logo {
-        width: 13vw;
-        height: 2.6vw;
-        background: #10131c;
+        width: 12vw;
+        height: 2.4vw;
+        background: #fff;
         -webkit-mask: var(--logo) left center / contain no-repeat;
         mask: var(--logo) left center / contain no-repeat;
       }
-      /* Rows rise in as they enter the screen, driven by scroll where the browser supports it. */
-      @media (prefers-reduced-motion: no-preference) {
-        @supports (animation-timeline: view()) {
-          .salmon-soon-list li { animation: salmon-soon-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
-          @keyframes salmon-soon-in { from { opacity: 0; transform: translateY(2.4vw); } }
-        }
+      .salmon-soon-mascot {
+        position: absolute;
+        left: 50%;
+        bottom: -2vw;
+        z-index: 1;
+        width: 30vw;
+        height: auto;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 3vw 3vw rgba(120,24,12,.35));
       }
-      #coming-soon .salmon-powerups-title { font-size: 5.6vw; }
+      @media (prefers-reduced-motion: reduce) {
+        .salmon-soon-ring { animation: none; }
+      }
       /* Builders who want their Powerup in Salmon write to the integrations inbox (SOT, Salmon Website Index). */
-      .salmon-soon-cta { margin: 0 0 6vw; text-align: center; }
+      .salmon-soon-cta { position: relative; z-index: 2; margin: 0; padding: 3vw 0 4.5vw; text-align: center; }
+      .salmon-pill.salmon-pill-light { background: #fff; color: #10131c; box-shadow: 0 8px 30px 0 rgba(120,24,12,.25); }
+      .salmon-pill.salmon-pill-light:hover { box-shadow: 0 12px 36px 0 rgba(120,24,12,.32); }
       .salmon-pill {
         display: inline-block;
         padding: 16px 32px;
@@ -1383,13 +1396,17 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
-        .salmon-soon-list { width: 87.18vw; margin: 8vw auto 10vw; }
-        .salmon-soon-list li { padding: 4vw 0; }
-        .salmon-soon-word { font-size: 11vw; }
-        .salmon-soon-by { gap: 2vw; font-size: 3.2vw; }
-        .salmon-soon-logo { width: 26vw; height: 5.2vw; }
-        #coming-soon .salmon-powerups-title { font-size: 12vw; }
-        .salmon-soon-cta { margin-bottom: 14vw; }
+        #coming-soon { margin: 0 16px; border-radius: 24px; }
+        .salmon-soon-eyebrow { font-size: 3.6vw; }
+        .salmon-soon-title { font-size: 12vw; }
+        .salmon-soon-stage { height: 78vw; margin-top: 4vw; perspective: 120vw; }
+        .salmon-soon-ring li { left: -24vw; top: -28vw; width: 48vw; height: 56vw; padding: 4.4vw; border-radius: 4vw; transform: rotateY(calc(var(--i) * 36deg)) translateZ(-82vw); }
+        .salmon-soon-chip { padding: 1vw 2.2vw; font-size: 2.8vw; }
+        .salmon-soon-word { font-size: 10vw; }
+        .salmon-soon-by { gap: 2vw; margin-top: 2.4vw; font-size: 3.2vw; }
+        .salmon-soon-logo { width: 22vw; height: 4.6vw; }
+        .salmon-soon-mascot { width: 58vw; }
+        .salmon-soon-cta { padding: 6vw 0 9vw; }
         #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
