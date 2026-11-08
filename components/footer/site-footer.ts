@@ -201,7 +201,9 @@ export const footerCss = `
     gap: 6vw;
     padding: 64px 64px 0 !important;
   }
+  /* Sized as content-box so the card measures the same on Tailwind pages (border-box reset) and on the home. */
   .salmon-footer-app {
+    box-sizing: content-box;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -244,7 +246,7 @@ export const footerCss = `
     transform: translateX(-50%);
     overflow: hidden;
   }
-  .salmon-footer-phone iframe { position: absolute; inset: 0; border: 0; pointer-events: none; }
+  .salmon-footer-phone iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
   .salmon-footer-main {
     display: flex;
     flex-direction: column;
