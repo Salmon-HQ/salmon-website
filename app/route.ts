@@ -262,7 +262,7 @@ const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
     ({ word, glyph, logo, name }) =>
       `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-visually-hidden> with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
         logo
-          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span>`
+          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span><span class=salmon-soon-back><b>Coming soon</b><small>by ${name}</small></span>`
           : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
       }</span></span></li>`,
   ).join('')}</ul>`;
@@ -1170,6 +1170,55 @@ export async function GET(request: Request) {
         -webkit-mask: var(--logo) center / contain no-repeat;
         mask: var(--logo) center / contain no-repeat;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
+      }
+      /* Coming soon: each slab flips like a coin lying on a table, logo on the front and "Coming soon · by <partner>"
+         on the back, in a slow wave along the strip. --flip is registered so it animates inside the transform,
+         which keeps the hover lift working. */
+      @property --flip { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+      .salmon-intro-marquee-soon .salmon-intro-face {
+        position: relative;
+        transform-style: preserve-3d;
+        transform: perspective(50vw) rotateX(64deg) rotateY(var(--flip));
+        animation: salmon-soon-flip 12s infinite;
+      }
+      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+2) .salmon-intro-face { animation-delay: -2.4s; }
+      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+3) .salmon-intro-face { animation-delay: -4.8s; }
+      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n+4) .salmon-intro-face { animation-delay: -7.2s; }
+      .salmon-intro-marquee-soon .salmon-intro-item:nth-child(5n) .salmon-intro-face { animation-delay: -9.6s; }
+      @keyframes salmon-soon-flip {
+        0%, 42% { --flip: 0deg; animation-timing-function: cubic-bezier(.65,0,.35,1); }
+        50%, 92% { --flip: 180deg; animation-timing-function: cubic-bezier(.65,0,.35,1); }
+        100% { --flip: 360deg; }
+      }
+      .salmon-intro-marquee-soon .salmon-intro-logo { backface-visibility: hidden; }
+      .salmon-soon-back {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .6vw;
+        transform: rotateY(180deg);
+        backface-visibility: hidden;
+        letter-spacing: -.04em;
+      }
+      .salmon-soon-back b {
+        font-size: 4.2vw;
+        font-weight: 600;
+        line-height: 1;
+        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .salmon-soon-back small { font-size: 2.6vw; font-weight: 500; color: #10131c; }
+      @media (hover: hover) {
+        .salmon-intro-marquee-soon .salmon-intro-face:hover { transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw) rotateY(var(--flip)); }
+      }
+      .salmon-intro-marquee-soon .salmon-intro-face:active { transform: perspective(50vw) rotateX(64deg) translateZ(-1vw) rotateY(var(--flip)); }
+      @media (prefers-reduced-motion: reduce) {
+        .salmon-intro-marquee-soon .salmon-intro-face { animation: none; }
       }
       /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
