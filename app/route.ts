@@ -492,10 +492,10 @@ export async function GET(request: Request) {
           radial-gradient(at 38% 72%, rgba(255, 92, 69, .42) 0, transparent 30%),
           radial-gradient(at 48% 52%, rgba(161, 42, 42, .35) 0, transparent 52%) !important;
       }
-      /* No cream card or shadow behind Powerups, so the page runs white into
-         Real ownership without a colour cut. */
+      /* Cream Powerups card, so the template's scroll clip shows: it opens to full width as the row comes in
+         and closes back into a rounded card as the demo leaves. Its static shadow stays off (it would not follow the clip). */
       #program .card-content {
-        background-color: transparent !important;
+        background-color: #fff7f4 !important;
       }
       #program .card-shadow {
         display: none !important;
