@@ -1069,10 +1069,10 @@ export async function GET(request: Request) {
       .salmon-footer-legal ul { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 10px; }
       .salmon-footer-legal a, .salmon-footer-legal p { color: #9a9ca6; font-size: 13px; }
       .salmon-footer-legal a:hover { color: #ff5c45; }
-      /* DM Sans 700 at line-height 1 draws "Salmon" from .11em to .85em, so a
-         .74em box hides the bottom 15% of the letters behind the page edge. */
+      /* DM Sans 700 at line-height 1 draws "Salmon" from .12em to .854em (the round
+         letters' overshoot), so a .855em box sets the word right on the page edge, uncut. */
       .salmon-footer-wordmark {
-        height: .74em;
+        height: .855em;
         margin-top: 6vw;
         padding: 0;
         color: #1a1e2a;
