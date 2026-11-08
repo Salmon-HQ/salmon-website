@@ -277,8 +277,8 @@ export async function GET(request: Request) {
       #nav .soon-txt { color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 600; }
       /* The template toggles .fx over #salmon (no longer black, so it changes
          nothing) and .hide over the footer. */
-      /* White header band behind the logo and Download now button (button ends at 78px):
-         solid down to the button, then a fade so sections slide under it smoothly.
+      /* White header band: solid down to the Download now button's bottom edge
+         (78px desktop, 56px mobile), then an 18px fade so sections slide under it.
          Hidden over the dark footer, where the template already hides the logo. */
       #nav::before {
         content: "";
@@ -286,8 +286,8 @@ export async function GET(request: Request) {
         top: 0;
         left: 0;
         width: 100%;
-        height: var(--salmon-nav-band, 136px);
-        background: linear-gradient(to bottom, #fff 0, #fff calc(var(--salmon-nav-band, 136px) - 40px), rgba(255,255,255,0) 100%);
+        height: calc(var(--salmon-nav-solid, 78px) + 18px);
+        background: linear-gradient(to bottom, #fff 0, #fff var(--salmon-nav-solid, 78px), rgba(255,255,255,0) 100%);
         pointer-events: none;
         transition: opacity .2s cubic-bezier(.215,.61,.355,1);
       }
@@ -994,7 +994,7 @@ export async function GET(request: Request) {
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #nav-logo { top: 21px !important; height: 26px !important; gap: 8px !important; }
-        #nav { --salmon-nav-band: 96px; }
+        #nav { --salmon-nav-solid: 56px; }
         #nav-logo::before { width: 26px; height: 26px; }
         #nav-logo::after { font-size: 22px; }
         #salmon { padding-bottom: calc(16px + 24px); }
