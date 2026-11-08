@@ -274,6 +274,8 @@ export async function GET(request: Request) {
       /* Logo sized to the Download now button and centred on it (button: top 24px, 54px tall). */
       #nav-logo { top: 35px !important; height: 32px !important; }
       #nav .soon { background: #ff5c45 !important; box-shadow: 0 8px 30px 0 rgba(255,92,69,.3) !important; }
+      /* Mirrors the logo's inset from the left edge (template: 40px, 6.15385vw on mobile). */
+      #nav .soon { right: 40px !important; }
       #nav .soon-txt { color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 600; }
       /* The template toggles .fx over #salmon (no longer black, so it changes
          nothing) and .hide over the footer. */
@@ -995,6 +997,7 @@ export async function GET(request: Request) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #nav-logo { top: 21px !important; height: 26px !important; gap: 8px !important; }
         #nav { --salmon-nav-solid: 56px; }
+        #nav .soon { right: 6.15385vw !important; }
         #nav-logo::before { width: 26px; height: 26px; }
         #nav-logo::after { font-size: 22px; }
         #salmon { padding-bottom: calc(16px + 24px); }
