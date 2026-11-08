@@ -1057,6 +1057,8 @@ export async function GET(request: Request) {
         -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
         mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
       }
+      /* Both strips at 80% of their drawn size; zoom scales the vw sizes, gaps and shadows together. */
+      .salmon-intro-marquee { zoom: .8; }
       .salmon-intro-track {
         display: flex;
         width: max-content;
