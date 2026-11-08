@@ -231,27 +231,12 @@ const footerHtml = `
   </div>
   <div class="salmon-footer-wordmark" aria-hidden="true">Salmon</div>`;
 
-// Stake, Swap and Pay: each word and its tile are one list item, so the word
+// Features (Stake, Swap and Pay live in the Powerups section): each word and its tile are one list item, so the word
 // is centred on its tile by layout. The tile is the site's section icon tile
 // (.section-rectangle) laid in perspective. The glyphs are the app's Phosphor
 // marks, the same geometry as components/hero/wallet-icons (a route handler
-// cannot render React to markup). Pay is the Payments QR, NFTs the app's Image.
+// cannot render React to markup). NFTs is the app's Image.
 const INTRO_ITEMS = [
-  {
-    word: 'Stake',
-    glyph:
-      '<polyline points="32 176 128 232 224 176"/><polyline points="32 128 128 184 224 128"/><polygon points="32 80 128 136 224 80 128 24 32 80"/>',
-  },
-  {
-    word: 'Swap',
-    glyph:
-      '<polyline points="176 144 208 176 176 208"/><line x1="48" y1="176" x2="208" y2="176"/><polyline points="80 112 48 80 80 48"/><line x1="208" y1="80" x2="48" y2="80"/>',
-  },
-  {
-    word: 'Pay',
-    glyph:
-      '<rect x="48" y="48" width="64" height="64" rx="8"/><rect x="48" y="144" width="64" height="64" rx="8"/><rect x="144" y="48" width="64" height="64" rx="8"/><line x1="144" y1="144" x2="144" y2="176"/><polyline points="144 208 176 208 176 144"/><line x1="176" y1="160" x2="208" y2="160"/><line x1="208" y1="192" x2="208" y2="208"/>',
-  },
   {
     word: 'Send',
     glyph: '<line x1="64" y1="192" x2="192" y2="64"/><polyline points="94 64 192 64 192 162"/>',
@@ -1059,7 +1044,7 @@ export async function GET(request: Request) {
       .salmon-intro-track {
         display: flex;
         width: max-content;
-        animation: salmon-intro-slide 48s linear infinite;
+        animation: salmon-intro-slide 24s linear infinite;
       }
       /* Only a tile stops the strip, not the gaps around it. */
       .salmon-intro-track:has(.salmon-intro-face:hover) { animation-play-state: paused; }
@@ -1125,7 +1110,7 @@ export async function GET(request: Request) {
         mask: var(--logo) center / contain no-repeat;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      /* The second strip runs the other way, at the speed of the first (5 tiles against 6). */
+      /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
       /* Same type and spacing as "Add more when you need more." (#intro p), in the accent. */
       #intro p.salmon-intro-soon { color: #ff5c45; }
