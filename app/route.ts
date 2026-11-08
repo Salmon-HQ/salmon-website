@@ -180,8 +180,7 @@ const downloadsHtml = `<div class="salmon-downloads">${STORES.map(
     `<a class="salmon-download" href="${store.href}"${externalAttrs(store.href)} aria-label="${store.label}">${store.icon}</a>`,
 ).join('')}</div>`;
 
-// Real ownership, merged with Get Salmon: title, copy, the store buttons, then Get Salmon's line.
-const ownershipCardHtml = `<div id=salmon-card-0><h2>Real ownership</h2><p>Own it twice. <span>Own the wallet. Own the experience.</span></p><div class=salmon-ro-get>${downloadsHtml}<p class=salmon-ro-close><span>A reason to arrive.</span> <span>A wallet designed to stay.</span></p></div></div>`;
+const getSalmonCardHtml = `<h3 class="salmon-get-title">Get Salmon</h3><p class="salmon-get-subtitle"><span>A reason to arrive.</span> <span>A wallet designed to stay.</span></p>${downloadsHtml}`;
 
 // Layout follows hims.com: app card on the left, link columns, socials,
 // legal row and an oversized wordmark closing the page.
@@ -251,41 +250,34 @@ const INTRO_ITEMS = [
     glyph:
       '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
   },
-];
-
-// Community Powerups on the way: an index of big words, each signed by the partner building it.
-const SOON_ITEMS = [
   { word: 'Cash', logo: 'moneygram', name: 'MoneyGram' },
   { word: 'Invest', logo: 'cesto', name: 'Cesto' },
   { word: 'Trade', logo: 'titan', name: 'Titan' },
   { word: 'Borrow', logo: 'hobba', name: 'Hobba' },
   { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
-];
-// Coming soon, after hims' labs card: a band of partner panels crosses the card on a diagonal, edge to edge,
-// behind the salmon fin holding the phone. The list runs twice so the band loops without a gap.
-const soonPanelsHtml = [...SOON_ITEMS, ...SOON_ITEMS]
-  .map(
-    ({ word, logo, name }, i) =>
-      `<li${i >= SOON_ITEMS.length ? ' aria-hidden=true' : ''}><span class=salmon-soon-word>${word}</span><span class=salmon-soon-by>by <span class=salmon-soon-logo role=img aria-label="${name}" style="--logo:url(/coming-soon/${logo}.svg)"></span></span></li>`,
-  )
-  .join('');
+] as { word: string; glyph?: string; logo?: string; name?: string }[];
 
 const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
   `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${items.map(
-    ({ word, glyph }) =>
-      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
+    ({ word, glyph, logo, name }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-visually-hidden> with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
+        logo
+          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span>`
+          : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
+      }</span></span></li>`,
   ).join('')}</ul>`;
 
 // Each strip holds its list twice: the track slides one list's width and starts over.
-const introMarquee = (items: typeof INTRO_ITEMS) =>
-  `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
-const introRowHtml = introMarquee(INTRO_ITEMS);
+const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
+  `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
+const introRowHtml = introMarquee(INTRO_ITEMS.filter((item) => !item.logo));
 // Opens the cream Powerups card: title, context and "Add more" on the first screen, then the row and demo.
 const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-// The salmon fin holding the phone (renders from blender/fin.py) around the live wallet screen.
-const finPhoneHtml = `<div class=salmon-fin-phone><img class=salmon-fin-back src=/fin/fin-back.webp alt="" loading=lazy><div class=salmon-fin-screen><iframe src="/phone-preview?screen=loading" title="Review send screen in Salmon: amount, recipient and network fee before signing" loading=lazy tabindex=-1></iframe></div><img class=salmon-fin-front src=/fin/fin-front.webp alt="" loading=lazy></div>`;
-const comingSoonHtml = `<div id=coming-soon><p class=salmon-soon-eyebrow>Powerups by the community</p><h2 class=salmon-soon-title>Coming soon</h2><div class=salmon-soon-stage><div class=salmon-soon-band><ul class=salmon-soon-track>${soonPanelsHtml}</ul></div>${finPhoneHtml}<p class=salmon-soon-cta><a class="salmon-pill salmon-pill-light" href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div></div>`;
+const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
+  INTRO_ITEMS.filter((item) => item.logo),
+  ' salmon-intro-marquee-soon',
+)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -334,7 +326,7 @@ export async function GET(request: Request) {
   );
   const withDownloadLink = withSalmonLogo.replace(
     /<a\s+class=soon>/,
-    '<a class=soon href="#salmon-card-0">',
+    '<a class=soon href="#salmon-card-1">',
   );
   // The template script still queries #shop on load (clip, sticky list, nav-logo
   // colour), so the Member Shop section becomes an empty stub instead of being
@@ -365,10 +357,9 @@ export async function GET(request: Request) {
     .replace(/(<section id=salmon class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
     // "Add more when you need more." moves up between the Powerups title and "Coming soon" (introRowHtml).
     .replace(' <p>Add more when you need more.</p>', '')
-    // Real ownership's card replaces the template's title, its two cards and the Get Salmon card.
     .replace(
-      /<h2>Real ownership<\/h2>(\s*<div class=card>\s*<div class=card-content>\s*)<div id=salmon-card-0>[\s\S]*?(?=<div id=salmon-card-2>)/,
-      (_, open) => `${open}${ownershipCardHtml} `,
+      /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
+      () => `<div id=salmon-card-1 class=salmon-get-card>${getSalmonCardHtml}</div> `,
     )
     .replace(/<footer>[\s\S]*?<\/footer>/, () => `<footer>${footerHtml}</footer>`);
   const validatorSection = renderValidatorSection(await getValidatorStats());
@@ -631,7 +622,8 @@ export async function GET(request: Request) {
         display: none !important;
       }
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         background: #161c2d;
         box-shadow:
           0 0 0 .9vw #080a0f,
@@ -643,23 +635,27 @@ export async function GET(request: Request) {
          shrunk by --bezel, the outer box-shadow width. The hero phone uses the
          same size for continuity. */
       #hero .card-content-screen,
-      #program .card-content-screen {
+      #program .card-content-screen,
+      #salmon-card-0 .card-content-screen {
         --bezel: 1.02vw;
       }
       .shim-not-null #hero .card-content-screen,
-      .shim-not-null #program .card-content-screen {
+      .shim-not-null #program .card-content-screen,
+      .shim-not-null #salmon-card-0 .card-content-screen {
         width: calc(18.75vw - 2 * var(--bezel));
         height: calc(39.93vw - 2 * var(--bezel));
         border-radius: calc(2.78vw - var(--bezel));
       }
       .shim-null #hero .card-content-screen,
-      .shim-null #program .card-content-screen {
+      .shim-null #program .card-content-screen,
+      .shim-null #salmon-card-0 .card-content-screen {
         width: calc(22.43vh - 2 * var(--bezel));
         height: calc(47.76vh - 2 * var(--bezel));
         border-radius: calc(3.32vh - var(--bezel));
       }
       #hero .card-content-screen::before,
-      #program .card-content-screen::before {
+      #program .card-content-screen::before,
+      #salmon-card-0 .card-content-screen::before {
         content: "";
         position: absolute;
         z-index: 7;
@@ -671,6 +667,7 @@ export async function GET(request: Request) {
         background: #080a0f;
         transform: translateX(-50%);
       }
+      #salmon-card-0 .card-content-screen iframe,
       .salmon-phone-screen iframe {
         width: 100%;
         height: 100%;
@@ -687,8 +684,8 @@ export async function GET(request: Request) {
         overflow: hidden !important;
         visibility: hidden !important;
       }
-      /* Real ownership is no longer a black section: its card holds the title, the copy, the store buttons and
-         Get Salmon's line (ownershipCardHtml). */
+      /* Real ownership is no longer a black section: the icon and title move
+         into the Own it twice card and Get Salmon sits below as its own card. */
       #salmon {
         margin-top: 0 !important;
         padding-bottom: calc(64px + 24px);
@@ -706,17 +703,50 @@ export async function GET(request: Request) {
       #salmon-card-0 > p {
         margin-top: 3vw !important;
       }
-      .salmon-ro-get { padding: 4.5vw 0 var(--salmon-card-top); }
-      #salmon-card-0 .salmon-ro-close {
-        width: auto;
-        margin: 3vw 0 0;
-        color: rgba(255,255,255,.62);
-        font-size: clamp(17px, 1.6vw, 26px);
-        line-height: 1.3;
-        letter-spacing: -.02em;
+      /* The salmon fin holding the phone: two renders from blender/fin.py
+         (docs/fin-preproduction.md), the back one under the CSS phone and the
+         front one over its live screen. The numbers are the script's "FIN CSS"
+         output divided by the phone's 18.75vw width, so the fin follows the
+         phone in both template sizings. */
+      #salmon-card-0-phone {
+        --phone-w: 18.75vw;
+        /* Phone and fin float as one piece: a slow rise and a slight sway
+           around the phone's centre. */
+        animation: salmon-fin-float 7s ease-in-out infinite;
       }
-      /* Wraps between the two sentences, never inside one. */
-      #salmon-card-0 .salmon-ro-close span { display: inline-block; }
+      @keyframes salmon-fin-float {
+        0%, 100% { translate: 0 0; rotate: 0deg; }
+        50% { translate: 0 calc(-.06 * var(--phone-w)); rotate: -.8deg; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #salmon-card-0-phone { animation: none; }
+      }
+      .shim-null #salmon-card-0-phone { --phone-w: 22.43vh; }
+      #salmon-card-0-phone img.salmon-fin-back,
+      #salmon-card-0-phone img.salmon-fin-front {
+        top: calc(50% - 1.79429 * var(--phone-w));
+        left: calc(50% - 2.34357 * var(--phone-w));
+        width: calc(4.68720 * var(--phone-w));
+        height: calc(3.90352 * var(--phone-w));
+        transform: none;
+        pointer-events: none;
+      }
+      /* The fin runs on past the render's left and bottom edges; fading there
+         hides the straight cut. */
+      #salmon-card-0-phone img.salmon-fin-back {
+        z-index: 1;
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
+        mask-composite: intersect;
+      }
+      #salmon-card-0-phone img.salmon-fin-front { z-index: 3; }
+      #salmon-card-1.salmon-get-card {
+        box-sizing: border-box;
+        min-height: 38vw;
+        padding: 8vw 5vw;
+        background-image: linear-gradient(120deg, #161c2d 0%, #10131c 58%, #321b20 100%) !important;
+      }
       #salmon-card-0 > p span {
         display: block;
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
@@ -724,6 +754,31 @@ export async function GET(request: Request) {
         -webkit-background-clip: text;
         color: transparent;
         -webkit-text-fill-color: transparent;
+      }
+      #salmon-card-1 .salmon-get-title {
+        margin: 0 0 1.4vw;
+        color: #fff;
+        font-size: clamp(34px, 4.6vw, 72px);
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -.055em;
+        text-align: center;
+      }
+      /* Resets the template's #salmon-card-1 p padding and fixed width. */
+      #salmon-card-1 .salmon-get-subtitle {
+        width: auto;
+        padding: 0;
+        margin: 0 0 5vw;
+        color: rgba(255,255,255,.62);
+        font-size: clamp(17px, 1.6vw, 26px);
+        font-weight: 400;
+        line-height: 1.3;
+        letter-spacing: -.02em;
+        text-align: center;
+      }
+      /* Wraps between the two sentences, never inside one. */
+      #salmon-card-1 .salmon-get-subtitle span {
+        display: inline-block;
       }
       .salmon-downloads {
         display: flex;
@@ -1116,146 +1171,22 @@ export async function GET(request: Request) {
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      /* Coming soon card, after hims' labs card: the salmon fin holding the phone stands in front of a band of
-         partner panels that crosses the card on a diagonal. The card is one screen tall: the stage takes what the
-         title leaves, and everything in it is sized in its height (cqh). */
-      #coming-soon {
-        position: relative;
-        overflow: hidden;
-        margin: var(--salmon-section-gap) 64px 0;
-        padding-top: var(--salmon-card-top);
-        border-radius: 45px;
-        color: #fff;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        box-sizing: border-box;
-        height: calc(100svh - 124px);
-        min-height: 560px;
-        background:
-          radial-gradient(ellipse at 50% 70%, rgba(255,214,200,.55), transparent 55%),
-          linear-gradient(165deg, #ff8f7a 0%, #ff6a52 45%, #d9432f 100%);
-        box-shadow: 0 27px 104px 0 rgba(161,42,42,.25);
+      /* Partner marks in one ink, so five brands read as one row of tiles. */
+      .salmon-intro-logo {
+        width: 72%;
+        height: 30%;
+        background: #10131c;
+        -webkit-mask: var(--logo) center / contain no-repeat;
+        mask: var(--logo) center / contain no-repeat;
+        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      .salmon-soon-eyebrow, .salmon-soon-title { position: relative; z-index: 3; }
-      .salmon-soon-eyebrow { padding-top: var(--salmon-card-title-top); font-size: 1.4vw; font-weight: 500; opacity: .85; }
-      .salmon-soon-title { margin-top: .4vw; font-size: 5.6vw; font-weight: 500; line-height: 1.04; letter-spacing: -.0575em; }
-      .salmon-soon-stage { position: relative; flex: 1; min-height: 0; container-type: size; perspective: 220cqh; perspective-origin: 50% 40%; }
-      /* The band is a wall turned toward the right and tipped down, so it runs from far and high on the left to
-         near and low on the right; the track slides along it. */
-      .salmon-soon-band {
-        position: absolute;
-        top: 6cqh;
-        left: -40vw;
-        right: -40vw;
-        transform: rotateY(-14deg) rotateZ(8deg);
-      }
-      .salmon-soon-track {
-        display: flex;
-        gap: 4cqh;
-        width: max-content;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        animation: salmon-soon-slide 45s linear infinite;
-      }
-      @keyframes salmon-soon-slide { to { transform: translateX(-50%); } }
-      .salmon-soon-track li {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        flex: none;
-        width: 50cqh;
-        height: 54cqh;
-        padding: 5cqh;
-        border: 1px solid rgba(255,255,255,.28);
-        border-radius: 4.5cqh;
-        background: linear-gradient(160deg, rgba(120,30,20,.34), rgba(80,16,12,.46));
-        text-align: left;
-      }
-      .salmon-soon-word { margin-top: auto; font-size: 8.6cqh; font-weight: 500; line-height: 1; letter-spacing: -.0575em; }
-      .salmon-soon-by { display: flex; align-items: center; gap: 1.6cqh; margin-top: 2.4cqh; font-size: 2.7cqh; font-weight: 500; opacity: .8; }
-      .salmon-soon-logo {
-        width: 22cqh;
-        height: 4.4cqh;
-        background: #fff;
-        -webkit-mask: var(--logo) left center / contain no-repeat;
-        mask: var(--logo) left center / contain no-repeat;
-      }
-      /* The fin and phone keep their own sizing (--phone-w) and float; here they fill the stage, centred. */
-      /* The salmon fin holding the phone: two renders from blender/fin.py (docs/fin-preproduction.md), the back
-         one under the phone and the front one over its live screen. The fin's numbers are the script's "FIN CSS"
-         output in phone widths (--phone-w), so the whole piece scales from one value: here the phone is sized
-         from the stage's height (cqh), so the card fits one screen. */
-      .salmon-fin-phone {
-        --phone-w: calc(96cqh * .4696);
-        --bezel: calc(var(--phone-w) * .0544);
-        position: absolute;
-        top: 54%;
-        left: 50%;
-        z-index: 1;
-        width: var(--phone-w);
-        height: calc(var(--phone-w) / .4696);
-        transform: translate(-50%, -50%);
-        animation: salmon-fin-float 7s ease-in-out infinite;
-      }
-      @keyframes salmon-fin-float {
-        0%, 100% { translate: 0 0; rotate: 0deg; }
-        50% { translate: 0 calc(-.06 * var(--phone-w)); rotate: -.8deg; }
-      }
-      .salmon-fin-screen {
-        position: absolute;
-        inset: var(--bezel);
-        z-index: 2;
-        overflow: hidden;
-        border-radius: calc(var(--phone-w) * .1483 - var(--bezel));
-        background: #161c2d;
-        box-shadow:
-          0 0 0 calc(var(--bezel) * .88) #080a0f,
-          0 0 0 var(--bezel) #ff7e6d,
-          0 calc(var(--phone-w) * .12) calc(var(--phone-w) * .27) rgba(120,24,12,.35);
-      }
-      .salmon-fin-screen::before {
-        content: "";
-        position: absolute;
-        z-index: 7;
-        top: calc(var(--phone-w) * .0347);
-        left: 50%;
-        width: calc(var(--phone-w) * .277);
-        height: calc(var(--phone-w) * .0667);
-        border-radius: 999px;
-        background: #080a0f;
-        transform: translateX(-50%);
-      }
-      .salmon-fin-screen iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
-      .salmon-fin-back,
-      .salmon-fin-front {
-        position: absolute;
-        top: calc(50% - 1.79429 * var(--phone-w));
-        left: calc(50% - 2.34357 * var(--phone-w));
-        width: calc(4.68720 * var(--phone-w));
-        height: calc(3.90352 * var(--phone-w));
-        max-width: none;
-        pointer-events: none;
-      }
-      /* The fin runs on past the render's left and bottom edges; fading there hides the straight cut. */
-      .salmon-fin-back {
-        z-index: 1;
-        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
-        -webkit-mask-composite: source-in;
-        mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
-        mask-composite: intersect;
-      }
-      .salmon-fin-front { z-index: 3; }
-      @media (prefers-reduced-motion: reduce) {
-        .salmon-soon-track { animation: none; }
-      }
+      /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
+      .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
+      #coming-soon { overflow: hidden; }
+      #coming-soon .salmon-intro-marquee { margin-top: 3.5vw; }
+      #coming-soon .salmon-powerups-title { font-size: 5.6vw; }
       /* Builders who want their Powerup in Salmon write to the integrations inbox (SOT, Salmon Website Index). */
-      /* The button sits over the bottom of the phone, as hims' does over its figure. */
-      .salmon-soon-cta { position: absolute; left: 0; right: 0; bottom: 4.5cqh; z-index: 4; margin: 0; text-align: center; }
-      .salmon-pill.salmon-pill-light { background: #fff; color: #10131c; box-shadow: 0 8px 30px 0 rgba(120,24,12,.25); }
-      .salmon-pill.salmon-pill-light:hover { box-shadow: 0 12px 36px 0 rgba(120,24,12,.32); }
+      .salmon-soon-cta { margin: 0 0 6vw; text-align: center; }
       .salmon-pill {
         display: inline-block;
         padding: 16px 32px;
@@ -1270,6 +1201,14 @@ export async function GET(request: Request) {
       }
       .salmon-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 36px 0 rgba(255,92,69,.4); }
       .salmon-pill:focus-visible { outline: 2px solid #10131c; outline-offset: 3px; }
+      .salmon-visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
       @media (hover: hover) {
         .salmon-intro-face:hover {
           transform: perspective(50vw) rotateX(56deg) translateZ(2.2vw);
@@ -1281,7 +1220,8 @@ export async function GET(request: Request) {
             0 11vw 9vw rgba(16,19,28,.12),
             0 0 6vw rgba(255,92,69,.22) !important;
         }
-        .salmon-intro-face:hover svg {
+        .salmon-intro-face:hover svg,
+        .salmon-intro-face:hover .salmon-intro-logo {
           transform: scale(1.08);
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
@@ -1299,7 +1239,8 @@ export async function GET(request: Request) {
         .salmon-intro-marquee { overflow-x: auto; }
         .salmon-intro-row[aria-hidden] { display: none; }
         .salmon-intro-face,
-        .salmon-intro-face svg { transition: none; }
+        .salmon-intro-face svg,
+        .salmon-intro-logo { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
@@ -1404,17 +1345,9 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #coming-soon { margin: var(--salmon-section-gap) 16px 0; border-radius: 24px; }
-        .salmon-soon-eyebrow { font-size: 3.6vw; }
-        .salmon-soon-title { font-size: 12vw; }
-        #coming-soon { height: calc(100svh - 96px); min-height: 520px; }
-        /* A tall, narrow stage: the phone and panels follow the screen's width instead of its height. */
-        .salmon-fin-phone { --phone-w: min(96cqh * .4696, 50vw); }
-        .salmon-soon-track { gap: 4vw; }
-        .salmon-soon-track li { width: 42vw; height: 46vw; padding: 4vw; border-radius: 4vw; }
-        .salmon-soon-word { font-size: 7vw; }
-        .salmon-soon-by { gap: 1.6vw; margin-top: 2vw; font-size: 3vw; }
-        .salmon-soon-logo { width: 20vw; height: 4vw; }
+        #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
+        #coming-soon .salmon-powerups-title { font-size: 12vw; }
+        .salmon-soon-cta { margin-bottom: 14vw; }
         #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
@@ -1447,18 +1380,25 @@ export async function GET(request: Request) {
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
         #salmon-card-0 > p { margin-top: 8vw !important; }
-        #salmon-card-0 .salmon-download { --d: min(112px, 23vw); }
+        #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
+        #salmon-card-1 .salmon-get-title { margin-bottom: 14px; }
+        #salmon-card-1 .salmon-get-subtitle { margin-bottom: 48px; }
+        #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
+        #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
-        #program .card-content-screen {
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen {
           box-shadow:
             0 0 0 2.2vw #080a0f,
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
         #hero .card-content-screen,
-        #program .card-content-screen { --bezel: 2.55vw; }
+        #program .card-content-screen,
+        #salmon-card-0 .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
-        #program .card-content-screen::before {
+        #program .card-content-screen::before,
+        #salmon-card-0 .card-content-screen::before {
           top: 1.6vw;
           width: 13vw;
           height: 3vw;
@@ -1538,6 +1478,11 @@ export async function GET(request: Request) {
           window.addEventListener('resize', onScroll);
           flowFrame.addEventListener('load', function () { measure(); drawn = target; sent = null; post(); });
         }
+
+        var salmonHeading = document.querySelector('#salmon > h2');
+
+        var ownershipCard = document.querySelector('#salmon-card-0');
+        if (ownershipCard && salmonHeading) ownershipCard.prepend(salmonHeading);
 
         var parallaxCard = document.querySelector('#salmon-card-2');
         if (parallaxCard) parallaxCard.remove();
