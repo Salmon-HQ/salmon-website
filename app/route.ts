@@ -346,6 +346,8 @@ export async function GET(request: Request) {
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
     .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div> <h2>Powerups<\/h2>/, '$1')
+    // Real ownership opens on its title, without the icon tile.
+    .replace(/(<section id=salmon class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
     // "Add more when you need more." moves up between the Powerups title and "Coming soon" (introRowHtml).
     .replace(' <p>Add more when you need more.</p>', '')
     .replace(
@@ -531,11 +533,6 @@ export async function GET(request: Request) {
       #salmon.section {
         padding-top: 6vw !important;
       }
-      #salmon .section-rectangle {
-        width: 9vw !important;
-        height: 9vw !important;
-        box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
-      }
       /* The Powerups title, moved above "Coming soon", keeps the section title look. */
       #intro .salmon-powerups-title {
         padding-top: 6vw;
@@ -684,12 +681,6 @@ export async function GET(request: Request) {
         min-height: 38vw;
         padding: 8vw 5vw;
         background-image: linear-gradient(120deg, #161c2d 0%, #10131c 58%, #321b20 100%) !important;
-      }
-      #salmon .section-rectangle img {
-        width: 40%;
-        height: 40%;
-        object-fit: contain;
-        filter: brightness(0);
       }
       #salmon-card-0 > p span {
         display: block;
@@ -1299,7 +1290,6 @@ export async function GET(request: Request) {
         .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
-        #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
         #intro .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
         #program .card { margin-top: 10vw !important; }
@@ -1407,12 +1397,9 @@ export async function GET(request: Request) {
         }
 
         var salmonHeading = document.querySelector('#salmon > h2');
-        var ownershipIcon = document.querySelector('#salmon .section-rectangle');
-        if (ownershipIcon) ownershipIcon.innerHTML = '<img src="/images/logo.svg" alt="Salmon">';
 
         var ownershipCard = document.querySelector('#salmon-card-0');
         if (ownershipCard && salmonHeading) ownershipCard.prepend(salmonHeading);
-        if (ownershipCard && ownershipIcon) ownershipCard.prepend(ownershipIcon);
 
         var parallaxCard = document.querySelector('#salmon-card-2');
         if (parallaxCard) parallaxCard.remove();
