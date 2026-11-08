@@ -272,9 +272,9 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more>Add <span>more</span> when you need <span>more</span>.</p>`;
-// After the Powerups demo: the partners, under a title set like "Powerups".
-const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
+  `<h2 class=salmon-powerups-title>Powerups</h2>`;
+// After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
+const comingSoonHtml = `<div id=coming-soon><p class=salmon-add-more>Add <span>more</span> when you need <span>more</span>.</p><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
   ' salmon-intro-marquee-soon',
 )}</div>`;
@@ -557,9 +557,9 @@ export async function GET(request: Request) {
         line-height: 1 !important;
       }
       .card-content-list-sticky-copy .salmon-key { color: #ff5c45; -webkit-text-fill-color: #ff5c45; }
-      /* Orange line, the two "more" in ink. */
-      #intro p.salmon-add-more { color: #ff5c45; }
-      #intro p.salmon-add-more span { color: #10131c; }
+      /* Closing line after the demo, set like the other intro lines: orange, the two "more" in ink. */
+      #coming-soon p.salmon-add-more { width: 50vw; margin: 6vw auto 0; color: #ff5c45; font-size: 3.2vw; line-height: 1.1; letter-spacing: -.0475em; text-align: center; }
+      #coming-soon p.salmon-add-more span { color: #10131c; }
       /* Powerups starts right under "Add more when you need more."; the row image carries its own top margin. */
       #program.section { padding-top: 0 !important; }
       #program .card {
@@ -1275,6 +1275,7 @@ export async function GET(request: Request) {
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
         #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
+        #coming-soon p.salmon-add-more { width: 87.18vw; margin-top: 14vw; font-size: 8.5vw; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
