@@ -272,7 +272,7 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-intro-soon>Coming soon</p>` +
+  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add more when you need more.</p><p class=salmon-intro-soon>Coming soon</p>` +
   introMarquee(INTRO_ITEMS.filter((item) => item.logo), ' salmon-intro-marquee-soon');
 
 const SCREENS = [
@@ -338,9 +338,8 @@ export async function GET(request: Request) {
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
     .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div> <h2>Powerups<\/h2>/, '$1')
-    // "Add more when you need more." moves from the features strip to under "Let's fix that."
+    // "Add more when you need more." moves up between the Powerups title and "Coming soon" (introRowHtml).
     .replace(' <p>Add more when you need more.</p>', '')
-    .replace("<span>Let's fix that.</span> </p>", "<span>Let's fix that.</span><span class=salmon-add-more>Add more when you need more.</span></p>")
     .replace(
       /<div id=salmon-card-1>[\s\S]*?<\/div> (?=<div id=salmon-card-2>)/,
       () => `<div id=salmon-card-1 class=salmon-get-card>${getSalmonCardHtml}</div> `,
@@ -501,14 +500,13 @@ export async function GET(request: Request) {
       .shim-null #program-card-content-grid {
         height: 100vh !important;
       }
-      #program-card-content-intro span:not(.salmon-add-more) {
+      #program-card-content-intro span {
         background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%) !important;
         background-clip: text !important;
         -webkit-background-clip: text !important;
         color: transparent !important;
         -webkit-text-fill-color: transparent !important;
       }
-      #program-card-content-intro .salmon-add-more { display: block; margin-top: .6em; background: none !important; color: #10131c !important; -webkit-text-fill-color: #10131c !important; }
       #program .p {
         height: 0 !important;
         margin: 0 !important;
