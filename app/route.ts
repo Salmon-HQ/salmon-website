@@ -274,7 +274,9 @@ const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
   `<h2 class=salmon-powerups-title>Powerups</h2>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-const comingSoonHtml = `<div id=coming-soon><p class=salmon-add-more>Add <span>more</span> when you need <span>more</span>.</p><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
+// The slogan gets its own pinned screen; its words light up one by one as the page scrolls (salmonSlogan in the script).
+const sloganHtml = `<section id=salmon-slogan><div class=salmon-slogan-pin><p class=salmon-slogan><span class="salmon-slogan-w salmon-orange">Add</span> <span class=salmon-slogan-w>more</span> <span class="salmon-slogan-w salmon-orange">when you need</span> <span class="salmon-slogan-w salmon-slogan-last">more<span class=salmon-orange>.</span></span></p></div></section>`;
+const comingSoonHtml = `${sloganHtml}<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
   ' salmon-intro-marquee-soon',
 )}</div>`;
@@ -467,15 +469,15 @@ export async function GET(request: Request) {
         color: #10131c !important;
         font-weight: 600 !important;
       }
-      #hero .p .salmon-copy-accent { color: #ff5c45; }
-      #hero .p .salmon-copy-soft { color: #ff7e6d; }
       #hero .p .salmon-copy-deep { color: #a12a2a; }
       #nav .soon-icon { display: none !important; }
       #nav .soon > div { display: flex; align-items: center; justify-content: center; }
       #hero h1 {
-        background: none !important;
-        color: #ff5c45 !important;
-        -webkit-text-fill-color: #ff5c45 !important;
+        background: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
       }
       #hero h1 .salmon-h1-strong {
         font-weight: 600;
@@ -556,10 +558,32 @@ export async function GET(request: Request) {
         font-size: 7vw !important;
         line-height: 1 !important;
       }
-      .card-content-list-sticky-copy .salmon-key { color: #ff5c45; -webkit-text-fill-color: #ff5c45; }
-      /* Closing line after the demo, set like the other intro lines: orange, the two "more" in ink. */
-      #coming-soon p.salmon-add-more { width: 50vw; margin: 6vw auto 0; color: #ff5c45; font-size: 3.2vw; line-height: 1.1; letter-spacing: -.0475em; text-align: center; }
-      #coming-soon p.salmon-add-more span { color: #10131c; }
+      /* Orange words share the "Let's fix that." gradient, darker at the end. */
+      #hero .p .salmon-copy-accent,
+      #hero .p .salmon-copy-soft,
+      .card-content-list-sticky-copy .salmon-key,
+      .salmon-orange {
+        background-image: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+      }
+      /* Slogan: one screen, held for 1.5 more while each word lights up. */
+      #salmon-slogan { position: relative; height: 250vh; }
+      .salmon-slogan-pin { position: sticky; top: 0; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100svh; }
+      .salmon-slogan { width: 80vw; margin: 0; color: #10131c; font-size: 7vw; font-weight: 600; line-height: 1.05; letter-spacing: -.0575em; text-align: center; }
+      .salmon-slogan-w { display: inline-block; opacity: .12; transform: translateY(.12em); transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+      .salmon-slogan-w.on { opacity: 1; transform: none; }
+      .salmon-slogan-last { transform-origin: 50% 80%; }
+      .salmon-slogan-last.on { transform: scale(1.12); }
+      @media (prefers-reduced-motion: reduce) {
+        #salmon-slogan { height: auto; }
+        .salmon-slogan-pin { position: static; }
+        .salmon-slogan-w { opacity: 1; transform: none; transition: none; }
+      }
       /* Powerups starts right under "Add more when you need more."; the row image carries its own top margin. */
       #program.section { padding-top: 0 !important; }
       #program .card {
@@ -1277,7 +1301,7 @@ export async function GET(request: Request) {
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
         #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
-        #coming-soon p.salmon-add-more { width: 87.18vw; margin-top: 14vw; font-size: 8.5vw; }
+        .salmon-slogan { width: 87.18vw; font-size: 12vw; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
@@ -1419,7 +1443,22 @@ export async function GET(request: Request) {
         var powerupsPercent = document.querySelector('#program-card-content-percent-w');
         if (powerupsPercent) powerupsPercent.remove();
       }
+      // Slogan: each word lights up at its share of the pinned scroll, and goes dark again scrolling back.
+      function salmonSlogan() {
+        var section = document.getElementById('salmon-slogan');
+        if (!section) return;
+        var words = section.querySelectorAll('.salmon-slogan-w');
+        function update() {
+          var travel = section.offsetHeight - innerHeight;
+          var progress = travel > 0 ? -section.getBoundingClientRect().top / travel : 1;
+          for (var i = 0; i < words.length; i++) words[i].classList.toggle('on', progress > (i + 0.5) / (words.length + 1));
+        }
+        addEventListener('scroll', update, { passive: true });
+        addEventListener('resize', update);
+        update();
+      }
       applySalmonCopy();
+      salmonSlogan();
       if (document.readyState !== 'complete') {
         window.addEventListener('load', initSalmonStandalone, { once: true });
       } else {
