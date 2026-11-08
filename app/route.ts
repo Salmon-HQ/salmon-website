@@ -482,11 +482,21 @@ export async function GET(request: Request) {
       #hero h1 .salmon-h1-strong {
         font-weight: 600;
       }
+      /* The brand's scale texture, faint, over every container card (hero, Powerups, Coming soon, Real ownership). */
+      :root { --salmon-scales: url(/images/scales.svg); --salmon-scales-size: 822px 26px; }
       #hero .card-content {
         background-image:
+          var(--salmon-scales),
           radial-gradient(circle at 50% 68%, rgba(255, 92, 69, .42), transparent 30%),
           radial-gradient(circle at 72% 38%, rgba(255, 126, 109, .24), transparent 24%),
           linear-gradient(180deg, #ffffff 0%, #fff7f4 58%, #10131c 100%) !important;
+        background-size: var(--salmon-scales-size), 100% 100%, 100% 100%, 100% 100% !important;
+        background-repeat: repeat, no-repeat, no-repeat, no-repeat !important;
+        background-position: top left, center, center, center !important;
+      }
+      /* The hero's glow layer is a white sheet over most of the card, so it carries the scales too. */
+      #hero-card-content-gradient {
+        background: #fff var(--salmon-scales) top left / var(--salmon-scales-size) repeat !important;
       }
       #hero-card-content-gradient::after {
         background-image:
@@ -498,6 +508,9 @@ export async function GET(request: Request) {
          and closes back into a rounded card as the demo leaves. Its static shadow stays off (it would not follow the clip). */
       #program .card-content {
         background-color: #fff7f4 !important;
+        background-image: var(--salmon-scales) !important;
+        background-size: var(--salmon-scales-size) !important;
+        background-repeat: repeat !important;
       }
       #program .card-shadow {
         display: none !important;
@@ -691,6 +704,10 @@ export async function GET(request: Request) {
         background-color: transparent !important;
       }
       #salmon-card-0 {
+        background-image: var(--salmon-scales), url(/reference-assets/media/salmon/00.jpg) !important;
+        background-size: var(--salmon-scales-size), cover !important;
+        background-repeat: repeat, no-repeat !important;
+        background-position: top left, top center !important;
         margin-top: 0 !important;
         padding-top: var(--salmon-card-top) !important;
         color: #fff;
