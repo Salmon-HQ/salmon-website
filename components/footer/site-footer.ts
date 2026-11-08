@@ -55,6 +55,7 @@ const FOOTER_COLUMNS = [
       ['Powerups', '/#program'],
       ['Validator', '/#salmon-validator'],
       ['Extension', STORES[0].href],
+      ...STORES.slice(1).map((store) => [store.name, store.href]),
       ['Docs', 'https://docs.salmonwallet.io/'],
     ],
   },
