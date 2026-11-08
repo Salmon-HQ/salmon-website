@@ -483,7 +483,7 @@ export async function GET(request: Request) {
         font-weight: 600;
       }
       /* The brand's scale texture, faint, over every container card (hero, Powerups, Coming soon, Real ownership). */
-      :root { --salmon-scales: url(/images/scales.svg); --salmon-scales-size: 822px 26px; }
+      :root { --salmon-scales: url(/images/scales.svg); --salmon-scales-size: 2466px 78px; }
       #hero .card-content {
         background-image:
           var(--salmon-scales),
