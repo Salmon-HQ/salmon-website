@@ -95,7 +95,7 @@ export const footerHtml = `
   <div id="footer-top" class="salmon-footer">
     <aside class="salmon-footer-app">
       <p class="salmon-footer-app-eyebrow">Download the free Salmon app</p>
-      <p class="salmon-footer-app-title">A reason to arrive.<br>A wallet designed to stay.</p>
+      <p class="salmon-footer-app-title"><span>A reason to arrive.</span> <span>A wallet designed to stay.</span></p>
       ${downloadsHtml}
       <div class="salmon-footer-phone"><iframe src="/phone-preview" title="Salmon wallet home: balance and token list" loading="lazy" tabindex="-1"></iframe></div>
     </aside>
@@ -225,6 +225,7 @@ export const footerCss = `
     line-height: 1.05;
     letter-spacing: -.045em;
   }
+  .salmon-footer-app-title span { display: block; text-wrap: balance; }
   .salmon-footer-app .salmon-download { --d: 72px; }
   .salmon-footer-app .salmon-download svg {
     width: 26px;
