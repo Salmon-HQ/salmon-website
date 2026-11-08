@@ -272,11 +272,9 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2>`;
+  `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
 // After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-// The slogan gets its own pinned screen; its words light up one by one as the page scrolls (salmonSlogan in the script).
-const sloganHtml = `<section id=salmon-slogan><div class=salmon-slogan-pin><p class=salmon-slogan><span class="salmon-slogan-w salmon-orange">Add</span> <span class=salmon-slogan-w>more</span> <span class="salmon-slogan-w salmon-orange">when you need</span> <span class="salmon-slogan-w salmon-slogan-last">more<span class=salmon-orange>.</span></span></p></div></section>`;
-const comingSoonHtml = `${sloganHtml}<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
+const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
   ' salmon-intro-marquee-soon',
 )}</div>`;
@@ -571,18 +569,16 @@ export async function GET(request: Request) {
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
       }
-      /* Slogan: one screen, held for 1.5 more while each word lights up. */
-      #salmon-slogan { position: relative; height: 250vh; }
-      .salmon-slogan-pin { position: sticky; top: 0; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100svh; }
-      .salmon-slogan { width: 80vw; margin: 0; color: #10131c; font-size: 7vw; font-weight: 600; line-height: 1.05; letter-spacing: -.0575em; text-align: center; }
-      .salmon-slogan-w { display: inline-block; opacity: .12; transform: translateY(.12em); transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
-      .salmon-slogan-w.on { opacity: 1; transform: none; }
-      .salmon-slogan-last { transform-origin: 50% 80%; }
-      .salmon-slogan-last.on { transform: scale(1.12); }
+      /* Powerups intro: title, context (90% of the intro size) and "Add more" fill the first screen; the row and demo follow. */
+      .salmon-powerups-intro { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; min-height: 100svh; padding: 84px 0 24px; }
+      .salmon-powerups-intro .salmon-powerups-title { padding-top: 0; }
+      #intro #program-card-content-intro { margin: 3.5vw auto 0 !important; font-size: 2.88vw !important; line-height: 1.1 !important; }
+      #intro p.salmon-add-more span { color: #10131c; }
+      /* "Add more" lights up word by word once, when it comes into view (salmonReveal in the script). */
+      .salmon-reveal-w { display: inline-block; opacity: .12; transform: translateY(.12em); transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+      .salmon-reveal-w.on { opacity: 1; transform: none; }
       @media (prefers-reduced-motion: reduce) {
-        #salmon-slogan { height: auto; }
-        .salmon-slogan-pin { position: static; }
-        .salmon-slogan-w { opacity: 1; transform: none; transition: none; }
+        .salmon-reveal-w { opacity: 1; transform: none; transition: none; }
       }
       /* Powerups starts right under "Add more when you need more."; the row image carries its own top margin. */
       #program.section { padding-top: 0 !important; }
@@ -1301,7 +1297,7 @@ export async function GET(request: Request) {
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
         #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
-        .salmon-slogan { width: 87.18vw; font-size: 12vw; }
+        #intro #program-card-content-intro { margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
@@ -1443,22 +1439,21 @@ export async function GET(request: Request) {
         var powerupsPercent = document.querySelector('#program-card-content-percent-w');
         if (powerupsPercent) powerupsPercent.remove();
       }
-      // Slogan: each word lights up at its share of the pinned scroll, and goes dark again scrolling back.
-      function salmonSlogan() {
-        var section = document.getElementById('salmon-slogan');
-        if (!section) return;
-        var words = section.querySelectorAll('.salmon-slogan-w');
-        function update() {
-          var travel = section.offsetHeight - innerHeight;
-          var progress = travel > 0 ? -section.getBoundingClientRect().top / travel : 1;
-          for (var i = 0; i < words.length; i++) words[i].classList.toggle('on', progress > (i + 0.5) / (words.length + 1));
-        }
-        addEventListener('scroll', update, { passive: true });
-        addEventListener('resize', update);
-        update();
+      // "Add more": its words light up one after another the first time it is on screen.
+      function salmonReveal() {
+        var line = document.querySelector('.salmon-add-more');
+        if (!line) return;
+        var words = line.querySelectorAll('.salmon-reveal-w');
+        if (!('IntersectionObserver' in window)) { words.forEach(function (word) { word.classList.add('on'); }); return; }
+        var seen = new IntersectionObserver(function (entries) {
+          if (!entries[0].isIntersecting) return;
+          seen.disconnect();
+          words.forEach(function (word, i) { setTimeout(function () { word.classList.add('on'); }, i * 350); });
+        }, { threshold: 0.6 });
+        seen.observe(line);
       }
       applySalmonCopy();
-      salmonSlogan();
+      salmonReveal();
       if (document.readyState !== 'complete') {
         window.addEventListener('load', initSalmonStandalone, { once: true });
       } else {
