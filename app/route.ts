@@ -1326,6 +1326,9 @@ export async function GET(request: Request) {
           height: 3vw;
         }
       }
+      /* The template left two 17.36vw gaps between the hero sentence and the strip; one 64px gap remains. */
+      #hero .p { padding-bottom: 0 !important; }
+      #intro { margin-top: clamp(40px, 4.4vw, 64px) !important; }
     </style>
   `;
   const localized = withValidator.replace(
