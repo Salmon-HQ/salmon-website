@@ -122,7 +122,7 @@ export const footerHtml = `
       <div class="salmon-footer-legal">
         <img src="/images/app-icon.png" alt="" class="salmon-footer-legal-icon">
         <div>
-          <p class="salmon-footer-tagline">Open wallet infrastructure</p>
+          <p class="salmon-footer-tagline">The modular wallet for Solana</p>
           <p>© ${new Date().getFullYear()} Salmon Wallet. Open source and self-custodial. All rights reserved.</p>
         </div>
       </div>
