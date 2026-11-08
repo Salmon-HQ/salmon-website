@@ -347,6 +347,11 @@ export async function GET(request: Request) {
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
     .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div> <h2>Powerups<\/h2>/, '$1')
+    // Step copy: key words in the accent, so each step reads at a glance.
+    .replace('Add only the capabilities', 'Add <span class=salmon-key>only</span> the capabilities')
+    .replace('<p>Turn it on when you need it. You decide what', '<p><span class=salmon-key>Turn it on</span> when you need it. <span class=salmon-key>You decide</span> what')
+    .replace('Keep your wallet lean.', 'Keep your wallet <span class=salmon-key>lean</span>.')
+    .replace('everything else remains optional.', 'everything else remains <span class=salmon-key>optional</span>.')
     // Real ownership opens on its title, without the icon tile.
     .replace(/(<section id=salmon class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
     // "Add more when you need more." moves up between the Powerups title and "Coming soon" (introRowHtml).
@@ -551,6 +556,7 @@ export async function GET(request: Request) {
         font-size: 7vw !important;
         line-height: 1 !important;
       }
+      .card-content-list-sticky-copy .salmon-key { color: #ff5c45; -webkit-text-fill-color: #ff5c45; }
       /* Orange line, the two "more" in ink. */
       #intro p.salmon-add-more { color: #ff5c45; }
       #intro p.salmon-add-more span { color: #10131c; }
