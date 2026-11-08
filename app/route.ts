@@ -277,7 +277,7 @@ const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-pow
 const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
   INTRO_ITEMS.filter((item) => item.logo),
   ' salmon-intro-marquee-soon',
-)}</div>`;
+)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Add%20a%20Powerup%20to%20Salmon">Add your Powerup</a></p></div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -1129,7 +1129,7 @@ export async function GET(request: Request) {
         font-size: 9.79167vw;
         line-height: 110%;
         letter-spacing: -.0575em;
-        color: #f0f0f0;
+        color: #d9d9db;
         white-space: nowrap;
       }
       .salmon-intro-tile {
@@ -1175,6 +1175,23 @@ export async function GET(request: Request) {
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
       #coming-soon { overflow: hidden; }
       #coming-soon .salmon-intro-marquee { margin-top: 3.5vw; }
+      #coming-soon .salmon-powerups-title { font-size: 5.6vw; }
+      /* Builders who want their Powerup in Salmon write to the integrations inbox (SOT, Salmon Website Index). */
+      .salmon-soon-cta { margin: 0 0 6vw; text-align: center; }
+      .salmon-pill {
+        display: inline-block;
+        padding: 16px 32px;
+        border-radius: 999px;
+        background: #ff5c45;
+        box-shadow: 0 8px 30px 0 rgba(255,92,69,.3);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+      }
+      .salmon-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 36px 0 rgba(255,92,69,.4); }
+      .salmon-pill:focus-visible { outline: 2px solid #10131c; outline-offset: 3px; }
       .salmon-visually-hidden {
         position: absolute;
         width: 1px;
@@ -1320,6 +1337,8 @@ export async function GET(request: Request) {
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
         #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
+        #coming-soon .salmon-powerups-title { font-size: 12vw; }
+        .salmon-soon-cta { margin-bottom: 14vw; }
         #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
