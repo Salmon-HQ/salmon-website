@@ -157,7 +157,7 @@ const FOOTER_COLUMNS = [
       {
         links: [
           ['About', 'https://www.salmonwallet.io/about'],
-          ['Contact', 'https://www.salmonwallet.io/contact'],
+          ['Contact', '/contact'],
         ],
       },
       {
@@ -221,8 +221,8 @@ const footerHtml = `
         <img src="/images/app-icon.png" alt="" class="salmon-footer-legal-icon">
         <div>
           <ul>
-            <li><a href="https://www.salmonwallet.io/terms">Terms &amp; conditions</a></li>
-            <li><a href="https://www.salmonwallet.io/privacy">Privacy policy</a></li>
+            <li><a href="/terms">Terms &amp; conditions</a></li>
+            <li><a href="/privacy">Privacy policy</a></li>
           </ul>
           <p>© ${new Date().getFullYear()} Salmon Wallet. Open source and self-custodial. All rights reserved.</p>
         </div>
@@ -557,9 +557,11 @@ export async function GET(request: Request) {
         line-height: 1.1 !important;
       }
       /* Real ownership (#salmon) shares the Powerups header sizes. */
+      /* One gap between stacked cards: Powerups → Coming soon → Real ownership. */
+      :root { --salmon-section-gap: 6vw; }
       #program.section,
       #salmon.section {
-        padding-top: 6vw !important;
+        padding-top: var(--salmon-section-gap) !important;
       }
       /* "Powerups" and "Coming soon" keep the section title look. */
       .salmon-powerups-title {
@@ -1179,7 +1181,7 @@ export async function GET(request: Request) {
       #coming-soon {
         position: relative;
         overflow: hidden;
-        margin: 0 64px;
+        margin: var(--salmon-section-gap) 64px 0;
         padding-top: var(--salmon-card-top);
         border-radius: 45px;
         color: #fff;
@@ -1399,7 +1401,7 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #coming-soon { margin: 0 16px; border-radius: 24px; }
+        #coming-soon { margin: var(--salmon-section-gap) 16px 0; border-radius: 24px; }
         .salmon-soon-eyebrow { font-size: 3.6vw; }
         .salmon-soon-title { font-size: 12vw; }
         .salmon-soon-stage { height: 78vw; margin-top: 4vw; perspective: 160vw; }
@@ -1435,7 +1437,7 @@ export async function GET(request: Request) {
         .salmon-screens-list::-webkit-scrollbar { display: none; }
         .salmon-screens-list li, .salmon-screens-list li:nth-child(4) { grid-column: auto; scroll-snap-align: start; }
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
-        #salmon.section { padding-top: 14vw !important; }
+        :root { --salmon-section-gap: 14vw; }
         :root { --salmon-card-top: 12vw; --salmon-card-title-top: 4vw; }
         #salmon-card-0 > h2 { font-size: 15vw !important; }
         .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
