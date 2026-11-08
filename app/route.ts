@@ -272,13 +272,12 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<h2 class=salmon-powerups-title>Powerups</h2><p>Add <span class=salmon-accent>more</span> when you need <span class=salmon-accent>more</span>.</p>`;
-// After the Powerups demo: the "Wallets became mega-apps" sentence (moved out of the card), then the partners.
-const comingSoonHtml = (powerupsCopy: string) =>
-  `<div id=coming-soon>${powerupsCopy}<p class=salmon-intro-soon>Coming soon</p>${introMarquee(
-    INTRO_ITEMS.filter((item) => item.logo),
-    ' salmon-intro-marquee-soon',
-  )}</div>`;
+  `<h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more>Add <span>more</span> when you need <span>more</span>.</p>`;
+// After the Powerups demo: the partners, under a title set like "Powerups".
+const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
+  INTRO_ITEMS.filter((item) => item.logo),
+  ' salmon-intro-marquee-soon',
+)}</div>`;
 
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
@@ -340,8 +339,10 @@ export async function GET(request: Request) {
   const powerupsCopy = withoutShop.match(/<p id=program-card-content-intro>[\s\S]*?<\/p>/)?.[0] ?? '';
   const withScreens = withoutShop
     .replace(powerupsCopy, '')
-    .replace(/<section id=salmon class=section>/, () => `${comingSoonHtml(powerupsCopy)}<section id=salmon class=section>`)
+    .replace(/<section id=salmon class=section>/, () => `${comingSoonHtml}<section id=salmon class=section>`)
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
+    // "Wallets became mega-apps" leaves the Powerups card for the spot between the title and "Add more".
+    .replace('<h2 class=salmon-powerups-title>Powerups</h2>', (title) => title + powerupsCopy)
     // "Inside the app" is off for now; uncomment to show it again.
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
     // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
@@ -537,8 +538,8 @@ export async function GET(request: Request) {
       #salmon.section {
         padding-top: 6vw !important;
       }
-      /* The Powerups title, moved above "Coming soon", keeps the section title look. */
-      #intro .salmon-powerups-title {
+      /* "Powerups" and "Coming soon" keep the section title look. */
+      .salmon-powerups-title {
         padding-top: 6vw;
         font-size: 7vw;
         line-height: 1;
@@ -550,7 +551,9 @@ export async function GET(request: Request) {
         font-size: 7vw !important;
         line-height: 1 !important;
       }
-      #intro p .salmon-accent { color: #ff5c45; }
+      /* Orange line, the two "more" in ink. */
+      #intro p.salmon-add-more { color: #ff5c45; }
+      #intro p.salmon-add-more span { color: #10131c; }
       /* Powerups starts right under "Add more when you need more."; the row image carries its own top margin. */
       #program.section { padding-top: 0 !important; }
       #program .card {
@@ -1119,17 +1122,8 @@ export async function GET(request: Request) {
       }
       /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
       .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
-      /* Same type as "Add more when you need more." (#intro p), in the accent. */
-      #coming-soon { padding-top: 6vw; overflow: hidden; }
-      #coming-soon p.salmon-intro-soon {
-        width: 50vw;
-        margin: 3.5vw auto 0;
-        color: #ff5c45;
-        font-size: 3.2vw;
-        line-height: 1.1;
-        letter-spacing: -.0475em;
-        text-align: center;
-      }
+      #coming-soon { overflow: hidden; }
+      #coming-soon .salmon-intro-marquee { margin-top: 3.5vw; }
       .salmon-visually-hidden {
         position: absolute;
         width: 1px;
@@ -1274,8 +1268,7 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         #intro p { margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #coming-soon { padding-top: 14vw; }
-        #coming-soon p.salmon-intro-soon { width: 87.18vw; margin-top: 8vw; font-size: 8.5vw; }
+        #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
         #screens .section-rectangle svg { width: 8vw; height: 8vw; }
@@ -1301,7 +1294,7 @@ export async function GET(request: Request) {
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #salmon.section { padding-top: 14vw !important; }
         #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
-        #intro .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
+        .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
         #salmon-card-0 { padding-top: 12vw !important; }
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
