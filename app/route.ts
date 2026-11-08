@@ -272,7 +272,7 @@ const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
   `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
 const introRowHtml =
   introMarquee(INTRO_ITEMS.filter((item) => !item.logo)) +
-  `<p class=salmon-intro-soon>Coming soon</p>` +
+  `<h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-intro-soon>Coming soon</p>` +
   introMarquee(INTRO_ITEMS.filter((item) => item.logo), ' salmon-intro-marquee-soon');
 
 const SCREENS = [
@@ -336,8 +336,8 @@ export async function GET(request: Request) {
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
     // "Inside the app" is off for now; uncomment to show it again.
     // .replace(/<section id=salmon class=section>/, () => `${screensSectionHtml}<section id=salmon class=section>`)
-    // Powerups opens on its title, without the icon tile.
-    .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
+    // Powerups loses its icon tile, and its title moves up above "Coming soon" (introRowHtml).
+    .replace(/(<section id=program class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div> <h2>Powerups<\/h2>/, '$1')
     // "Add more when you need more." moves from the features strip to under "Let's fix that."
     .replace(' <p>Add more when you need more.</p>', '')
     .replace("<span>Let's fix that.</span> </p>", "<span>Let's fix that.</span><span class=salmon-add-more>Add more when you need more.</span></p>")
@@ -530,7 +530,14 @@ export async function GET(request: Request) {
         height: 9vw !important;
         box-shadow: 0 6px 48px 0 rgba(0,0,0,.09) !important;
       }
-      #program > h2,
+      /* The Powerups title, moved above "Coming soon", keeps the section title look. */
+      #intro .salmon-powerups-title {
+        padding-top: 6vw;
+        font-size: 7vw;
+        line-height: 1;
+        letter-spacing: -.0575em;
+        text-align: center;
+      }
       #salmon-card-0 > h2 {
         padding-top: 1.8vw !important;
         font-size: 7vw !important;
@@ -1276,7 +1283,8 @@ export async function GET(request: Request) {
         .salmon-screens-phone { border-radius: calc(6vw - var(--bezel)); }
         #program.section, #salmon.section { padding-top: 14vw !important; }
         #salmon .section-rectangle { width: 20vw !important; height: 20vw !important; }
-        #program > h2, #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #salmon-card-0 > h2 { padding-top: 4vw !important; font-size: 15vw !important; }
+        #intro .salmon-powerups-title { padding-top: 14vw; font-size: 15vw; }
         #program .card { margin-top: 10vw !important; }
         #salmon-card-0 { padding-top: 12vw !important; }
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
