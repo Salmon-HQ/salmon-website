@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { SITE_URL as BASE_URL } from '@/lib/site';
 
-const BASE_URL = 'https://salmonwallet.io';
+// Bump when the pages' content changes.
+const LAST_MODIFIED = new Date('2026-11-09');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ['en', 'es', 'pt'];
@@ -15,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return pages.flatMap((page) =>
     (page.path === '/terms' || page.path === '/privacy' ? locales : ['en']).map((locale) => ({
       url: `${BASE_URL}${locale === 'en' ? '' : `/${locale}`}${page.path}`,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED,
       changeFrequency: page.changeFrequency,
       priority: page.priority,
     }))

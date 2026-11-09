@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { comingSoonCss, comingSoonHtml } from '@/components/coming-soon/coming-soon';
+import { consentCss, consentHtml, consentScript } from '@/components/consent/consent';
 import { downloadsCss, downloadsHtml, footerCss, footerHtml } from '@/components/footer/site-footer';
+import { SITE_URL, structuredData } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +35,8 @@ async function getValidatorStats(): Promise<ValidatorStats> {
   try {
     const res = await fetch(`https://api.stakewiz.com/validator/${VALIDATOR_VOTE_ACCOUNT}`, {
       next: { revalidate: 3600 },
+      // A hung API must not hold the page: the fallback snapshot is shown instead.
+      signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) return VALIDATOR_FALLBACK;
     const v = await res.json();
@@ -130,8 +134,7 @@ const screensSectionHtml = `<section id=screens class=section aria-labelledby=sc
   ).join('')}</ul>
 </section>`;
 
-export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+export async function GET() {
   let html: string;
   try {
     html = await readFile(SNAPSHOT_PATH, 'utf8');
@@ -216,11 +219,16 @@ export async function GET(request: Request) {
     <meta property="og:type" content="website">
     <meta property="og:title" content="Salmon — One wallet. Only what you need.">
     <meta property="og:description" content="A lightweight Solana wallet that expands through optional Powerups.">
-    <meta property="og:image" content="${origin}/images/sharing-og.png">
+    <meta property="og:image" content="${SITE_URL}/images/sharing-og.png">
+    <meta property="og:url" content="${SITE_URL}/">
+    <meta property="og:site_name" content="Salmon Wallet">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Salmon — One wallet. Only what you need.">
     <meta name="twitter:description" content="A lightweight Solana wallet that expands through optional Powerups.">
-    <meta name="twitter:image" content="${origin}/images/sharing-og.png">
+    <meta name="twitter:image" content="${SITE_URL}/images/sharing-og.png">
+    <link rel="canonical" href="${SITE_URL}/">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <script type="application/ld+json">${JSON.stringify(structuredData()).replace(/</g, '\\u003c')}</script>
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
     <title>Salmon — One wallet. Only what you need.</title>
@@ -861,6 +869,7 @@ export async function GET(request: Request) {
       }
       .salmon-validator-foot a:hover { background: #ff5c45; }
       ${footerCss}
+      ${consentCss}
       ${comingSoonCss}
       /* The features as an endless strip of columns of the same width and gap,
          each a word over its tile. Every tile carries its own perspective (the
@@ -1318,12 +1327,13 @@ export async function GET(request: Request) {
       } else {
         initSalmonStandalone();
       }
-    </script>`;
+    </script>${consentHtml()}<script>${consentScript}</script>`;
 
   return new Response(finalHtml, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'no-store',
+      // Served from Vercel's edge for 10 minutes, refreshed in the background (the validator figures cache for an hour).
+      'cache-control': 'public, s-maxage=600, stale-while-revalidate=3600',
     },
   });
 }

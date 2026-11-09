@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import type { CSSProperties, ReactNode } from 'react';
 import { COLORS, PowerupRow } from '@/components/hero/mock-kit';
 import { u } from '@/components/hero/phone-scale';
@@ -99,6 +100,9 @@ ${mob.css}
   .row { width: ${MOBILE_STILL.widths[0]}vw; transform: var(--still-mobile); }
 }
 `;
+
+// A frame inside the home page, not a page of its own.
+export const metadata: Metadata = { robots: { index: false } };
 
 /** The Coming soon Powerups as the wallet's PowerupRow, switched off, rising in a loop. Shown inside the landing's orange card. */
 export default function PowerupRows() {

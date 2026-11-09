@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { ActivityMock, LoadingMock, PaymentRequestMock, ReceiveMock, SendReviewMock, SwapReviewMock, TokenDetailMock } from '@/components/hero/AppScreenMocks';
 import HomeScreenMock, { STEP_PROGRESS, flowState, type MockStep } from '@/components/hero/HomeScreenMock';
@@ -16,6 +17,9 @@ const SCREENS: Record<string, ReactNode> = {
 
 // ?screen= picks a static screen; ?flow=powerups is the Powerups phone, driven
 // by the landing's scroll; ?step=1-3 pins a flow step for checking it alone.
+// A frame inside the home page, not a page of its own.
+export const metadata: Metadata = { robots: { index: false } };
+
 export default async function PhonePreview({
   searchParams,
 }: {

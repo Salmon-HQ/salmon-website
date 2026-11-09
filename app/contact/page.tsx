@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import PageShell from '@/components/legal/PageShell';
 
-export const metadata: Metadata = { title: 'Contact Salmon Wallet', description: 'Official contact guidance for Salmon Wallet integrations, product, privacy, and security enquiries.' };
+export const metadata: Metadata = {
+  title: 'Contact Salmon Wallet',
+  description: 'Official contact guidance for Salmon Wallet integrations, product, privacy, and security enquiries.',
+  alternates: { canonical: '/contact' },
+};
 
 // Copied verbatim from salmon-website lib/info-pages.ts (infoPages.contact).
 const page = {

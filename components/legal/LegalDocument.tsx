@@ -90,7 +90,7 @@ export function legalMetadata(kind: LegalKind, locale: LegalLocale = 'en'): Meta
 export default function LegalDocument({ kind, locale = 'en' }: { kind: LegalKind; locale?: LegalLocale }) {
   const doc = getPowerupsLegal(locale, kind);
   return (
-    <PageShell>
+    <PageShell locale={locale}>
       <article lang={locale}>
         <h1 className="mb-6 text-4xl font-semibold tracking-[-0.03em]">{doc.title}</h1>
         <p className="mb-10 text-[#10131c]/70">
