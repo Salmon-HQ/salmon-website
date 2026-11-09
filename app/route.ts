@@ -203,6 +203,8 @@ export async function GET(request: Request) {
     .replace('everything else remains optional.', 'everything else remains <span class=salmon-key>optional</span>.')
     // Real ownership opens on its title, without the icon tile.
     .replace(/(<section id=salmon class=section>) <div class=section-rectangle>[\s\S]*?<\/svg> <\/div>/, '$1')
+    // Light shafts from the water's surface, behind everything in the card.
+    .replace('<div id=salmon-card-0>', '<div id=salmon-card-0><div class=salmon-rays aria-hidden=true></div>')
     // "Add more when you need more." moves up between the Powerups title and "Coming soon" (introRowHtml).
     .replace(' <p>Add more when you need more.</p>', '')
     .replace(
@@ -501,8 +503,7 @@ export async function GET(request: Request) {
         display: none !important;
       }
       #hero .card-content-screen,
-      #program .card-content-screen,
-      #salmon-card-0 .card-content-screen {
+      #program .card-content-screen {
         background: #161c2d;
         box-shadow:
           0 0 0 .9vw #080a0f,
@@ -514,27 +515,23 @@ export async function GET(request: Request) {
          shrunk by --bezel, the outer box-shadow width. The hero phone uses the
          same size for continuity. */
       #hero .card-content-screen,
-      #program .card-content-screen,
-      #salmon-card-0 .card-content-screen {
+      #program .card-content-screen {
         --bezel: 1.02vw;
       }
       .shim-not-null #hero .card-content-screen,
-      .shim-not-null #program .card-content-screen,
-      .shim-not-null #salmon-card-0 .card-content-screen {
+      .shim-not-null #program .card-content-screen {
         width: calc(18.75vw - 2 * var(--bezel));
         height: calc(39.93vw - 2 * var(--bezel));
         border-radius: calc(2.78vw - var(--bezel));
       }
       .shim-null #hero .card-content-screen,
-      .shim-null #program .card-content-screen,
-      .shim-null #salmon-card-0 .card-content-screen {
+      .shim-null #program .card-content-screen {
         width: calc(22.43vh - 2 * var(--bezel));
         height: calc(47.76vh - 2 * var(--bezel));
         border-radius: calc(3.32vh - var(--bezel));
       }
       #hero .card-content-screen::before,
-      #program .card-content-screen::before,
-      #salmon-card-0 .card-content-screen::before {
+      #program .card-content-screen::before {
         content: "";
         position: absolute;
         z-index: 7;
@@ -575,23 +572,91 @@ export async function GET(request: Request) {
         background-color: transparent !important;
       }
       #salmon-card-0 {
+        /* 100cqw below is the card's width, so the fin can be fitted to it. */
+        container-type: inline-size;
+        isolation: isolate;
         margin-top: 0 !important;
         padding-top: var(--salmon-card-top) !important;
+        padding-bottom: var(--salmon-card-top);
         color: #fff;
+      }
+      /* Warm light rising from the card's bottom edge, where the fin sits. */
+      #salmon-card-0::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: auto 0 0;
+        height: 55%;
+        background: linear-gradient(to top, rgba(255,92,69,.16), rgba(255,92,69,.05) 45%, rgba(255,92,69,0));
+        pointer-events: none;
+      }
+      /* The card seen from under the water: a bright band where the surface is, and soft parallel shafts
+         coming down from it that fade out before the fin. Two shaft layers with different spacing sway on
+         different periods, so the light never repeats; only transform animates (stripes and blur raster once). */
+      .salmon-rays {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        overflow: hidden;
+        border-radius: inherit;
+        background: linear-gradient(to bottom, rgba(255, 214, 196, .13), rgba(255, 214, 196, 0) 9%);
+        pointer-events: none;
+      }
+      .salmon-rays::before,
+      .salmon-rays::after {
+        content: "";
+        position: absolute;
+        top: -10%;
+        left: -25%;
+        width: 150%;
+        height: 85%;
+        background: repeating-linear-gradient(104deg, transparent 0 3vw, rgba(255, 196, 170, .55) 5vw, transparent 8vw 13vw);
+        filter: blur(1vw);
+        -webkit-mask-image: linear-gradient(to bottom, #000, transparent 85%);
+        mask-image: linear-gradient(to bottom, #000, transparent 85%);
+        opacity: .2;
+        transform-origin: 50% 0;
+        animation: salmon-rays-sway 14s ease-in-out infinite alternate;
+      }
+      .salmon-rays::after {
+        background: repeating-linear-gradient(98deg, transparent 0 5vw, rgba(255, 170, 140, .5) 6.5vw, transparent 9vw 17vw);
+        opacity: .16;
+        animation-duration: 21s;
+        animation-direction: alternate-reverse;
+      }
+      @keyframes salmon-rays-sway {
+        from { transform: rotate(-2deg) translateX(-2%); }
+        to { transform: rotate(2deg) translateX(2%); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .salmon-rays::before,
+        .salmon-rays::after { animation: none; }
       }
       #salmon-card-0 > p {
         margin-top: 3vw !important;
       }
       /* The salmon fin holding the phone: two renders from blender/fin.py
          (docs/fin-preproduction.md), the back one under the CSS phone and the
-         front one over its live screen. The numbers are the script's "FIN CSS"
-         output divided by the phone's 18.75vw width, so the fin follows the
-         phone in both template sizings. */
+         front one over its live screen. Both renders frame the phone and the
+         whole fin, so this box is their frame and the phone sits inside it.
+         The numbers are the script's "FIN CSS" output divided by 18.75vw, the
+         width it renders the phone at. */
       #salmon-card-0-phone {
-        --phone-w: 18.75vw;
+        --phone-max: 18.75vw;
+        /* The template's phone size, shrunk when needed so the box fits the
+           card's width and the viewport under the header band (96px). */
+        --phone-w: min(var(--phone-max), 100cqw / 4.13573, (100svh - 96px - 32px) / 3.42203);
         /* Phone and fin float as one piece: a slow rise and a slight sway
-           around the phone's centre. */
+           around the box's centre, inside the render's margin. */
         animation: salmon-fin-float 7s ease-in-out infinite;
+      }
+      .shim-null #salmon-card-0-phone { --phone-max: 22.43vh; }
+      #salmon #salmon-card-0-phone {
+        width: calc(4.13573 * var(--phone-w));
+        height: calc(3.42203 * var(--phone-w));
+        /* The phone, not the box, sits on the card's centre line. The screen's
+           left below is its centre (the template translates it -50%). */
+        margin: 3vw 0 0 calc(50% - 3.19509 * var(--phone-w));
       }
       @keyframes salmon-fin-float {
         0%, 100% { translate: 0 0; rotate: 0deg; }
@@ -600,26 +665,58 @@ export async function GET(request: Request) {
       @media (prefers-reduced-motion: reduce) {
         #salmon-card-0-phone { animation: none; }
       }
-      .shim-null #salmon-card-0-phone { --phone-w: 22.43vh; }
+      /* A soft orange light behind phone and fin, fading out before the box's edges. */
+      #salmon-card-0-phone::before {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        background: radial-gradient(closest-side, rgba(255,92,69,.26), rgba(255,92,69,.09) 55%, rgba(255,92,69,0));
+        pointer-events: none;
+      }
       #salmon-card-0-phone img.salmon-fin-back,
       #salmon-card-0-phone img.salmon-fin-front {
-        top: calc(50% - 1.79429 * var(--phone-w));
-        left: calc(50% - 2.34357 * var(--phone-w));
-        width: calc(4.68720 * var(--phone-w));
-        height: calc(3.90352 * var(--phone-w));
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         transform: none;
         pointer-events: none;
       }
-      /* The fin runs on past the render's left and bottom edges; fading there
-         hides the straight cut. */
+      /* The fin rises out of the card: its tail, at the box's lower left, fades
+         in toward the phone so no edge of it reads as a cut. */
       #salmon-card-0-phone img.salmon-fin-back {
         z-index: 1;
-        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
-        -webkit-mask-composite: source-in;
-        mask-image: linear-gradient(to right, transparent 0, #000 22%), linear-gradient(to top, transparent 0, #000 14%);
-        mask-composite: intersect;
+        -webkit-mask-image: linear-gradient(55deg, transparent 16%, #000 50%);
+        mask-image: linear-gradient(55deg, transparent 16%, #000 50%);
       }
       #salmon-card-0-phone img.salmon-fin-front { z-index: 3; }
+      /* The phone, in the same proportions as the hero's, scaled by --phone-w. */
+      #salmon-card-0 .card-content-screen {
+        --bezel: calc(.0544 * var(--phone-w));
+        left: calc(3.19509 * var(--phone-w));
+        top: calc(1.12357 * var(--phone-w));
+        width: calc(var(--phone-w) - 2 * var(--bezel));
+        height: calc(2.1296 * var(--phone-w) - 2 * var(--bezel));
+        border-radius: calc(.14827 * var(--phone-w) - var(--bezel));
+        background: #161c2d;
+        box-shadow:
+          0 0 0 calc(.048 * var(--phone-w)) #080a0f,
+          0 0 0 var(--bezel) #ff7e6d,
+          0 calc(.11733 * var(--phone-w)) calc(.26667 * var(--phone-w)) rgba(16,19,28,.28);
+      }
+      #salmon-card-0 .card-content-screen::before {
+        content: "";
+        position: absolute;
+        z-index: 7;
+        top: calc(.03467 * var(--phone-w));
+        left: 50%;
+        width: calc(.27733 * var(--phone-w));
+        height: calc(.06667 * var(--phone-w));
+        border-radius: 999px;
+        background: #080a0f;
+        transform: translateX(-50%);
+      }
       #salmon-card-1.salmon-get-card {
         box-sizing: border-box;
         min-height: 38vw;
@@ -1055,25 +1152,23 @@ export async function GET(request: Request) {
         /* The card is narrower than the page, so the title shrinks to stay on one line. */
         #salmon-card-0 > h2 { font-size: 13vw !important; }
         #salmon-card-0 > p { margin-top: 8vw !important; }
+        #salmon #salmon-card-0-phone { margin-top: 8vw; }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
         #salmon-card-1 .salmon-get-title { margin-bottom: 14px; }
         #salmon-card-1 .salmon-get-subtitle { margin-bottom: 48px; }
         #salmon-card-1 .salmon-downloads { display: flex; gap: 0; }
         #salmon-card-1 .salmon-download { --d: min(112px, 23vw); }
         #hero .card-content-screen,
-        #program .card-content-screen,
-        #salmon-card-0 .card-content-screen {
+        #program .card-content-screen {
           box-shadow:
             0 0 0 2.2vw #080a0f,
             0 0 0 2.55vw #ff7e6d,
             0 5vw 12vw rgba(16,19,28,.28);
         }
         #hero .card-content-screen,
-        #program .card-content-screen,
-        #salmon-card-0 .card-content-screen { --bezel: 2.55vw; }
+        #program .card-content-screen { --bezel: 2.55vw; }
         #hero .card-content-screen::before,
-        #program .card-content-screen::before,
-        #salmon-card-0 .card-content-screen::before {
+        #program .card-content-screen::before {
           top: 1.6vw;
           width: 13vw;
           height: 3vw;

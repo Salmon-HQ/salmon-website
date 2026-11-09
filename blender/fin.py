@@ -37,9 +37,9 @@ BEZEL = 1.02 / VW_PER_MM
 EDGE_X = PHONE_W / 2
 WRAP_R = PHONE_T / 2 + 1.0  # half the thickness plus clearance
 
-# The concept image's frame, 1280x1066 px, with its phone mapped onto ours:
-# the phone spans px 504-776 x 215-765 there.
-FRAME_PX = (1280, 1066)
+# Points are given in the concept image's px (1280x1066), with its phone
+# mapped onto ours: the phone spans px 504-776 x 215-765 there.
+PHONE_BOX_PX = (504, 215, 776, 765)
 MM_PER_PX = PHONE_W / 272
 PHONE_CENTRE_PX = (640, 490)
 
@@ -261,6 +261,20 @@ def ray_material():
     return m
 
 
+def render_frame(pad=32):
+    """The render's frame in concept px (left, top, right, bottom): the phone
+    and the whole fin plus a margin. The concept's own frame cut the fan's
+    tail at its left and bottom edges."""
+    points = [ray_point(i / 100, k / 200) for i in range(101) for k in range(201)]
+    xs = [PHONE_CENTRE_PX[0] + p.x / MM_PER_PX for p in points] + [PHONE_BOX_PX[0], PHONE_BOX_PX[2]]
+    ys = [PHONE_CENTRE_PX[1] - p.z / MM_PER_PX for p in points] + [PHONE_BOX_PX[1], PHONE_BOX_PX[3]]
+    return (math.floor(min(xs)) - pad, math.floor(min(ys)) - pad, math.ceil(max(xs)) + pad, math.ceil(max(ys)) + pad)
+
+
+FRAME = render_frame()
+FRAME_PX = (FRAME[2] - FRAME[0], FRAME[3] - FRAME[1])
+
+
 def build_phone():
     bpy.ops.mesh.primitive_cube_add(size=1)
     body = bpy.context.object
@@ -462,8 +476,7 @@ def build_scene():
     fin_materials = (membrane_material(), ray_material())
     build_fin(*fin_materials)
 
-    # The camera frames exactly the concept image, so the two overlay.
-    centre_x, centre_z = from_px(FRAME_PX[0] / 2, FRAME_PX[1] / 2)
+    centre_x, centre_z = from_px((FRAME[0] + FRAME[2]) / 2, (FRAME[1] + FRAME[3]) / 2)
     frame_w = FRAME_PX[0] * MM_PER_PX
     lens = 100.0
     distance = frame_w * lens / 36.0

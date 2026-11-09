@@ -36,7 +36,7 @@ La base de la aleta (donde nacen los radios) apoya sobre la pantalla cerca del b
 
 ## Integración en la web
 
-Hecha (2026-11-05): `blender/fin.py -- <dir> layers 200` renderiza `fin-back.png` y `fin-front.png` (2560×2132) e imprime la línea `FIN CSS` con su posición en vw. Se convierten a WebP en `public/fin/` y `app/route.ts` las ubica alrededor del celular de CSS de `#salmon-card-0` con números relativos al ancho del celular (`--phone-w`), así siguen al celular en las dos medidas del template (vw y vh). Si cambia la forma o el material, se vuelve a correr el comando y se reemplazan los dos WebP; si cambia el tamaño del celular, también los números del CSS.
+Hecha (2026-11-05): `blender/fin.py -- <dir> layers 200` renderiza `fin-back.png` y `fin-front.png` (2260×1870, un cuadro que encierra el celular y la aleta entera con margen, para que ningún borde la corte) e imprime la línea `FIN CSS` con su posición en vw. Se convierten a WebP en `public/fin/` y `app/route.ts` las ubica alrededor del celular de CSS de `#salmon-card-0` con números relativos al ancho del celular (`--phone-w`), así siguen al celular en las dos medidas del template (vw y vh). Si cambia la forma o el material, se vuelve a correr el comando y se reemplazan los dos WebP; si cambia el tamaño del celular, también los números del CSS.
 
 - El marco del celular hoy viene en la foto de la mano. Con la aleta, el celular pasa a ser el mismo de CSS que el hero y Powerups (pantalla + bisel con `box-shadow`), y la aleta se renderiza contra esas medidas.
 - Flotación (después): las capas y el celular suben y bajan juntos con CSS; una ondulación real de la aleta requiere una secuencia renderizada.
