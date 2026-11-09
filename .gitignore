@@ -41,3 +41,5 @@ Thumbs.db
 *.tsbuildinfo
 
 .playwright-cli
+# scripts/shot.mjs output
+shots/

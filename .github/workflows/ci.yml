@@ -1,4 +1,4 @@
-# PR checks: the production build (it type-checks).
+# PR checks: the production build (it type-checks), then tests against it (legal text, mobile update file, redirects).
 # Plain `pull_request` only, so fork runs get no secrets. Actions pinned to full SHAs.
 name: CI
 
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   checks:
-    name: build
+    name: build / test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -35,3 +35,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Tests
+        run: npm test
