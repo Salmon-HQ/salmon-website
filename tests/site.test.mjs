@@ -56,7 +56,8 @@ test('the mobile app update file is served', async () => {
 const REDIRECTS = {
   '/about': '/',
   '/brand': '/',
-  '/developers': '/',
+  '/developers': '/api',
+  '/es/developers': '/api',
   '/es': '/',
   '/pt': '/',
   '/en': '/',
@@ -75,7 +76,7 @@ for (const [from, to] of Object.entries(REDIRECTS)) {
   });
 }
 
-for (const path of ['/', '/contact', '/robots.txt', '/sitemap.xml']) {
+for (const path of ['/', '/contact', '/api', '/robots.txt', '/sitemap.xml']) {
   test(`${path} answers 200`, async () => {
     assert.equal((await fetch(BASE + path)).status, 200);
   });
@@ -83,7 +84,7 @@ for (const path of ['/', '/contact', '/robots.txt', '/sitemap.xml']) {
 
 const MARKDOWN = { accept: 'text/markdown' };
 
-for (const path of ['/', '/seeker', '/contact', '/terms', '/es/privacy']) {
+for (const path of ['/', '/seeker', '/api', '/contact', '/terms', '/es/privacy']) {
   test(`${path} answers in Markdown when asked, and in HTML otherwise`, async () => {
     const md = await fetch(BASE + path, { headers: MARKDOWN });
     assert.equal(md.status, 200);
@@ -125,4 +126,61 @@ test('the sitemap lists /seeker and the home links to it', async () => {
   const home = await (await fetch(`${BASE}/`)).text();
   assert.ok(home.includes('href="/seeker"'));
   assert.ok(!home.includes('href="solanadappstore:'));
+});
+
+test('/openapi.json is the backend spec, ready for function calling', async () => {
+  const res = await fetch(`${BASE}/openapi.json`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /^application\/json/);
+  const spec = await res.json();
+  assert.match(spec.openapi, /^3\./);
+  assert.equal(spec.servers[0].url, 'https://api.salmonwallet.io');
+  const ids = [];
+  for (const [path, item] of Object.entries(spec.paths)) {
+    for (const [method, op] of Object.entries(item)) {
+      if (!['get', 'post', 'put', 'patch', 'delete'].includes(method)) continue;
+      assert.ok(op.operationId, `${method} ${path} has an operationId`);
+      assert.ok(op.summary || op.description, `${method} ${path} is described`);
+      for (const param of [...(item.parameters ?? []), ...(op.parameters ?? [])]) assert.ok(param.$ref || param.schema, `${method} ${path} ${param.name} is typed`);
+      ids.push(op.operationId);
+    }
+  }
+  assert.equal(new Set(ids).size, ids.length, 'operationIds are unique');
+});
+
+test('/openapi.yaml is served as YAML and matches the JSON', async () => {
+  const res = await fetch(`${BASE}/openapi.yaml`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /^application\/yaml/);
+  const { parse } = await import('yaml');
+  assert.deepEqual(parse(await res.text()), await (await fetch(`${BASE}/openapi.json`)).json());
+});
+
+test('/.well-known/api-catalog is an RFC 9727 linkset pointing at the spec', async () => {
+  const res = await fetch(`${BASE}/.well-known/api-catalog`);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"');
+  const [entry] = (await res.json()).linkset;
+  assert.equal(entry.anchor, 'https://api.salmonwallet.io/');
+  assert.equal(entry['service-desc'][0].href, 'https://www.salmonwallet.io/openapi.json');
+  const head = await fetch(`${BASE}/.well-known/api-catalog`, { method: 'HEAD' });
+  assert.equal(head.headers.get('link'), '<https://www.salmonwallet.io/.well-known/api-catalog>; rel="api-catalog"');
+});
+
+test('/api names the product API and lists every operation of the spec', async () => {
+  const html = await (await fetch(`${BASE}/api`)).text();
+  assert.match(html, /<title>Salmon Wallet API[^<]*<\/title>/);
+  assert.match(html, /<h1[^>]*>Salmon Wallet API<\/h1>/);
+  const spec = await (await fetch(`${BASE}/openapi.json`)).json();
+  for (const path of Object.keys(spec.paths)) assert.ok(html.includes(path.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)) || html.includes(path), path);
+});
+
+test('the home links the API, the GitHub org and the API catalog, and names its product terms in JSON-LD', async () => {
+  const home = await (await fetch(`${BASE}/`)).text();
+  for (const text of ['href="/api"', 'href="https://github.com/Salmon-HQ"', '<link rel="api-catalog" href="/.well-known/api-catalog">', '"keywords":"Solana wallet', '"knowsAbout"', '"@type":"WebAPI"']) assert.ok(home.includes(text), text);
+});
+
+test('/llms.txt says when to use Salmon and how to call its API', async () => {
+  const body = await (await fetch(`${BASE}/llms.txt`)).text();
+  for (const text of ['## When to use Salmon', '## API', 'https://api.salmonwallet.io', 'https://www.salmonwallet.io/openapi.json', 'GET /v1/networks']) assert.ok(body.includes(text), text);
 });

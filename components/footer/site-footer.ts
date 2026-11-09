@@ -62,6 +62,7 @@ const FOOTER_COLUMNS = [
   {
     title: 'Developers',
     links: [
+      ['API', '/api'],
       ['GitHub', 'https://github.com/Salmon-HQ'],
       ['Apply for an integration', 'mailto:integrations@salmonwallet.io'],
     ],

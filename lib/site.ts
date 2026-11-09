@@ -5,6 +5,13 @@ export const SITE_URL = 'https://www.salmonwallet.io';
 export const DOCS_URL = 'https://docs.salmonwallet.io';
 export const GITHUB_URL = 'https://github.com/Salmon-HQ';
 
+// The Salmon API: the backend of the wallet apps. Its OpenAPI description lives in the backend repo and is copied to
+// public/openapi.{yaml,json} by scripts/sync-openapi.mjs.
+export const API_URL = 'https://api.salmonwallet.io';
+export const API_DOCS_URL = `${DOCS_URL}/developer-zone/10_backend_api_reference`;
+export const API_SOURCE_URL = `${GITHUB_URL}/salmon-wallet-backend`;
+export const OPENAPI_URL = `${SITE_URL}/openapi.json`;
+
 // The home's title and description, shared by its <head> and the default metadata of the Next pages.
 export const HOME_TITLE = 'Salmon: Lightweight, Self-Custodial Solana Wallet with Powerups';
 export const HOME_DESCRIPTION =
@@ -49,6 +56,7 @@ export function structuredData() {
           contactType: 'integrations and product enquiries',
           availableLanguage: ['English', 'Spanish', 'Portuguese'],
         },
+        knowsAbout: ['Solana wallet', 'Self-custodial wallet', 'Solana'],
         // TODO(address): add a PostalAddress here once the legal address to publish is confirmed.
         sameAs: ['https://x.com/salmonwallet', GITHUB_URL, 'https://t.me/salmon_wallet', 'https://medium.com/@salmonwallet'],
       },
@@ -62,8 +70,18 @@ export function structuredData() {
         operatingSystem: 'iOS, Android, Chrome',
         isAccessibleForFree: true,
         publisher: { '@id': organizationId },
+        keywords: 'Solana wallet, self-custodial wallet, Powerups, Solana validator',
         codeRepository: GITHUB_URL,
         downloadUrl: [STORE_URLS.ios, STORE_URLS.android, STORE_URLS.chrome, STORE_URLS.seeker],
+      },
+      {
+        '@type': 'WebAPI',
+        '@id': `${SITE_URL}/api#webapi`,
+        name: 'Salmon Wallet API',
+        description: 'Public HTTP API behind the Salmon wallet apps: networks, balances, activity, tokens, NFTs and market data.',
+        url: `${SITE_URL}/api`,
+        documentation: API_DOCS_URL,
+        provider: { '@id': organizationId },
       },
       {
         '@type': 'WebSite',

@@ -1,0 +1,2580 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Salmon API",
+    "version": "0.26.0",
+    "description": "Public HTTP API of the Salmon Wallet backend (`gol-salmon-api`).\n\nThe API is organized as vertical slices per blockchain, mounted at\n`/v1/<chain>-{env}` (e.g. `/v1/solana-mainnet`), plus cross-chain\nsurfaces (`/v1/networks`, `/v1/dapp`, CoinGecko market\ndata, and the multichain balance endpoint) and unversioned service-info\nendpoints (`/health`, `/status`).\n\nError payloads use the envelope `{ error: '<snake_case_code>',\nerror_description: '<human message>' }` (see the `Error` schema),\nincluding the analytics ingest endpoint (`POST /v1/events`), a separate\ndependency-light Lambda whose `no_valid_events` also carries a\n`rejected` count.\n\nResponse shapes are defined by the `src/resources/` layer — that layer\nis the public contract. Shapes documented as `additionalProperties: true`\nare provider-enriched and carry extra fields beyond the stable ones\nlisted here; the referenced resource file is the source of truth.\n"
+  },
+  "security": [],
+  "servers": [
+    {
+      "url": "https://api.salmonwallet.io",
+      "description": "production"
+    },
+    {
+      "url": "http://localhost:3000/local",
+      "description": "serverless-offline local (routes are prefixed with the stage, hence `/local`)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "info",
+      "description": "Unversioned service info (mounted before `/v1`)"
+    },
+    {
+      "name": "networks",
+      "description": "Network catalog (`network-catalog` contract)"
+    },
+    {
+      "name": "market-data",
+      "description": "CoinGecko-backed market data (`coingecko-market-data` contract)"
+    },
+    {
+      "name": "dapp",
+      "description": "Dapp metadata (`dapp-metadata` contract)"
+    },
+    {
+      "name": "multichain",
+      "description": "Cross-chain account endpoints (`multichain-account-balance` contract)"
+    },
+    {
+      "name": "solana",
+      "description": "Solana chain slice (`/v1/solana-{env}`)"
+    },
+    {
+      "name": "bitcoin",
+      "description": "Bitcoin chain slice (`/v1/bitcoin-{env}`)"
+    },
+    {
+      "name": "analytics",
+      "description": "Usage-analytics ingest (separate Lambda, not part of the Express app)"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "info"
+        ],
+        "operationId": "getHealth",
+        "summary": "Liveness / dependency health check",
+        "description": "Runs the dependency health check (internet reachability + Redis) and\nreports per-dependency status. Responds 200 when healthy, 500 when a\nprobe fails (status reported as DOWN).\n",
+        "responses": {
+          "200": {
+            "description": "Service healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthInfo"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "One or more dependency probes failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "tags": [
+          "info"
+        ],
+        "operationId": "getStatus",
+        "summary": "Service/build identification",
+        "description": "Build metadata, plus where the country gate places the caller and the\nbuild date of the country database it reads, so a stale database or a\ntester's location can be checked from outside. The deploy smoke step\nreads `countryDatabase`; the nightly `production country gate` job\nreads both. Never cached.\n",
+        "responses": {
+          "200": {
+            "description": "Build metadata",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "salmon-api"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "0.14.0"
+                    },
+                    "build": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "GitHub Actions run id (absent/undefined outside CI builds)"
+                    },
+                    "commit": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Git SHA of the deployed build"
+                    },
+                    "stage": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "prod"
+                    },
+                    "time": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "country": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "AR",
+                      "description": "Where the country gate places the caller: ISO 3166-1\nalpha-2, or an ISO 3166-2 code for the Ukrainian\nregions the gate treats on their own (`UA-43`…). `null`\nwhen the caller cannot be placed (private or unplaced\naddress, a request through a CloudFront distribution in\nfront of API Gateway, a prod database older than 45\ndays) or the database cannot be opened.\n"
+                    },
+                    "countryDatabase": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true,
+                      "example": "2026-10-01",
+                      "description": "Build date of the DB-IP country database, or `null` when it cannot be opened"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/networks": {
+      "get": {
+        "tags": [
+          "networks"
+        ],
+        "operationId": "listNetworks",
+        "summary": "List supported networks for the current stage",
+        "description": "Stage-derived network list with `enabled` + `sections` flags. See the\n`network-catalog` contract (`src/resources/shared/network-resource.js`).\nCached 3600s.\n",
+        "responses": {
+          "200": {
+            "description": "Array of network resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Network"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/exchange-rates": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "operationId": "getExchangeRates",
+        "summary": "BTC-denominated fiat exchange rates",
+        "description": "Raw CoinGecko exchange-rates payload. Cached 900s.",
+        "responses": {
+          "200": {
+            "description": "Exchange rates (raw CoinGecko shape)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/chart/{platform}/contract/{address}": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "operationId": "getContractMarketChart",
+        "summary": "Market chart for a token by contract address (mint)",
+        "description": "Charts any token CoinGecko lists for the platform, keyed by contract\naddress instead of CoinGecko coin id. Same `days` normalization and\nlong-term-fallback policy as `/v1/chart/{coinId}`.\n",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "CoinGecko asset-platform id (e.g. `solana`)"
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token contract address / mint"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Numeric day count, `ytd`, or `max`"
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "usd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chart data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "platform",
+                    "contractAddress",
+                    "currency",
+                    "days",
+                    "prices"
+                  ],
+                  "properties": {
+                    "platform": {
+                      "type": "string"
+                    },
+                    "contractAddress": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "days": {},
+                    "prices": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "marketCaps": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "totalVolumes": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CoinGecko does not list this contract on this platform",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/chart/{coinId}": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "operationId": "getMarketChart",
+        "summary": "Historical market chart data for a coin",
+        "description": "Raw CoinGecko market-chart payload. `days` is normalized and a\nlong-term-fallback policy is applied by the service (see the\n`coingecko-market-data` contract). Cached 300s.\n",
+        "parameters": [
+          {
+            "name": "coinId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "solana"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Number of days of history (normalized server-side)"
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "usd"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Market chart data (raw CoinGecko shape, e.g. `prices`, `market_caps`, `total_volumes` arrays)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/coin/{coinId}": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "operationId": "getCoinInfo",
+        "summary": "Coin detail",
+        "description": "Raw CoinGecko coin-detail payload. Cached 300s.",
+        "parameters": [
+          {
+            "name": "coinId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bitcoin"
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coin detail (raw CoinGecko shape)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/coin/{platform}/contract/{address}": {
+      "get": {
+        "tags": [
+          "market-data"
+        ],
+        "operationId": "getContractCoinInfo",
+        "summary": "Coin detail by token contract address",
+        "description": "Same mapped shape as `/v1/coin/{coinId}`, resolved by contract address (mint) for tokens without a known CoinGecko id. The response always includes the resolved CoinGecko `id`, so clients can cache it and switch to the coin-id paths. Cached 300s.",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "solana"
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN"
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coin detail (same shape as `/v1/coin/{coinId}`, `id` included)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not listed on CoinGecko for the platform (`info_not_found`) — expected for the long tail of SPL tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/dapp/metadata": {
+      "get": {
+        "tags": [
+          "dapp"
+        ],
+        "operationId": "getDappMetadata",
+        "summary": "OpenGraph-derived dapp metadata",
+        "description": "Returns `{ name, icon }` for a dapp URL (`dapp-metadata` contract). Cached 60s.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Dapp URL to fetch OpenGraph metadata for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dapp metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "icon": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/{networkId}/account/{address}/balance": {
+      "get": {
+        "tags": [
+          "multichain"
+        ],
+        "operationId": "getAccountBalance",
+        "summary": "Cross-chain account balance",
+        "description": "Array-shape balance response with native/token branching, dispatching\non the network's blockchain (`multichain-account-balance` contract,\n`src/resources/shared/account-balance-resource.js`). Only Bitcoin and\nSolana networks are allowlisted (`BALANCE_CHAINS`); other network ids\nfall through to the catch-all 404.\n",
+        "parameters": [
+          {
+            "name": "networkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bitcoin-mainnet",
+                "bitcoin-testnet",
+                "solana-mainnet",
+                "solana-testnet",
+                "solana-devnet"
+              ]
+            }
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Account address on the given network"
+          },
+          {
+            "name": "tokens",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chain-specific token filter (passed through to the balance provider)"
+          },
+          {
+            "name": "includeSpam",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false",
+                "1",
+                "0"
+              ]
+            },
+            "description": "When truthy (`true`/`1`), opts out of the chain-specific spam\nfilter (e.g. Solana drops tokens without a `verified` tag — top-1000 market cap; `community` = listed long tail\nby default).\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance items (native + token entries)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BalanceItem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown network id (`bad_request`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/account/{address}/transactions": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "listSolanaTransactions",
+        "summary": "Solana transaction history",
+        "description": "Enriched transaction history (`solana-transaction-enrichment`\ncontract). Provider routing: Triton One (RPC + local parser); bare-RPC\nunclassified reads as the degraded tier. First-page queries are served through\na short-lived cache; paged queries always hit the provider.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Account public key (base58)"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of transactions per page"
+          },
+          {
+            "name": "pageToken",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cursor — signature to paginate before"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of enriched transaction resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SolanaTransaction"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidNetwork"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/ft/verified": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "listVerifiedSolanaFungibleTokens",
+        "summary": "Verified-token list",
+        "description": "NFTs (decimals = 0) excluded. Cached 300s.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verified token list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FungibleToken"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidNetwork"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/ft/search": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "searchSolanaFungibleTokens",
+        "summary": "Token search",
+        "description": "NFTs (decimals = 0) excluded. Not cached.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "sol"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching token list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FungibleToken"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`missing_parameter` when `query` is absent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/ft/swap/build": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "buildSolanaSwap",
+        "summary": "Build an UNSIGNED swap transaction",
+        "description": "`solana-swap-build` contract. Passes the availability gate first\n(`capability-availability`: country + `X-Salmon-Platform` → the row's\nprovider, 403 `region_restricted` otherwise; on a Jupiter row the\n`publicKey` is screened, 403 `wallet_restricted`), then asks that\nprovider (0x or Jupiter) for swap instructions with Salmon's fee\n(server-configured, never from the request), assembles a v0\ntransaction with the caller as fee payer and returns it unsigned. The\nwallet signs and broadcasts on the device; there is no execute/relay\nendpoint (root AGENTS.md \"Signing boundary\"). `solana-mainnet` only.\nNot cached; rebuild after `expiresAt`.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "$ref": "#/components/parameters/SalmonPlatform"
+          },
+          {
+            "name": "inputMint",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outputMint",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publicKey",
+            "in": "query",
+            "required": true,
+            "description": "Wallet public key that will sign the swap (taker + fee payer)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "Input amount in base units (one of `amount` / `uiAmount` is required)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uiAmount",
+            "in": "query",
+            "description": "Human-readable input amount; decimals resolved server-side",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slippageBps",
+            "in": "query",
+            "description": "0–10000, default 50",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsigned swap transaction plus quote details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapBuild"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`missing_parameter` / `invalid_parameter` / `unknown_mint`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`region_restricted` — swap is not offered in the caller's country on this platform, or the caller's country cannot be determined (private or unplaced address, a request through a CloudFront distribution in front of API Gateway, a prod country database older than 45 days); `wallet_restricted` — the sanctions screening (Salmon's on a Jupiter row, 0x's on a 0x row) refused the taker",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found` — Swap is switched off, by the stage or by its availability row for this platform; `no_route` — the provider cannot route this pair/amount; its own reason travels in `error_description` with the 0x code in parentheses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`token_not_supported` — unknown mint, Token-2022 with transfer fee/hook, or a token the provider will not trade; `slippage_exceeded` — the price moved past the tolerance before the swap could settle; `insufficient_funds` — not enough of the input token; `insufficient_sol` — not enough SOL for the network fee and the token accounts the swap opens; `simulation_failed` — the runtime rejected the quote for another reason. In every 422 case nothing is returned to sign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`server_error`, or `swap_misconfigured` when 0x rejected Salmon-side parameters (fee, disabled sources)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`provider_fee_mismatch` — the built transaction does not carry the configured fee",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`upstream_unavailable` — the country database could not be opened, the row names a provider without a configured credential, or neither sanctions layer could answer; `upstream_rate_limited` — the provider keeps throttling",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/nft": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "listSolanaNfts",
+        "summary": "List NFTs owned by a public key",
+        "description": "Flat backend shape per the `solana-nft-listing` contract. Fungible\ntokens are filtered out by the resource layer; blacklisted or\npositively-spam-scored NFTs are dropped unless `includeSpam=true`.\nAn owner with no NFTs gets a 200 with an empty `data` array — 404\n(`nfts_not_found`) only signals a provider-level lookup failure.\nCached 60s.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "name": "publicKey",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Owner wallet public key (base58)"
+          },
+          {
+            "name": "includeSpam",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false",
+                "1",
+                "0"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "noCache",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "deprecated": true,
+            "description": "Accepted for compatibility; has no effect."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NFT list with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Nft"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": true,
+                      "description": "Provider pagination metadata (DAS-driven). `total` is the\nprovider's raw count, so a page may carry fewer than `limit`\nitems once filtering runs.\n",
+                      "properties": {
+                        "hidden": {
+                          "type": "object",
+                          "description": "Items dropped from this page only (not cumulative)",
+                          "properties": {
+                            "spam": {
+                              "type": "integer",
+                              "description": "Hidden by blacklist / spam score; 0 when `includeSpam` is on"
+                            },
+                            "fungible": {
+                              "type": "integer",
+                              "description": "DAS assets rejected as fungible by the resource"
+                            }
+                          },
+                          "required": [
+                            "spam",
+                            "fungible"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request` when `publicKey` is missing (or invalid network env)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`nfts_not_found` — provider returned no result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/nft/{mintAddress}": {
+      "post": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "buildSolanaNftBurnTransaction",
+        "summary": "Build an unsigned NFT burn transaction",
+        "description": "Routes on token standard — cNFT (Bubblegum v1/v2), pNFT, printed\nedition, master edition (`solana-nft-burn` contract). Returns an\nunsigned transaction for the client to sign. Oversized compressed\nburns fall back to a multi-step lookup-table flow\n(`{ transactions, lookupTable, message }`). Rate-limited more\nstrictly than the rest of the API.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "$ref": "#/components/parameters/MintAddress"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "NFT owner's public key (signs and pays)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsigned burn transaction payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnsignedTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request` when `owner` is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`nft_not_found` — mint could not be resolved to an NFT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`burn_not_supported` (unknown token standard) or `burn_transaction_too_large` (exceeds the 1232-byte tx limit even after lookup-table fallback)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`burn_transaction` (service returned no data) or `server_error`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/nft/{mintAddress}/transfer": {
+      "post": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "buildSolanaNftTransferTransaction",
+        "summary": "Build an unsigned NFT transfer transaction",
+        "description": "Uses Token Metadata `transferV1` (or Bubblegum for compressed\nassets) so programmable NFTs work. Returns an unsigned transaction\nfor the client to sign. Rate-limited more strictly than the rest of\nthe API.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "$ref": "#/components/parameters/MintAddress"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recipient wallet address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsigned transfer transaction payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnsignedTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request` when `owner` or `destination` is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`nft_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`transfer_not_supported` or `transfer_transaction_too_large`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`transfer_transaction` (service returned no data) or `server_error`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/powerups/availability": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "getSolanaPowerupAvailability",
+        "summary": "What this caller may use on the network",
+        "description": "`capability-availability` contract. One entry per registered Powerup\non the network plus the `swap` capability, decided per request from\nthe caller's country (the source address API Gateway attaches, never\na header) and the `X-Salmon-Platform` header. Informs only: the build\nroute is what refuses. Never cached (`Cache-Control: no-store`).\nWhen the caller's country cannot be worked out (private or unplaced\naddress, a request through a CloudFront distribution in front of API\nGateway, or a prod country database older than 45 days), `swap` is\n`enabled: false` with `reason: region`; other Powerups are unaffected.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "$ref": "#/components/parameters/SalmonPlatform"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability per capability",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CapabilityAvailability"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidNetwork"
+          },
+          "503": {
+            "description": "`network_catalog_unavailable` — the stage catalog failed to load; `upstream_unavailable` — the country database could not be opened",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/solana-{env}/powerups/{id}/build": {
+      "get": {
+        "tags": [
+          "solana"
+        ],
+        "operationId": "buildSolanaPowerupTransaction",
+        "summary": "Build an unsigned Powerup transaction",
+        "description": "`community-powerups` contract. Returns an UNSIGNED v0 transaction\n(caller = fee payer, zero signatures) for a registered\ntransaction-building Powerup; the backend never receives a signed\ntransaction and no execute/broadcast route exists. Passes the\navailability gate first: a caller in a country where the capability\nis not offered on their platform, or whose country cannot be worked\nout when the capability is regulated (`swap`), gets 403\n`region_restricted` before any provider is called.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SolanaEnv"
+          },
+          {
+            "$ref": "#/components/parameters/SalmonPlatform"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Powerup id from the registry"
+          },
+          {
+            "name": "publicKey",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Caller's public key (fee payer and only signer)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsigned Powerup build envelope (`provider`, `transaction`, `expiresAt`, fee lines, contributor, display fields)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`missing_parameter` / `invalid_parameter`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`region_restricted` — not offered in the caller's country on this platform, or the country cannot be determined and the capability is regulated (`swap`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found` — unknown, disabled or undeclared-network Powerup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`simulation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`provider_program_mismatch` / `provider_signer_mismatch`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`simulation_unavailable`, a resilience 503, or `upstream_unavailable` when the country database could not be opened",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/bitcoin-{env}/account/{address}/transactions": {
+      "get": {
+        "tags": [
+          "bitcoin"
+        ],
+        "operationId": "listBitcoinTransactions",
+        "summary": "Bitcoin transaction history",
+        "description": "Canonical 9-bucket transaction shape with fee attribution and\nfull-set UTXO walk (`bitcoin-account-history` contract). Query params\nare passed through as pagination/filter options.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BitcoinEnv"
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of Bitcoin transaction resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BitcoinTransaction"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidNetwork"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/bitcoin-{env}/account/{address}/utxo": {
+      "get": {
+        "tags": [
+          "bitcoin"
+        ],
+        "operationId": "listBitcoinUtxos",
+        "summary": "UTXO set for an address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BitcoinEnv"
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of UTXO resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BitcoinUtxo"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidNetwork"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "operationId": "ingestAnalyticsEvents",
+        "summary": "Usage-analytics event ingest",
+        "description": "Dedicated Lambda (`src/analytics/handler.js`), wired as an explicit\nAPI Gateway route so it does not share concurrency with the main API\nfunction. Events are re-validated against a server-side allow-list;\nanything resembling an address, mint, raw number, or oversized string\nis dropped. The client IP is never read or stored. Up to 100 events\nper batch are processed. Events reach GA4 dated to the start of the\nhour the batch arrived, not the exact moment; events that follow an\non-chain transaction are dated to the day.\n\nOnly the wallet posts here: a request with an `Origin` that is not an\nextension origin (`chrome-extension://`, `moz-extension://`,\n`safari-web-extension://`), including `http(s)://…` and `null`, is\nrefused with 403; a request without `Origin` (mobile) is accepted.\nCORS is `Access-Control-Allow-Origin: *`; OPTIONS preflight returns\n204.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "installId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9-]{1,64}$",
+                        "description": "The wallet's install id; a batch without one that matches is refused with 400 `install_id_required`"
+                      },
+                      "sessionId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9-]{1,64}$",
+                        "description": "Dropped when it does not match"
+                      },
+                      "platform": {
+                        "type": "string",
+                        "enum": [
+                          "extension",
+                          "mobile",
+                          "ios",
+                          "android",
+                          "seeker"
+                        ],
+                        "description": "Anything else, `web` included, is recorded as `unknown`"
+                      },
+                      "appVersion": {
+                        "type": "string",
+                        "description": "Must be plain semver (max 32 chars) or it is dropped"
+                      }
+                    }
+                  },
+                  "events": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "type": "string",
+                          "description": "Allow-listed event name (see `src/analytics/event-schema.js`)"
+                        },
+                        "props": {
+                          "type": "object",
+                          "description": "Allow-listed keys only: `chain`, `from_chain`,\n`to_chain` (`solana`, `bitcoin`, `ethereum`),\n`success` (boolean) and `powerup` (`swap`,\n`payments`, `memo`, `skr`). An event carrying any\nother key or value is rejected.\n",
+                          "additionalProperties": true
+                        },
+                        "ts": {
+                          "type": "number",
+                          "description": "Client-side epoch-millis timestamp (defaults to server receive time)"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    },
+                    "required": [
+                      "installId"
+                    ]
+                  }
+                },
+                "required": [
+                  "context",
+                  "events"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Batch accepted (always 202, even when the sink write fails —\nbest-effort delivery, `accepted: 0, buffered: false` in that case).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accepted": {
+                      "type": "integer"
+                    },
+                    "rejected": {
+                      "type": "integer"
+                    },
+                    "buffered": {
+                      "type": "boolean",
+                      "description": "Present (false) only when the sink write failed"
+                    }
+                  },
+                  "required": [
+                    "accepted",
+                    "rejected"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`, `events_array_required`, `install_id_required` (no `context.installId` matching its pattern), or `no_valid_events` (with a `rejected` count)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_json",
+                        "events_array_required",
+                        "install_id_required",
+                        "no_valid_events"
+                      ]
+                    },
+                    "error_description": {
+                      "type": "string"
+                    },
+                    "rejected": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "error_description"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`origin_not_allowed` — the request carries an `Origin` that is not an extension origin (a web page, or `null`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "`method_not_allowed` for any verb other than POST/OPTIONS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "SolanaEnv": {
+        "name": "env",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "mainnet",
+            "testnet",
+            "devnet"
+          ]
+        },
+        "description": "Solana network environment. Combined with the chain prefix into the\nnetwork id (`solana-mainnet`, `solana-testnet`, `solana-devnet`).\nAn unknown combination responds 400 `bad_request`.\n"
+      },
+      "BitcoinEnv": {
+        "name": "env",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "mainnet",
+            "testnet"
+          ]
+        },
+        "description": "Bitcoin network environment (`bitcoin-mainnet`, `bitcoin-testnet`).\nAn unknown combination responds 400 `bad_request`.\n"
+      },
+      "SalmonPlatform": {
+        "name": "X-Salmon-Platform",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "ios",
+            "android",
+            "extension"
+          ]
+        },
+        "description": "The platform the app runs on. Missing or unknown values are\nevaluated as `ios`, the most restrictive platform.\n"
+      },
+      "MintAddress": {
+        "name": "mintAddress",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"
+        },
+        "description": "NFT mint address (base58 Solana public key)"
+      }
+    },
+    "responses": {
+      "ServerError": {
+        "description": "Unexpected error (`server_error`), emitted by the final error middleware",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InvalidNetwork": {
+        "description": "Unknown `<chain>-<env>` network id (`bad_request`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "Standard error envelope. `error` is a stable snake_case code;\n`error_description` is a human-readable message. Codes in use:\n`bad_request`, `missing_parameter`, `invalid_parameter`,\n`too_many_mints`, `not_found` (catch-all 404), `nft_not_found`,\n`nfts_not_found`, `route_not_found`, `execution_failed`,\n`burn_not_supported`, `burn_transaction_too_large`,\n`burn_transaction`, `transfer_not_supported`,\n`transfer_transaction_too_large`, `transfer_transaction`,\n`region_restricted`, `wallet_restricted`, `no_route`, `token_not_supported`,\n`slippage_exceeded`, `insufficient_funds`, `insufficient_sol`,\n`provider_fee_mismatch`, `swap_misconfigured`, `upstream_unavailable`,\n`upstream_rate_limited`, `server_error`.\n",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Stable snake_case error code",
+            "example": "bad_request"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable message"
+          }
+        },
+        "required": [
+          "error",
+          "error_description"
+        ]
+      },
+      "CapabilityAvailability": {
+        "type": "object",
+        "description": "One capability as seen by this caller. `reason` only when\n`enabled: false`; `provider` only when `enabled: true` and the\ncapability routes through one.\n",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "swap"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "region",
+              "maintenance",
+              "deprecated"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "jupiter",
+              "0x"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "enabled"
+        ]
+      },
+      "HealthInfo": {
+        "type": "object",
+        "description": "Health-check payload from `packages/health-check` — `app_state` plus\nper-dependency status objects (network, redis) and the resolved\nclient IP.\n",
+        "properties": {
+          "app_state": {
+            "type": "string",
+            "example": "UP"
+          },
+          "network": {
+            "type": "object",
+            "properties": {
+              "ip": {
+                "type": "string"
+              },
+              "internet": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "redis": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "x-forwarded-for": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "Network": {
+        "type": "object",
+        "description": "Network catalog entry (`src/resources/shared/network-resource.js`)",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "solana-mainnet"
+          },
+          "blockchain": {
+            "type": "string",
+            "example": "solana"
+          },
+          "environment": {
+            "type": "string",
+            "example": "mainnet"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Public network config (e.g. node URL); always an object"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Stage-derived enable flag (`network-capabilities-<stage>`)"
+          },
+          "sections": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Stage-derived feature-section flags; always an object"
+          },
+          "attribution": {
+            "type": "object",
+            "nullable": true,
+            "description": "Data-provider credit the client must render verbatim on screens showing this network's catalog or prices (CoinGecko terms); null when none applies",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "blockchain",
+          "environment",
+          "name",
+          "enabled",
+          "sections"
+        ]
+      },
+      "BalanceItem": {
+        "type": "object",
+        "description": "One balance entry (`src/resources/shared/account-balance-resource.js`).\nBranches on `type`: native entries carry `address` (chain-native\npseudo-address) and usually `coingeckoId`; token entries carry\n`mint`/`address` (contract) and optional `coingeckoId`/`tags`.\nPricing fields (`price`, `usdBalance`, `priceChange24h`) and `logo`\nare present only when the enrichers resolved them.\n",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "blockchain": {
+            "type": "string",
+            "example": "solana"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Confirmed balance in base units (provider-typed; may arrive as number)"
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "`native` or a token type (e.g. `erc20`-style provider types)"
+          },
+          "address": {
+            "type": "string",
+            "description": "Native pseudo-address or token contract/mint address"
+          },
+          "mint": {
+            "type": "string",
+            "description": "Token entries only — same value as `address`"
+          },
+          "coingeckoId": {
+            "type": "string",
+            "description": "Present for known natives (BTC/ETH/SOL) and enriched tokens"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Token entries only, when the enricher attached catalog tags"
+          },
+          "price": {
+            "type": "number",
+            "description": "USD unit price (when price enrichment resolved)"
+          },
+          "usdBalance": {
+            "type": "number",
+            "description": "USD value of the balance (when price enrichment resolved)"
+          },
+          "priceChange24h": {
+            "type": "number",
+            "description": "24h price change (when price enrichment resolved)"
+          },
+          "logo": {
+            "type": "string",
+            "description": "Logo URL (provider marker or side-loaded via `?include=logo`)"
+          }
+        },
+        "required": [
+          "owner",
+          "blockchain",
+          "amount",
+          "decimals",
+          "symbol",
+          "name",
+          "type",
+          "address"
+        ]
+      },
+      "FungibleToken": {
+        "type": "object",
+        "description": "Canonical Solana fungible-token shape\n(`src/resources/solana/solana-ft-batch-resource.js`).\n",
+        "properties": {
+          "chainId": {
+            "type": "integer",
+            "example": 101,
+            "description": "`101` = Solana mainnet"
+          },
+          "address": {
+            "type": "string",
+            "description": "Mint address"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo URL, IPFS-normalized to a stable gateway"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "coingeckoId": {
+            "type": "string",
+            "nullable": true,
+            "description": "CoinGecko coin id when the token is listed there, else null"
+          }
+        },
+        "required": [
+          "chainId",
+          "address",
+          "symbol",
+          "name",
+          "decimals",
+          "logo",
+          "tags",
+          "coingeckoId"
+        ]
+      },
+      "Nft": {
+        "type": "object",
+        "description": "Solana NFT resource (`src/resources/solana/solana-nft-resource.js`).\nFungible tokens never appear (the resource returns null for them and\nthe list endpoint filters those out).\n",
+        "properties": {
+          "mint": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Normalized metadata URI"
+          },
+          "description": {
+            "type": "string",
+            "description": "From the JSON metadata; absent when metadata lacks it"
+          },
+          "collection": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "From the JSON metadata; absent when metadata lacks it"
+          },
+          "media": {
+            "type": "string",
+            "nullable": true,
+            "description": "Normalized display image URL (override → `json.image` → `nft.image`)"
+          },
+          "extras": {
+            "type": "object",
+            "properties": {
+              "creators": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "nullable": true
+              },
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "nullable": true
+              },
+              "properties": {
+                "type": "object",
+                "additionalProperties": true,
+                "nullable": true
+              }
+            }
+          },
+          "extensions": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Token-2022 extensions; absent for classic NFTs"
+          },
+          "spamScore": {
+            "type": "number",
+            "description": "Heuristic spam score; > 0 means the NFT is hidden by default from list responses"
+          },
+          "spamReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blacklisted": {
+            "type": "boolean",
+            "description": "Side-loaded from the scam blacklist (list endpoint requests it)"
+          }
+        },
+        "required": [
+          "mint",
+          "owner",
+          "name",
+          "symbol",
+          "media",
+          "extras",
+          "spamScore",
+          "spamReasons"
+        ]
+      },
+      "SolanaTransaction": {
+        "type": "object",
+        "description": "Enriched Solana transaction (`solana-transaction-enrichment`\ncontract). Two producers share this shape: the provider-enriched\npath (Triton-parsed, see\n`src/resources/solana/helius-transaction-resource.js`) and the\nbare-RPC fallback (`src/resources/solana/solana-transaction-resource.js`).\nThe fields listed here are the stable core; the enriched path adds\nprovider fields (`description`, `source`, `events`, `heliusType`,\n`instructions`, `feePayer`, `slot`, `blockTime`,\n`confirmationStatus`) whose inner structure is provider-defined —\nhence `additionalProperties: true`.\n",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transaction signature"
+          },
+          "timestamp": {
+            "type": "number",
+            "nullable": true,
+            "description": "Unix epoch seconds (block time)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ]
+          },
+          "fee": {
+            "type": "object",
+            "nullable": true,
+            "description": "Present only when the queried address paid the fee",
+            "properties": {
+              "amount": {
+                "type": "number"
+              },
+              "decimals": {
+                "type": "integer"
+              },
+              "symbol": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string",
+            "description": "Canonical transaction type (`send`, `receive`, `interaction`, `mint`, `burn`, `stake`, `loan`, `memo`, `unknown` — see `src/constants/transaction-types.js`). For transfers the direction is read off the legs: outputs only is `send`, inputs only `receive`, both `interaction`; SOL that only came back to a wallet that signed the transaction (rent from its own closed accounts) is `interaction`."
+          },
+          "action": {
+            "type": "string",
+            "nullable": true,
+            "description": "The verb inside an `interaction`, as a stable key: `swap`, `nft_sale`, `nft_purchase`, `accounts_closed`, `program_call`. Absent on every other type."
+          },
+          "actionMeta": {
+            "type": "object",
+            "nullable": true,
+            "description": "What the verb needs said: `{ count }` for `accounts_closed`."
+          },
+          "app": {
+            "type": "string",
+            "nullable": true,
+            "description": "The name the user knows the program family by (Jupiter, Raydium, Magic Eden, Marinade…), for the detail. Absent for the platform’s own programs."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferLeg"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferLeg"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "type",
+          "inputs",
+          "outputs"
+        ],
+        "additionalProperties": true
+      },
+      "TransferLeg": {
+        "type": "object",
+        "description": "One asset the queried address gained (`inputs`) or lost (`outputs`) in the transaction: its net balance change, one leg per asset, never one per instruction. A SOL leg beside token legs is reported only from 0.005 SOL; alone it is always reported. The transaction fee is never a leg (see `fee`).",
+        "properties": {
+          "amount": {
+            "description": "Raw amount in base units (number or numeric string depending on source)",
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "decimals": {
+            "type": "integer",
+            "nullable": true
+          },
+          "symbol": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mint/contract address (SOL pseudo-address for native legs)"
+          },
+          "source": {
+            "type": "string",
+            "description": "Present on input legs"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Present on output legs"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SwapBuild": {
+        "type": "object",
+        "description": "`src/resources/solana/solana-swap-build-resource.js`. Amounts are\nbase-unit strings. Provider attribution is data: render\n`providerDisplayName` / `attribution`, no provider-specific branches.\n",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "0x",
+              "jupiter"
+            ],
+            "description": "The routing provider the availability row chose for this caller"
+          },
+          "providerDisplayName": {
+            "type": "string"
+          },
+          "attribution": {
+            "type": "string"
+          },
+          "providerRequestId": {
+            "type": "string",
+            "description": "Provider-side request id (0x `zid`, Jupiter `requestId`) for support"
+          },
+          "transaction": {
+            "type": "string",
+            "description": "Base64-encoded v0 VersionedTransaction, no signatures, fee payer = `publicKey`"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Request a fresh build after this instant (blockhash lifetime)"
+          },
+          "input": {
+            "$ref": "#/components/schemas/SwapBuildLeg"
+          },
+          "output": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwapBuildLeg"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "minAmount": {
+                    "type": "string",
+                    "description": "Minimum output after slippage and fees"
+                  }
+                }
+              }
+            ]
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "percent": {
+                  "type": "number",
+                  "description": "Share of the remaining amount routed through this leg"
+                }
+              }
+            }
+          },
+          "priceImpactPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "USD value lost input→output, from CoinGecko prices; null when a price is unknown"
+          },
+          "slippageBps": {
+            "type": "integer"
+          },
+          "priorityFeeMicroLamports": {
+            "type": "integer",
+            "description": "Compute-unit price prepended to the transaction (network-derived p75, clamped 1000–20000; 0 when pinned off)"
+          },
+          "computeUnitLimit": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Compute-unit limit prepended to the transaction (simulated usage +15%, 400000 when simulation is unavailable); null when the priority fee is pinned off"
+          },
+          "inUsdValue": {
+            "type": "number",
+            "nullable": true
+          },
+          "outUsdValue": {
+            "type": "number",
+            "nullable": true
+          },
+          "salmonFee": {
+            "type": "object",
+            "nullable": true,
+            "description": "Salmon's fee. Taken from the output token (`side: output`, `output.amount`\nis already net of it) when Salmon's account for that token exists, else\nfrom the input token (`side: input`, deducted before routing). Null when\nno fee applies. `amount` is estimated from the configured bps.\n",
+            "properties": {
+              "amount": {
+                "type": "string"
+              },
+              "mint": {
+                "type": "string"
+              },
+              "side": {
+                "type": "string",
+                "enum": [
+                  "input",
+                  "output"
+                ]
+              },
+              "bps": {
+                "type": "integer"
+              },
+              "decimals": {
+                "type": "integer"
+              },
+              "symbol": {
+                "type": "string"
+              }
+            }
+          },
+          "routeFee": {
+            "type": "object",
+            "nullable": true,
+            "description": "The provider's own fee when it reports one; null for Jupiter's Router path and while 0x does not report it",
+            "properties": {
+              "bps": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "required": [
+          "provider",
+          "providerDisplayName",
+          "attribution",
+          "transaction",
+          "expiresAt",
+          "input",
+          "output",
+          "route",
+          "slippageBps"
+        ]
+      },
+      "SwapBuildLeg": {
+        "type": "object",
+        "properties": {
+          "mint": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "logo": {
+            "type": "string"
+          }
+        }
+      },
+      "UnsignedTransactionResponse": {
+        "description": "Unsigned transaction payload for the client to sign\n(`src/services/solana/transaction-serialization.js`). Single-tx case\nis `{ transaction }`; oversized compressed-NFT burns return the\nlookup-table fallback multi-step shape instead.\n",
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "SingleTransaction",
+            "properties": {
+              "transaction": {
+                "type": "string",
+                "description": "Base64-encoded v0 VersionedTransaction"
+              }
+            },
+            "required": [
+              "transaction"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "LookupTableFallback",
+            "description": "cNFT lookup-table fallback: sign and send each step in order",
+            "properties": {
+              "transactions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "transaction": {
+                      "type": "string",
+                      "description": "Base64-encoded v0 VersionedTransaction"
+                    },
+                    "step": {
+                      "type": "string",
+                      "description": "Step label (e.g. `createLookupTable`, `extendLookupTable`, `burn`)"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "lookupTable": {
+                "type": "string",
+                "description": "Address of the lookup table being created"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable explanation of the multi-step flow"
+              }
+            },
+            "required": [
+              "transactions"
+            ]
+          }
+        ]
+      },
+      "BitcoinTransaction": {
+        "type": "object",
+        "description": "Bitcoin transaction resource\n(`src/resources/bitcoin/bitcoin-transaction-resource.js`), built from\nthe UTXO event feed per the `bitcoin-account-history` contract.\n",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transaction id (txid)"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Transaction date from the provider feed"
+          },
+          "status": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "`send` | `receive` | `unknown` (address is both source and destination, or neither)"
+          },
+          "fee": {
+            "type": "object",
+            "nullable": true,
+            "description": "Present only when the queried address paid the fee",
+            "properties": {
+              "amount": {
+                "type": "string"
+              },
+              "decimals": {
+                "type": "integer"
+              },
+              "symbol": {
+                "type": "string",
+                "example": "BTC"
+              }
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "description": "Transfer legs received by the queried address",
+            "items": {
+              "$ref": "#/components/schemas/BitcoinTransferLeg"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "description": "Transfer legs sent by the queried address",
+            "items": {
+              "$ref": "#/components/schemas/BitcoinTransferLeg"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "timestamp",
+          "status",
+          "type",
+          "inputs",
+          "outputs"
+        ]
+      },
+      "BitcoinTransferLeg": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "symbol": {
+            "type": "string",
+            "nullable": true,
+            "description": "`BTC` for native legs, absent otherwise"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "description": "Denomination for non-BTC legs"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "destination": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "BitcoinUtxo": {
+        "type": "object",
+        "description": "UTXO resource (`src/resources/bitcoin/bitcoin-utxo-resource.js`)",
+        "properties": {
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "txId": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputIndex": {
+            "type": "integer",
+            "nullable": true
+          },
+          "script": {
+            "type": "string",
+            "nullable": true
+          },
+          "satoshis": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "satoshis"
+        ]
+      }
+    }
+  }
+}

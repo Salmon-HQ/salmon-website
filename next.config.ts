@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     return [
       { source: '/((?!_next/|phone-preview|powerup-rows|.*\\..*).*)', headers: [{ key: 'Vary', value: 'Accept' }] },
       { source: '/seeker', headers: [{ key: 'Vary', value: 'Accept, User-Agent' }] },
+      { source: '/openapi.yaml', headers: [{ key: 'Content-Type', value: 'application/yaml; charset=utf-8' }] },
     ];
   },
   // Addresses of the previous site keep working: retired pages land on the home, English drops its /en prefix,
@@ -27,8 +28,11 @@ const nextConfig: NextConfig = {
       { source: '/en/:path*', destination: '/:path*', permanent: true },
       { source: '/:locale(es|pt)', destination: '/', permanent: true },
       { source: '/:locale(es|pt)/contact', destination: '/contact', permanent: true },
-      { source: '/:locale(es|pt)/:page(about|brand|developers)', destination: '/', permanent: true },
-      { source: '/:page(about|brand|developers)', destination: '/', permanent: true },
+      { source: '/:locale(es|pt)/:page(about|brand)', destination: '/', permanent: true },
+      { source: '/:page(about|brand)', destination: '/', permanent: true },
+      // The previous site's "API Docs & Developer Resources" page.
+      { source: '/:locale(es|pt)/developers', destination: '/api', permanent: true },
+      { source: '/developers', destination: '/api', permanent: true },
     ];
   },
 };

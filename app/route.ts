@@ -251,6 +251,7 @@ export async function GET() {
     <meta name="twitter:image" content="${SITE_URL}/images/sharing-og.png">
     <link rel="canonical" href="${SITE_URL}/">
     <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="api-catalog" href="/.well-known/api-catalog">
     <script type="application/ld+json">${JSON.stringify(structuredData()).replace(/</g, '\\u003c')}</script>
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
