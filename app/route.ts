@@ -280,8 +280,7 @@ export async function GET(request: Request) {
       /* The template toggles .fx over #salmon (no longer black, so it changes
          nothing) and .hide over the footer. */
       /* White header band: solid down to the Download now button's bottom edge
-         (78px desktop, 56px mobile), then an 18px fade so sections slide under it.
-         Hidden over the dark footer, where the template already hides the logo. */
+         (78px desktop, 56px mobile), then an 18px fade so sections slide under it. */
       #nav::before {
         content: "";
         position: absolute;
@@ -293,7 +292,10 @@ export async function GET(request: Request) {
         pointer-events: none;
         transition: opacity .2s cubic-bezier(.215,.61,.355,1);
       }
+      /* Over the dark footer the template hides the logo; the band and Download now leave with it. */
       #nav:has(#nav-logo.hide)::before { opacity: 0; }
+      #nav .soon { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
+      #nav:has(#nav-logo.hide) .soon { opacity: 0; pointer-events: none; }
       #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
       #nav-logo.hide { opacity: 0; pointer-events: none; }
       #nav-logo .salmon-reference-mark {
