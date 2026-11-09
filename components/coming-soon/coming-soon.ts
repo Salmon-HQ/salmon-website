@@ -21,8 +21,8 @@ export const comingSoonHtml = `<div id=coming-soon class=salmon-soon>
 </div>`;
 
 // --u scales with the viewport's width but is capped by its height, so the whole card fits one screen on wide
-// and short displays alike (equal to 1vw at 1440x900). The frame's aspect ratio holds the five rows as
-// /powerup-rows lays them out (desktop: 35..45% wide; mobile: 84..96%), with room for their tilt, float and shadow.
+// and short displays alike (equal to 1vw at 1440x900). The frame's aspect ratio holds the four rows
+// /powerup-rows shows at a time as they rise (desktop: 34..41.5% wide; mobile: 74..86%), with room for tilt and shadow.
 export const comingSoonCss = `
   .salmon-soon {
     --u: min(1vw, 1.6vh);
@@ -66,7 +66,7 @@ export const comingSoonCss = `
     top: auto;
     left: auto;
     height: auto;
-    aspect-ratio: 100 / 45;
+    aspect-ratio: 100 / 38;
     margin-top: calc(var(--u) * 1.2);
     border: 0;
     background: transparent;
@@ -89,10 +89,11 @@ export const comingSoonCss = `
   .salmon-soon-apply:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(120, 24, 18, .32); }
   .salmon-soon-apply:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
   @media (max-width: 750px) {
-    .salmon-soon { padding: 0 calc(16px + 3vw) var(--salmon-card-top, 14vw); }
-    .salmon-soon-card { padding: 10vw 3vw 8vw; border-radius: 6vw; }
+    .salmon-soon { padding: 0 calc(16px + 1.5vw) var(--salmon-card-top, 14vw); }
+    /* Side padding keeps the widest row off the card's edges. */
+    .salmon-soon-card { padding: 10vw 4vw 8vw; border-radius: 6vw; }
     .salmon-soon .salmon-soon-title { font-size: 12vw; }
-    .salmon-soon-rows { width: 100%; aspect-ratio: 100 / 98; margin-top: 5vw; }
+    .salmon-soon-rows { width: 100%; aspect-ratio: 100 / 74; margin-top: 5vw; }
     .salmon-soon-cta { margin-top: 5vw; }
   }
 `;
