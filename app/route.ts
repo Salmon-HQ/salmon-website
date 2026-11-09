@@ -1110,6 +1110,36 @@ export async function GET(request: Request) {
         #salmon-card-0 > h2 { font-size: 13vw !important; }
         #salmon-card-0 > p { margin-top: 8vw !important; }
         #salmon #salmon-card-0-phone { margin-top: 8vw; }
+        /* Phones read larger on phones. Hero and Powerups grow by --salmon-phone-k (the row image with them, so
+           the Powerups phone still lands on its slot and the side tiles crop at the card's edges); the ceiling
+           keeps the Powerups phone above the viewport's bottom, as its sticky sits at 18%. */
+        .shim-null { --salmon-phone-k: 1.22; }
+        .shim-null #hero .card-content-screen,
+        .shim-null #program .card-content-screen {
+          width: calc(22.43vh * var(--salmon-phone-k) - 2 * var(--bezel));
+          height: calc(47.76vh * var(--salmon-phone-k) - 2 * var(--bezel));
+          border-radius: calc(3.32vh * var(--salmon-phone-k) - var(--bezel));
+        }
+        .shim-null #program-card-content-grid img { transform: translateX(-50%) scale(var(--salmon-phone-k)); }
+        /* Each step's copy sits centred in the space between the header band (56px) and the phone's top,
+           which is its sticky's 18% plus half the viewport, less half the phone. */
+        .shim-null #program .card-content-list-sticky-copy {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: calc(68vh - 23.88vh * var(--salmon-phone-k) - 56px);
+          margin-top: 56px;
+          padding: 0 4vw;
+        }
+        .shim-null #program .card-content-list-sticky-copy p {
+          font-size: 7.2vw;
+          line-height: 1.15;
+          text-align: center;
+        }
+        /* Real ownership: the phone is sized by the screen, not by the card, and the fin runs past the card's
+           sides, cropped there; its tail already fades in. */
+        #salmon-card-0 { overflow: clip; }
+        #salmon-card-0-phone { --phone-w: min(40vw, (100svh - 96px - 32px) / 3.42203); }
         #salmon-card-1.salmon-get-card { min-height: auto; padding: 72px 24px; }
         #salmon-card-1 .salmon-get-title { margin-bottom: 14px; }
         #salmon-card-1 .salmon-get-subtitle { margin-bottom: 48px; }
