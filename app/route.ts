@@ -363,6 +363,18 @@ export async function GET(request: Request) {
       #program .card-content {
         background-color: #fff7f4 !important;
       }
+      /* The card's clip is driven by salmonPowerupsCardClip() (it opens when the Swap phone detaches from the row),
+         which outranks the template's inline clip-path. Fallbacks are the closed card until the script runs. */
+      #program .card-content {
+        -webkit-clip-path: inset(0 var(--salmon-card-inset, 64px) round var(--salmon-card-radius, 45px)) !important;
+        clip-path: inset(0 var(--salmon-card-inset, 64px) round var(--salmon-card-radius, 45px)) !important;
+      }
+      @media (max-width: 750px) {
+        #program .card-content {
+          -webkit-clip-path: inset(0 var(--salmon-card-inset, 16px) round var(--salmon-card-radius, 24px)) !important;
+          clip-path: inset(0 var(--salmon-card-inset, 16px) round var(--salmon-card-radius, 24px)) !important;
+        }
+      }
       /* The Powerups row: each tile casts a soft shadow onto the card, as deep as the feature slabs'. The row is
          one transparent image, so drop-shadow follows each tile's outline. */
       #program .salmon-phone-screen,
@@ -1165,8 +1177,44 @@ export async function GET(request: Request) {
         }, { threshold: 0.6 });
         seen.observe(line);
       }
+      // The cream Powerups card stays a rounded card while the row scrolls in and opens to full width only once
+      // the Swap phone detaches from the row (its sticky wrapper starts sticking). Closing is the template's:
+      // it starts when the card's bottom reaches the viewport's. Inset, radius and scroll lengths match the
+      // template's clip (64/45px, 16/24px mobile; open over 2.8x and close over 3x the hero card's top), linear.
+      function salmonPowerupsCardClip() {
+        var card = document.querySelector('#program .card-content');
+        var sticky = card && card.querySelector('.card-content-phone-sticky');
+        var shim = sticky && sticky.previousElementSibling;
+        var hero = document.querySelector('#hero .card-content');
+        if (!shim || !hero) return;
+        var mobile = window.matchMedia('(max-width: 750px)');
+        var openLength = 1, closeLength = 1, stickyTop = 0, frame = 0;
+        var clamp01 = function (v) { return Math.min(1, Math.max(0, v)); };
+        var measure = function () {
+          var heroTop = hero.getBoundingClientRect().top + window.scrollY;
+          openLength = Math.max(1, 2.8 * heroTop);
+          closeLength = Math.max(1, 3 * heroTop);
+          stickyTop = parseFloat(getComputedStyle(sticky).top) || 0;
+        };
+        var draw = function () {
+          frame = 0;
+          var closed = mobile.matches ? [16, 24] : [64, 45];
+          var opened = clamp01((stickyTop - shim.getBoundingClientRect().bottom) / openLength);
+          var closing = clamp01((window.innerHeight - card.getBoundingClientRect().bottom) / closeLength);
+          var k = Math.max(1 - opened, closing);
+          card.style.setProperty('--salmon-card-inset', (closed[0] * k).toFixed(2) + 'px');
+          card.style.setProperty('--salmon-card-radius', (closed[1] * k).toFixed(2) + 'px');
+        };
+        var schedule = function () { if (!frame) frame = requestAnimationFrame(draw); };
+        var refresh = function () { measure(); schedule(); };
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', refresh);
+        window.addEventListener('load', refresh, { once: true });
+        refresh();
+      }
       applySalmonCopy();
       salmonReveal();
+      salmonPowerupsCardClip();
       if (document.readyState !== 'complete') {
         window.addEventListener('load', initSalmonStandalone, { once: true });
       } else {
