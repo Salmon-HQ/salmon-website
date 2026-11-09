@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { SITE_URL as BASE_URL } from '@/lib/site';
 
-const BASE_URL = 'https://salmonwallet.io';
+// Bump when the pages' content changes.
+const LAST_MODIFIED = new Date('2026-11-09');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ['en', 'es', 'pt'];
@@ -8,16 +10,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '', changeFrequency: 'monthly' as const, priority: 1.0 },
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3 },
     { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
-    { path: '/about', changeFrequency: 'monthly' as const, priority: 0.6 },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.6 },
-    { path: '/developers', changeFrequency: 'monthly' as const, priority: 0.7 },
-    { path: '/brand', changeFrequency: 'monthly' as const, priority: 0.6 },
   ];
 
+  // Only the legal pages have Spanish and Portuguese versions.
   return pages.flatMap((page) =>
-    locales.map((locale) => ({
+    (page.path === '/terms' || page.path === '/privacy' ? locales : ['en']).map((locale) => ({
       url: `${BASE_URL}${locale === 'en' ? '' : `/${locale}`}${page.path}`,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED,
       changeFrequency: page.changeFrequency,
       priority: page.priority,
     }))
