@@ -1,34 +1,31 @@
 ---
 name: design-context
-description: Sistema de diseño del sitio de Salmon Wallet — paleta navy/naranja, tipografía DM Sans/DM Mono, componentes y secciones reales, i18n. Usar SIEMPRE antes de tocar UI, colores, tipografía o copy de este repo. Incluye la advertencia crítica sobre claims de proof no verificados y sobre el rediseño revertido.
+description: Cómo está armado y cómo se ve el sitio de Salmon (salmonwallet.io). Cargala antes de tocar UI, estilos, animaciones o copy de este repo, y antes de buscar referencias visuales.
 ---
 
-# Design Context — salmon-website
+# Design context — salmon-website
 
-Landing de Salmon Wallet (Next.js App Router + next-intl + Tailwind v4). Dark editorial: navy profundo con acento salmón.
+## Cómo se ve
 
-## Ojo primero — dos cosas que rompen suposiciones
+La estética vigente está en `docs/visual-language.md`: leela antes de diseñar. En corto: página blanca, tarjetas crema que se abren con el scroll, DM Sans enorme y apretada, un solo acento naranja con degradé, la wallet oscura real dentro de los celulares, movimiento lento.
 
-1. **El rediseño fue revertido.** Hubo un rediseño en la branch `redesign/upstream` (visión "Skills/Skill Store", componentes `AnimatedBeam`/`BeamNode`/`Reveal`/`StatusBadge`) que **se abandonó**. Esos componentes **NO existen** en el sitio vivo, y **`docs/REBUILD-BRIEF.md` no existe**. El sitio actual es el pre-rediseño restaurado, manteniendo el bloque de validator stats en vivo. No trabajes contra el rediseño muerto.
-2. **Ningún claim de proof está verificado.** Audit de Halborn, "$200M+ protected", "50k+ users", "4.8★" — NADA confirmado. Ver memoria `unverified-proof-claims`. Jamás renderizar como verdad sin confirmación del usuario. Proof real disponible: repo open-source + validator stats en vivo.
+## Cómo está armado (las trampas)
 
-## Tokens — `app/globals.css` (`@theme`, Tailwind v4, sin config file)
+- La home es `app/route.ts`: sirve el template minificado `app/source.html` con una cadena de `.replace`, un bloque de CSS en el `<head>` y un script al final. No hay componentes React en la home.
+- El JS del template mide posiciones en `window.onload` y al redimensionar (clip de las tarjetas, lista de pasos, logo del nav). Lo que cambie tamaños después de `onload` desalinea esas medidas.
+- CSS global del template que pisa todo: `iframe { position:absolute; width:100%; height:100% }` y `.section h2` con tamaño, interlineado y padding enormes. Un iframe o un `h2` nuevo necesita sus propios valores con más especificidad.
+- React solo corre en páginas de Next. Next 16 bloquea `react-dom/server` en `app/`, así que los mocks de la wallet se muestran como iframes de `/phone-preview` y `/powerup-rows`.
+- Los mocks (`components/hero/mock-kit.tsx` y vecinos) son ports de componentes de `salmon-wallet-frontend`: sacá los componentes y los íconos (Phosphor bold) de ahí, no los inventes. `u(px)` devuelve `cqw` sobre un diseño de 440 de ancho: el contenedor necesita `@container`.
+- Celular = `@media (max-width: 750px)` y la clase `.shim-null` del template. Un cambio pedido para celular va dentro de esas reglas para no mover desktop.
+- Aviso de cookies: `components/consent/consent.ts`, compartido por la home y las páginas de Next.
+- Legales: el texto vive en `lib/legal-powerups-content.mjs`, generado desde el SOT con `scripts/sync-powerups-legal.mjs`. Nunca se edita a mano.
 
-- Acento: `--color-accent #ff5c45`, `--color-accent-end rgba(161,42,42,0.9)`, `--color-accent-soft #ff7e6d`.
-- Fondo: `--color-bg-primary #10131c` (también hardcodeado en `body`), `--color-bg-secondary #161c2d`.
-- Texto: `#ffffff` / `#8a8d98` / `#6b6e7b`. Bordes `#404962`. Status `--color-success #10b981`, `--color-error #ef4444`.
-- Type scale / spacing / easing como tokens (`--text-h2` clamp, `--space-section`, `--ease-expo-out`). Helpers `.font-display`, `.eyebrow`, `.no-scrollbar`, `@keyframes marquee`.
-- `#8a8d98` sobre navy es contraste borderline — verificá WCAG si lo usás para texto importante.
+## Copy
 
-## Tipografía — `app/layout.tsx`
+- Nunca "permissionless".
+- Ningún número, auditoría ni rating sin verificar (memoria `unverified-proof-claims`).
+- Estrategia y audiencia: `.claude/product-marketing.md`.
 
-`DM_Sans` (`--font-dm-sans`, 400/500/700) + `DM_Mono` (`--font-dm-mono`, 300/400/500) vía `next/font/google`; mapeadas en globals.css a `--font-sans`/`--font-mono`/`--font-display`. `themeColor: '#ff7e6d'`.
+## Verificar
 
-## Componentes reales
-
-- `components/ui/`: `AccordionItem`, `GlassmorphicCard`, `GradientButton`, `NumberTicker`, `ParticlesBackground`, `ScrollReveal`.
-- Secciones (`components/`): `Hero`, `Navbar`, `CardSection`, `Features`, `Why`, `Manifesto`, `Footer`, `Chains`, `FAQ`, `Security`, `GetSalmon`, más `components/sections/ValidatorStats.tsx` (stats en vivo — la pieza de proof real).
-
-## i18n — next-intl
-
-Locales `en` (default) / `es` / `pt`, `localePrefix: 'as-needed'` (`lib/i18n/routing.ts`). Mensajes en `messages/{en,es,pt}.json` (keys top-level: `metadata, nav, hero, chains, why, features, security, manifesto, faq, getSalmon, validator, footer`). Rutas: `app/[locale]/{layout,page}.tsx` + `privacy` + `terms`. Audiencia = devs/open-source → tono técnico, "don't trust, verify".
+Los previews de Vercel no se pueden abrir. Probá con un build de producción local (`npm run build && npx next start -p 3100`) y capturas con `node scripts/shot.mjs`, en 402×874 y 1440×900 como mínimo.
