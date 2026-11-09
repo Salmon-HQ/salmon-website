@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { comingSoonCss, comingSoonHtml } from '@/components/coming-soon/coming-soon';
 import { downloadsCss, downloadsHtml, footerCss, footerHtml } from '@/components/footer/site-footer';
 
 export const dynamic = 'force-dynamic';
@@ -98,35 +99,20 @@ const INTRO_ITEMS = [
     glyph:
       '<rect x="32" y="48" width="192" height="160" rx="8"/><polyline points="32 168 92 108 192 208"/><polyline points="148 164 178 134 224 180"/><circle cx="156" cy="100" r="4"/>',
   },
-  { word: 'Cash', logo: 'moneygram', name: 'MoneyGram' },
-  { word: 'Invest', logo: 'cesto', name: 'Cesto' },
-  { word: 'Trade', logo: 'titan', name: 'Titan' },
-  { word: 'Borrow', logo: 'hobba', name: 'Hobba' },
-  { word: 'Hardware', logo: 'unruggable', name: 'Unruggable' },
-] as { word: string; glyph?: string; logo?: string; name?: string }[];
+] as { word: string; glyph: string }[];
 
 const introListHtml = (items: typeof INTRO_ITEMS, hidden: boolean) =>
   `<ul class=salmon-intro-row${hidden ? ' aria-hidden=true' : ''}>${items.map(
-    ({ word, glyph, logo, name }) =>
-      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}${logo ? `<span class=salmon-visually-hidden> with ${name}</span>` : ''}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face">${
-        logo
-          ? `<span class=salmon-intro-logo style="--logo:url(/coming-soon/${logo}.svg)"></span>`
-          : `<svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`
-      }</span></span></li>`,
+    ({ word, glyph }) =>
+      `<li class=salmon-intro-item><span class=salmon-intro-word>${word}</span><span class=salmon-intro-tile aria-hidden=true><span class="section-rectangle salmon-intro-face"><svg viewBox="0 0 256 256"><g fill="none" stroke="#ff5c45" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg></span></span></li>`,
   ).join('')}</ul>`;
 
 // Each strip holds its list twice: the track slides one list's width and starts over.
-const introMarquee = (items: typeof INTRO_ITEMS, extra = '') =>
-  `<div class="salmon-intro-marquee${extra}"><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
-const introRowHtml = introMarquee(INTRO_ITEMS.filter((item) => !item.logo));
+const introMarquee = (items: typeof INTRO_ITEMS) =>
+  `<div class=salmon-intro-marquee><div class=salmon-intro-track>${introListHtml(items, false)}${introListHtml(items, true)}</div></div>`;
+const introRowHtml = introMarquee(INTRO_ITEMS);
 // Opens the cream Powerups card: title, context and "Add more" on the first screen, then the row and demo.
 const powerupsIntroHtml = `<div class=salmon-powerups-intro><h2 class=salmon-powerups-title>Powerups</h2><p class=salmon-add-more><span class="salmon-reveal-w salmon-orange">Add</span> <span class=salmon-reveal-w>more</span> <span class="salmon-reveal-w salmon-orange">when you need</span> <span class=salmon-reveal-w>more<span class=salmon-orange>.</span></span></p></div>`;
-// After the Powerups demo: the closing line, then the partners under a title set like "Powerups".
-const comingSoonHtml = `<div id=coming-soon><h2 class=salmon-powerups-title>Coming soon</h2>${introMarquee(
-  INTRO_ITEMS.filter((item) => item.logo),
-  ' salmon-intro-marquee-soon',
-)}<p class=salmon-soon-cta><a class=salmon-pill href="mailto:integrations@salmonwallet.io?subject=Apply%20for%20an%20integration">Apply for an integration</a></p></div>`;
-
 const SCREENS = [
   { screen: 'swap-review', title: 'Swap', powerup: true, alt: 'Swap review in Salmon: SOL to USDC with rate, fee and minimum received', copy: 'Trade tokens without leaving your wallet. Rate and fees are shown before you confirm.' },
   { screen: 'payments', title: 'Payments', powerup: true, alt: 'Payment request in Salmon: QR code for 25 USDC waiting for payment', copy: 'Request a payment with a QR code and follow its status until it arrives.' },
@@ -187,9 +173,14 @@ export async function GET(request: Request) {
   const powerupsCopy = withoutShop.match(/<p id=program-card-content-intro>[\s\S]*?<\/p>/)?.[0] ?? '';
   const withScreens = withoutShop
     .replace(powerupsCopy, '')
-    .replace(/<section id=salmon class=section>/, () => `${comingSoonHtml}<section id=salmon class=section>`)
     .replace(/<ul id=intro-list>[\s\S]*?<\/ul>\s*<div id=intro-img>[\s\S]*?<\/div>/, () => introRowHtml)
     .replace(/(<section id=program class=section>[\s\S]*?<div class=card-content>)/, (open) => open + powerupsIntroHtml)
+    // The Swap demo (phone between its shims, then the step copy) gets its own box so the sticky phone lets go
+    // where the demo ends, and Coming soon closes the cream card under it, a card inside the card.
+    .replace(
+      /(<section id=program class=section>[\s\S]*?)(<div class=card-content-phone-shim><\/div> <div class=card-content-phone-sticky>[\s\S]*?<div class=card-content-list>[\s\S]*?<\/ul> <\/div>)/,
+      (_, before, demo) => `${before}<div class=salmon-powerups-demo>${demo}</div>${comingSoonHtml}`,
+    )
     // "Wallets became mega-apps" leaves the Powerups card for the spot between the title and "Add more".
     .replace('<h2 class=salmon-powerups-title>Powerups</h2>', (title) => title + powerupsCopy)
     // "Inside the app" is off for now; uncomment to show it again.
@@ -433,13 +424,13 @@ export async function GET(request: Request) {
         line-height: 1.1 !important;
       }
       /* Real ownership (#salmon) shares the Powerups header sizes. */
-      /* One gap between stacked cards: Powerups → Coming soon → Real ownership. */
+      /* One gap between stacked cards: Powerups → Real ownership. */
       :root { --salmon-section-gap: 6vw; }
       #program.section,
       #salmon.section {
         padding-top: var(--salmon-section-gap) !important;
       }
-      /* "Powerups" and "Coming soon" keep the section title look. */
+      /* "Powerups" keeps the section title look. */
       .salmon-powerups-title {
         padding-top: 6vw;
         font-size: 7vw;
@@ -870,6 +861,7 @@ export async function GET(request: Request) {
       }
       .salmon-validator-foot a:hover { background: #ff5c45; }
       ${footerCss}
+      ${comingSoonCss}
       /* The features as an endless strip of columns of the same width and gap,
          each a word over its tile. Every tile carries its own perspective (the
          transform's perspective(), not a shared one on the row), so its
@@ -947,36 +939,6 @@ export async function GET(request: Request) {
         height: 34% !important;
         transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
       }
-      /* Partner marks in one ink, so five brands read as one row of tiles. */
-      .salmon-intro-logo {
-        width: 72%;
-        height: 30%;
-        background: #10131c;
-        -webkit-mask: var(--logo) center / contain no-repeat;
-        mask: var(--logo) center / contain no-repeat;
-        transition: filter .5s, transform .5s cubic-bezier(.22,1,.36,1);
-      }
-      /* The second strip runs the other way, at the speed of the first (5 tiles against 3). */
-      .salmon-intro-marquee-soon .salmon-intro-track { animation-duration: 40s; animation-direction: reverse; }
-      #coming-soon { overflow: hidden; }
-      #coming-soon .salmon-intro-marquee { margin-top: 3.5vw; }
-      #coming-soon .salmon-powerups-title { font-size: 5.6vw; }
-      /* Builders who want their Powerup in Salmon write to the integrations inbox (SOT, Salmon Website Index). */
-      .salmon-soon-cta { margin: 0 0 6vw; text-align: center; }
-      .salmon-pill {
-        display: inline-block;
-        padding: 16px 32px;
-        border-radius: 999px;
-        background: #ff5c45;
-        box-shadow: 0 8px 30px 0 rgba(255,92,69,.3);
-        color: #fff;
-        font-size: 18px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
-      }
-      .salmon-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 36px 0 rgba(255,92,69,.4); }
-      .salmon-pill:focus-visible { outline: 2px solid #10131c; outline-offset: 3px; }
       .salmon-visually-hidden {
         position: absolute;
         width: 1px;
@@ -996,8 +958,7 @@ export async function GET(request: Request) {
             0 11vw 9vw rgba(16,19,28,.12),
             0 0 6vw rgba(255,92,69,.22) !important;
         }
-        .salmon-intro-face:hover svg,
-        .salmon-intro-face:hover .salmon-intro-logo {
+        .salmon-intro-face:hover svg {
           transform: scale(1.08);
           filter: drop-shadow(0 0 1.2vw rgba(255,92,69,.55));
         }
@@ -1015,8 +976,7 @@ export async function GET(request: Request) {
         .salmon-intro-marquee { overflow-x: auto; }
         .salmon-intro-row[aria-hidden] { display: none; }
         .salmon-intro-face,
-        .salmon-intro-face svg,
-        .salmon-intro-logo { transition: none; }
+        .salmon-intro-face svg { transition: none; }
       }
       #screens.section { padding-top: 6vw !important; }
       #screens .section-rectangle {
@@ -1117,9 +1077,6 @@ export async function GET(request: Request) {
         .salmon-validator-stats li { padding: 24px 20px; }
         .salmon-validator-foot { padding: 20px; }
         .salmon-powerups-intro p { width: 87.17949vw; margin-top: 8vw !important; font-size: 8.5vw !important; }
-        #coming-soon .salmon-intro-marquee { margin-top: 8vw; }
-        #coming-soon .salmon-powerups-title { font-size: 12vw; }
-        .salmon-soon-cta { margin-bottom: 14vw; }
         #program #program-card-content-intro { width: 87.17949vw; margin-top: 6vw !important; font-size: 7.65vw !important; }
         #screens.section { padding-top: 14vw !important; }
         #screens .section-rectangle { width: 20vw !important; height: 20vw !important; }
@@ -1220,25 +1177,39 @@ export async function GET(request: Request) {
           // directly. Reduced motion shows one still screen per copy step.
           var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           var directScroll = reduceMotion || window.matchMedia('(pointer: coarse)').matches;
-          var target = -1, drawn = -1, sent = null, frame = 0;
+          // unlock runs 0 → 1 from the moment the phone leaves the row (its sticky wrapper starts sticking) to the
+          // moment the first step starts (p = 0): the app's unlock wait is drawn at that point of the scroll.
+          // Both distances move one-for-one with the scroll, so their sum is the segment's fixed length.
+          var powerupsSticky = document.querySelector('#program .card-content-phone-sticky');
+          var target = -1, drawn = -1, sent = null, unlockTarget = 0, unlockDrawn = 0, sentUnlock = null, frame = 0;
           var measure = function () {
             var rect = powerupsList.getBoundingClientRect();
             var p = (window.innerHeight / 2 - rect.top) / rect.height;
             if (reduceMotion) p = p < 0 ? -1 : p < 0.35 ? 0.27 : p < 0.6 ? 0.57 : 1;
             target = Math.max(-1, Math.min(1.05, p));
+            if (powerupsSticky && powerupsSticky.previousElementSibling) {
+              var past = (parseFloat(getComputedStyle(powerupsSticky).top) || 0) - powerupsSticky.previousElementSibling.getBoundingClientRect().bottom;
+              var ahead = rect.top - window.innerHeight / 2;
+              var u = past <= 0 ? 0 : ahead <= 0 ? 1 : past / (past + ahead);
+              unlockTarget = reduceMotion ? (u < 0.5 ? 0 : 1) : u;
+            }
           };
           var post = function () {
             var p = Math.round(drawn * 2000) / 2000;
-            if (p === sent || !flowFrame.contentWindow) return;
+            var u = Math.round(unlockDrawn * 1000) / 1000;
+            if ((p === sent && u === sentUnlock) || !flowFrame.contentWindow) return;
             sent = p;
-            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-progress', progress: p }, window.location.origin);
+            sentUnlock = u;
+            flowFrame.contentWindow.postMessage({ type: 'salmon-powerups-progress', progress: p, unlock: u }, window.location.origin);
           };
           var tick = function () {
             frame = 0;
             drawn = directScroll ? target : drawn + (target - drawn) * 0.12;
+            unlockDrawn = directScroll ? unlockTarget : unlockDrawn + (unlockTarget - unlockDrawn) * 0.12;
             if (Math.abs(target - drawn) < 0.0005) drawn = target;
+            if (Math.abs(unlockTarget - unlockDrawn) < 0.0005) unlockDrawn = unlockTarget;
             post();
-            if (drawn !== target) frame = requestAnimationFrame(tick);
+            if (drawn !== target || unlockDrawn !== unlockTarget) frame = requestAnimationFrame(tick);
           };
           var onScroll = function () {
             measure();
@@ -1246,7 +1217,7 @@ export async function GET(request: Request) {
           };
           window.addEventListener('scroll', onScroll, { passive: true });
           window.addEventListener('resize', onScroll);
-          flowFrame.addEventListener('load', function () { measure(); drawn = target; sent = null; post(); });
+          flowFrame.addEventListener('load', function () { measure(); drawn = target; unlockDrawn = unlockTarget; sent = sentUnlock = null; post(); });
         }
 
         var salmonHeading = document.querySelector('#salmon > h2');

@@ -695,20 +695,67 @@ const WAIT_CSS = `
   .salmon-wait-mark, .salmon-wait-crest { animation: none; }
 }`;
 
-/** The app's wait, mark only — no words, no tips. */
-export function LoadingMock() {
+const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
+/** motionEasing.settle (cubic-bezier .22,1,.36,1) and .sink (.4,0,1,1), close enough to scrub with. */
+const settle = (t: number) => 1 - (1 - t) ** 3;
+const sinkIn = (t: number) => t * t;
+
+/**
+ * One frame of the wait at `at` (0..1), for a wait the scroll drives instead of the clock: the words float in
+ * (Cluster: 8pt rise from 0.9 scale on `settle`, light on `sink`), then one wave runs (WAIT_CSS's mark sink and
+ * crest, period stops kept), and the caller fades to Home over the last stretch.
+ */
+function waitFrame(at: number) {
+  const words = clamp01(at / 0.25);
+  // The wave's own clock: 0..0.769 of the period is the crest crossing the screen (WAIT_CSS stops).
+  const k = clamp01((at - 0.2) / 0.6) * 0.769;
+  const sink = k < 0.0346 ? k / 0.0346 : k < 0.3115 ? 1 - (k - 0.0346) / (0.3115 - 0.0346) : 0;
+  return {
+    wordsStyle: {
+      opacity: sinkIn(words),
+      transform: `translateY(${u(8 * (1 - settle(words)))}) scale(${0.9 + 0.1 * settle(words)})`,
+    },
+    markStyle: { transform: `scale(${1 - 0.05 * sink})`, opacity: 1 - 0.12 * sink },
+    crestStyle: {
+      opacity: at < 0.2 ? 0 : k < 0.0308 ? k / 0.0308 : k < 0.654 ? 1 : 1 - (k - 0.654) / (0.769 - 0.654),
+      transform: `translate(-50%, -50%) scale(${0.02 + 0.98 * (k / 0.769)})`,
+    },
+  };
+}
+
+/**
+ * The app's wait. `waves={false}` is the still mark the app opens on, before the
+ * wait starts; `title` is the wait's one line under the mark (Words in
+ * LoadingScreen/styled.ts: mark/2 + 3xl below the centre, 2xl bold, text.primary).
+ * `at` draws it at a point of a scroll-driven wait instead of looping on the clock.
+ * Tips are left out.
+ */
+export function LoadingMock({ waves = true, title, at }: { waves?: boolean; title?: string; at?: number }) {
   // The front reaches the farthest corner of the 440×956 screen: 2·hypot(220, 478).
   const ring = u(1052.4);
+  const scrubbed = at !== undefined;
+  const frame = scrubbed ? waitFrame(at) : null;
+  const looping = waves && !scrubbed;
   return (
     <Screen>
-      <style>{WAIT_CSS}</style>
+      {looping && <style>{WAIT_CSS}</style>}
+      {(looping || scrubbed) && (
+        <div
+          className={`${looping ? 'salmon-wait-crest ' : ''}absolute left-1/2 top-1/2 rounded-full`}
+          style={{ width: ring, height: ring, background: CREST_GRADIENT, opacity: 0, transform: 'translate(-50%, -50%) scale(0)', ...frame?.crestStyle }}
+        />
+      )}
+      {title && (
+        <p
+          className="absolute inset-x-0 top-1/2 text-center font-bold"
+          style={{ paddingTop: u(48 + 32), paddingInline: u(24), fontSize: u(24), lineHeight: 1.25, color: COLORS.textPrimary, ...frame?.wordsStyle }}
+        >
+          {title}
+        </p>
+      )}
       <div
-        className="salmon-wait-crest absolute left-1/2 top-1/2 rounded-full"
-        style={{ width: ring, height: ring, background: CREST_GRADIENT, opacity: 0, transform: 'translate(-50%, -50%) scale(0)' }}
-      />
-      <div
-        className="salmon-wait-mark absolute left-1/2 top-1/2"
-        style={{ width: u(96), height: u(96), marginLeft: `calc(-1 * ${u(48)})`, marginTop: `calc(-1 * ${u(48)})`, color: COLORS.accentFill }}
+        className={`${looping ? 'salmon-wait-mark ' : ''}absolute left-1/2 top-1/2`}
+        style={{ width: u(96), height: u(96), marginLeft: `calc(-1 * ${u(48)})`, marginTop: `calc(-1 * ${u(48)})`, color: COLORS.accentFill, ...frame?.markStyle }}
       >
         <svg viewBox="0 0 253 237" fill="currentColor" className="block size-full">
           {MARK_PATHS.map((d) => (
