@@ -139,12 +139,13 @@ const screensSectionHtml = `<section id=screens class=section aria-labelledby=sc
 const finPicture = (name: 'fin-back' | 'fin-front') =>
   `<picture><source type="image/avif" sizes="(max-width: 750px) 100vw, 78vw" srcset="/fin/${name}-800.avif 800w, /fin/${name}-1400.avif 1400w, /fin/${name}-2260.avif 2260w"><img class=salmon-fin-${name.slice(4)} src=/fin/${name}.webp sizes="(max-width: 750px) 100vw, 78vw" srcset="/fin/${name}-800.webp 800w, /fin/${name}-1400.webp 1400w, /fin/${name}.webp 2260w" alt="" loading="lazy" decoding="async"></picture>`;
 
-// Images the template downloads but the page never shows lose their src (the phone frames, the Powerups screen's
-// last slide, which the script turns into a marker, the removed parallax card); the Powerups grid gets its row before the browser asks for
-// the template's 2 MB PNG; the rest come in AVIF/WebP.
+// Media the template downloads but the page never shows lose their src (the phone frames, the Powerups screen's
+// videos and last slide, which the script turns into markers, the removed parallax card); the Powerups grid gets its
+// row before the browser asks for the template's 2 MB PNG; the rest come in AVIF/WebP.
 function lighterImages(html: string) {
   return html
     .replace(/<img src=\/reference-assets\/media\/(?:left|right|program\/04)\.png\?\d+ alt="">/g, '<img alt="">')
+    .replace(/(<video muted playsinline) src=\/reference-assets\/media\/program\/0[01]\.mp4\?\d+/g, '$1')
     // #salmon-card-2 is removed by the script below once the DOM is parsed.
     .replace(/<img src=\/reference-assets\/media\/salmon\/card-2\/00\.png\?\d+>/, '<img alt="">')
     .replace(
@@ -156,7 +157,11 @@ function lighterImages(html: string) {
     .replace(
       'background-image:url(/reference-assets/media/salmon/00.jpg)',
       'background-image:url(/reference-assets/media/salmon/00.webp);background-image:image-set(url(/reference-assets/media/salmon/00.avif) type("image/avif"),url(/reference-assets/media/salmon/00.webp) type("image/webp"))',
-    );
+    )
+    // Template assets that are no longer in public/: its Sofia font (DM Sans replaces it) and the backgrounds of the
+    // hero card (overridden below) and of the removed #video section.
+    .replace(/@font-face\{font-family:sofia;[^}]*\}/g, '')
+    .replace(/;background-image:url\(\/reference-assets\/media\/(?:hero\/01|video\/00)\.jpg\)/g, '');
 }
 
 export async function GET() {
@@ -179,14 +184,7 @@ export async function GET() {
     /<div class=card-content-screen><video[^>]*hero\/00\.mp4[\s\S]*?<\/video><\/div>/,
     '<div class="card-content-screen salmon-phone-screen"><iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe></div>',
   );
-  const withSalmonLogo = withSalmonPhone.replace(
-    /<a[^>]*id="nav-logo"[^>]*>[\s\S]*?<\/a>/,
-    `<a href="/" id="nav-logo" aria-label="Salmon">
-      <img src="/images/logo.png" alt="" class="salmon-reference-mark">
-      <img src="/images/app-title.png" alt="Salmon" class="salmon-reference-wordmark">
-    </a>`,
-  );
-  const withDownloadLink = withSalmonLogo.replace(
+  const withDownloadLink = withSalmonPhone.replace(
     /<a\s+class=soon>/,
     '<a class=soon href="#salmon-card-1">',
   );
@@ -324,18 +322,6 @@ export async function GET() {
       #nav:has(#nav-logo.hide) .soon { opacity: 0; pointer-events: none; }
       #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
       #nav-logo.hide { opacity: 0; pointer-events: none; }
-      #nav-logo .salmon-reference-mark {
-        display: block;
-        width: 23px;
-        height: 23px;
-        object-fit: contain;
-      }
-      #nav-logo .salmon-reference-wordmark {
-        display: block;
-        width: 90px;
-        height: auto;
-        object-fit: contain;
-      }
       #hero-txt {
         padding-top: 7.5vh !important;
         padding-bottom: 40vh !important;
@@ -1099,7 +1085,6 @@ export async function GET() {
         letter-spacing: .02em;
       }
       @media (max-width: 750px) {
-        #nav-logo .salmon-reference-wordmark { width: 78px; }
         #nav-logo { top: 21px !important; height: 26px !important; gap: 8px !important; }
         #nav { --salmon-nav-solid: 56px; }
         #nav .soon { right: 6.15385vw !important; }
