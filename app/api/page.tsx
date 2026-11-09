@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PageShell from '@/components/legal/PageShell';
 import { API_RATE_LIMITS, API_VERSIONING, apiGroups, apiVersion } from '@/lib/api-spec';
-import { API_DOCS_URL, API_SOURCE_URL, API_URL, DOCS_URL, SITE_URL } from '@/lib/site';
+import { API_DOCS_URL, API_SOURCE_URL, API_URL, DOCS_URL, sharingMetadata } from '@/lib/site';
 
 const TITLE = 'Salmon Wallet API: Docs, Endpoints and OpenAPI Spec';
 const DESCRIPTION =
@@ -11,8 +11,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: '/api' },
-  openGraph: { type: 'website', title: TITLE, description: DESCRIPTION, url: `${SITE_URL}/api`, siteName: 'Salmon Wallet' },
-  twitter: { card: 'summary', title: TITLE, description: DESCRIPTION },
+  ...sharingMetadata(TITLE, DESCRIPTION, '/api'),
 };
 
 const link = 'underline underline-offset-4';

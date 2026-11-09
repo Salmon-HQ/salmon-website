@@ -3,7 +3,7 @@ import path from 'node:path';
 import { comingSoonCss, comingSoonHtml } from '@/components/coming-soon/coming-soon';
 import { consentCss, consentHtml, consentScript } from '@/components/consent/consent';
 import { downloadsCss, downloadsHtml, footerCss, footerHtml } from '@/components/footer/site-footer';
-import { HOME_DESCRIPTION, HOME_TITLE, SITE_URL, structuredData } from '@/lib/site';
+import { HOME_DESCRIPTION, HOME_TITLE, SHARING_IMAGE, SITE_URL, structuredData } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -242,13 +242,17 @@ export async function GET() {
     <meta property="og:type" content="website">
     <meta property="og:title" content="${HOME_TITLE}">
     <meta property="og:description" content="${HOME_DESCRIPTION}">
-    <meta property="og:image" content="${SITE_URL}/images/sharing-og.png">
+    <meta property="og:image" content="${SHARING_IMAGE.url}">
+    <meta property="og:image:width" content="${SHARING_IMAGE.width}">
+    <meta property="og:image:height" content="${SHARING_IMAGE.height}">
+    <meta property="og:image:alt" content="${SHARING_IMAGE.alt}">
     <meta property="og:url" content="${SITE_URL}/">
     <meta property="og:site_name" content="Salmon Wallet">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${HOME_TITLE}">
     <meta name="twitter:description" content="${HOME_DESCRIPTION}">
-    <meta name="twitter:image" content="${SITE_URL}/images/sharing-og.png">
+    <meta name="twitter:image" content="${SHARING_IMAGE.url}">
+    <meta name="twitter:image:alt" content="${SHARING_IMAGE.alt}">
     <link rel="canonical" href="${SITE_URL}/">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="api-catalog" href="/.well-known/api-catalog">

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import PageShell from '@/components/legal/PageShell';
-import { DOCS_URL, SITE_URL, STORE_URLS, isDappStoreDevice } from '@/lib/site';
+import { DOCS_URL, STORE_URLS, isDappStoreDevice, sharingMetadata } from '@/lib/site';
 
 const TITLE = 'Salmon on Solana Seeker: Get It from the Solana dApp Store';
 const DESCRIPTION =
@@ -11,8 +11,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: '/seeker' },
-  openGraph: { type: 'website', title: TITLE, description: DESCRIPTION, url: `${SITE_URL}/seeker`, siteName: 'Salmon Wallet' },
-  twitter: { card: 'summary', title: TITLE, description: DESCRIPTION },
+  ...sharingMetadata(TITLE, DESCRIPTION, '/seeker'),
 };
 
 const OTHER_PLATFORMS = [

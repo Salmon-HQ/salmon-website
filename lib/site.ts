@@ -1,6 +1,25 @@
+import type { Metadata } from 'next';
+
 // The address the site is served from: Vercel redirects the bare domain to www, and the mobile app reads
 // https://www.salmonwallet.io/app/mobile-release.json.
 export const SITE_URL = 'https://www.salmonwallet.io';
+
+// The link-preview image. Apps cache previews by image URL, so bump `v` whenever the file changes, or they keep
+// showing the old picture.
+export const SHARING_IMAGE = {
+  url: `${SITE_URL}/images/sharing-og.png?v=20261109`,
+  width: 1200,
+  height: 630,
+  alt: 'Salmon: one wallet, only what you need. Modular Solana wallet for Chrome, iOS, Android and Seeker.',
+};
+
+/** Open Graph and Twitter tags for a Next page, all with the same preview image. */
+export function sharingMetadata(title: string, description: string, path: string): Pick<Metadata, 'openGraph' | 'twitter'> {
+  return {
+    openGraph: { type: 'website', siteName: 'Salmon Wallet', title, description, url: `${SITE_URL}${path}`, images: [SHARING_IMAGE] },
+    twitter: { card: 'summary_large_image', title, description, images: [SHARING_IMAGE] },
+  };
+}
 
 export const DOCS_URL = 'https://docs.salmonwallet.io';
 export const GITHUB_URL = 'https://github.com/Salmon-HQ';

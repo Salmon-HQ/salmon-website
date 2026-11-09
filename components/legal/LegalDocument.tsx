@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { getPowerupsLegal } from '@/lib/legal-powerups.mjs';
+import { sharingMetadata } from '@/lib/site';
 import PageShell from './PageShell';
 
 // The text comes verbatim from lib/legal-powerups-content.mjs (regenerated from the SOT by scripts/sync-powerups-legal.mjs).
@@ -80,6 +81,7 @@ const legalPath = (locale: LegalLocale, kind: LegalKind) => `${locale === 'en' ?
 export function legalMetadata(kind: LegalKind, locale: LegalLocale = 'en'): Metadata {
   return {
     ...META[locale][kind],
+    ...sharingMetadata(META[locale][kind].title, META[locale][kind].description, legalPath(locale, kind)),
     alternates: {
       canonical: legalPath(locale, kind),
       languages: Object.fromEntries(LEGAL_LOCALES.map((l) => [l, legalPath(l, kind)])),

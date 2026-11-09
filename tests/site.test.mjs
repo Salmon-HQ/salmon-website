@@ -202,3 +202,18 @@ test('/api documents the rate limits and the versioning and deprecation policy, 
   const llms = await (await fetch(`${BASE}/llms.txt`)).text();
   for (const text of ['/api#rate-limits', '/api#versioning', 'Sunset']) assert.ok(llms.includes(text), text);
 });
+
+const SHARING_IMAGE = 'https://www.salmonwallet.io/images/sharing-og.png?v=';
+
+for (const path of ['/', '/seeker', '/api', '/contact', '/terms', '/es/privacy', '/nope']) {
+  test(`${path} shares with the current preview image`, async () => {
+    const html = await (await fetch(BASE + path)).text();
+    const og = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+    const twitter = html.match(/<meta name="twitter:image" content="([^"]+)"/)?.[1];
+    assert.ok(og?.startsWith(SHARING_IMAGE), `og:image ${og}`);
+    assert.equal(twitter, og);
+    assert.match(html, /<meta name="twitter:card" content="summary_large_image"/);
+    assert.match(html, /<meta property="og:image:width" content="1200"/);
+    assert.equal((await fetch(new URL(og).pathname.replace(/^/, BASE))).status, 200);
+  });
+}
