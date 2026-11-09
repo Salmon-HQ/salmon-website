@@ -20,7 +20,7 @@ export const STORES = [
   {
     name: 'Seeker',
     label: 'Get Salmon for Seeker',
-    href: 'solanadappstore://details?id=io.salmonwallet.app',
+    href: '/seeker',
     icon: '<img src="/images/seeker.svg" alt="" aria-hidden="true">',
   },
 ];
@@ -114,7 +114,7 @@ export const footerHtml = `
         <div class="salmon-footer-support">
           <p>Supported by</p>
           <div>
-            <img src="/images/partners/la-familia.png" alt="La Familia">
+            <img src="/images/partners/la-familia.webp" alt="La Familia" width="480" height="53">
             <img src="/images/partners/superteam-argentina.svg" alt="Superteam Argentina">
           </div>
         </div>

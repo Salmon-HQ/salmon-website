@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: "DM Sans";
-  src: url("/reference-assets/font/dm-sans-400.ttf") format("truetype");
+  src: url("/reference-assets/font/dm-sans-400.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: "DM Sans";
-  src: url("/reference-assets/font/dm-sans-500.ttf") format("truetype");
+  src: url("/reference-assets/font/dm-sans-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -18,7 +18,7 @@
 
 @font-face {
   font-family: "DM Sans";
-  src: url("/reference-assets/font/dm-sans-600.ttf") format("truetype");
+  src: url("/reference-assets/font/dm-sans-600.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -26,7 +26,7 @@
 
 @font-face {
   font-family: "DM Sans";
-  src: url("/reference-assets/font/dm-sans-700.ttf") format("truetype");
+  src: url("/reference-assets/font/dm-sans-700.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;

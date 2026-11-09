@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3 },
     { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.6 },
+    { path: '/seeker', changeFrequency: 'monthly' as const, priority: 0.7 },
   ];
 
   // Only the legal pages have Spanish and Portuguese versions.

@@ -80,3 +80,49 @@ for (const path of ['/', '/contact', '/robots.txt', '/sitemap.xml']) {
     assert.equal((await fetch(BASE + path)).status, 200);
   });
 }
+
+const MARKDOWN = { accept: 'text/markdown' };
+
+for (const path of ['/', '/seeker', '/contact', '/terms', '/es/privacy']) {
+  test(`${path} answers in Markdown when asked, and in HTML otherwise`, async () => {
+    const md = await fetch(BASE + path, { headers: MARKDOWN });
+    assert.equal(md.status, 200);
+    assert.equal(md.headers.get('content-type'), 'text/markdown; charset=utf-8');
+    assert.match(md.headers.get('vary'), /\bAccept\b/);
+    assert.match(await md.text(), /^# /);
+    const html = await fetch(BASE + path, { headers: { accept: 'text/html,*/*;q=0.8' } });
+    assert.match(html.headers.get('content-type'), /^text\/html/);
+  });
+}
+
+test('an unknown page is a 404 in Markdown too, with links to recover', async () => {
+  const res = await fetch(`${BASE}/nope`, { headers: MARKDOWN });
+  assert.equal(res.status, 404);
+  assert.equal(res.headers.get('content-type'), 'text/markdown; charset=utf-8');
+  const body = await res.text();
+  for (const link of ['https://www.salmonwallet.io/)', 'https://docs.salmonwallet.io', '/sitemap.xml', '/llms.txt']) assert.ok(body.includes(link), link);
+  assert.equal((await fetch(`${BASE}/nope`)).status, 404);
+});
+
+test('/llms.txt points agents at the docs and the Seeker page', async () => {
+  const res = await fetch(`${BASE}/llms.txt`);
+  assert.equal(res.status, 200);
+  const body = await res.text();
+  for (const text of ['https://docs.salmonwallet.io/llms.txt', 'https://docs.salmonwallet.io/llms-full.txt', 'https://www.salmonwallet.io/seeker', 'https://github.com/Salmon-HQ', '## FAQ']) assert.ok(body.includes(text), text);
+});
+
+test('/seeker offers the dApp Store first on a Seeker and the QR code elsewhere', async () => {
+  const seeker = await (await fetch(`${BASE}/seeker`, { headers: { 'user-agent': 'Mozilla/5.0 (Linux; Android 15; Seeker) Chrome/131.0 Mobile' } })).text();
+  assert.ok(seeker.includes('href="solanadappstore://details?id=io.salmonwallet.app"'));
+  assert.ok(!seeker.includes('seeker-qr.svg'));
+  const desktop = await (await fetch(`${BASE}/seeker`)).text();
+  assert.ok(desktop.includes('seeker-qr.svg'));
+  assert.ok(desktop.includes('<link rel="canonical" href="https://www.salmonwallet.io/seeker"/>'));
+});
+
+test('the sitemap lists /seeker and the home links to it', async () => {
+  assert.ok((await (await fetch(`${BASE}/sitemap.xml`)).text()).includes('<loc>https://www.salmonwallet.io/seeker</loc>'));
+  const home = await (await fetch(`${BASE}/`)).text();
+  assert.ok(home.includes('href="/seeker"'));
+  assert.ok(!home.includes('href="solanadappstore:'));
+});

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { comingSoonCss, comingSoonHtml } from '@/components/coming-soon/coming-soon';
 import { consentCss, consentHtml, consentScript } from '@/components/consent/consent';
 import { downloadsCss, downloadsHtml, footerCss, footerHtml } from '@/components/footer/site-footer';
-import { SITE_URL, structuredData } from '@/lib/site';
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_URL, structuredData } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,6 +134,31 @@ const screensSectionHtml = `<section id=screens class=section aria-labelledby=sc
   ).join('')}</ul>
 </section>`;
 
+// The fin in AVIF (WebP fallback) at the width the card draws it: at most 4.13573 × the 18.75vw phone, the card's
+// width on mobile.
+const finPicture = (name: 'fin-back' | 'fin-front') =>
+  `<picture><source type="image/avif" sizes="(max-width: 750px) 100vw, 78vw" srcset="/fin/${name}-800.avif 800w, /fin/${name}-1400.avif 1400w, /fin/${name}-2260.avif 2260w"><img class=salmon-fin-${name.slice(4)} src=/fin/${name}.webp sizes="(max-width: 750px) 100vw, 78vw" srcset="/fin/${name}-800.webp 800w, /fin/${name}-1400.webp 1400w, /fin/${name}.webp 2260w" alt="" loading="lazy" decoding="async"></picture>`;
+
+// Images the template downloads but the page never shows lose their src (the phone frames, the Powerups screen's
+// last slide, which the script turns into a marker, the removed parallax card); the Powerups grid gets its row before the browser asks for
+// the template's 2 MB PNG; the rest come in AVIF/WebP.
+function lighterImages(html: string) {
+  return html
+    .replace(/<img src=\/reference-assets\/media\/(?:left|right|program\/04)\.png\?\d+ alt="">/g, '<img alt="">')
+    // #salmon-card-2 is removed by the script below once the DOM is parsed.
+    .replace(/<img src=\/reference-assets\/media\/salmon\/card-2\/00\.png\?\d+>/, '<img alt="">')
+    .replace(
+      /<img src=\/reference-assets\/media\/program\/01\.png\?\d+ alt="">/,
+      '<img src=/powerups/row.webp alt="Salmon Powerups" decoding=async>',
+    )
+    .replace('<img class=salmon-fin-back src=/fin/fin-back.webp alt="" loading="lazy">', finPicture('fin-back'))
+    .replace('<img class=salmon-fin-front src=/fin/fin-front.webp alt="" loading="lazy">', finPicture('fin-front'))
+    .replace(
+      'background-image:url(/reference-assets/media/salmon/00.jpg)',
+      'background-image:url(/reference-assets/media/salmon/00.webp);background-image:image-set(url(/reference-assets/media/salmon/00.avif) type("image/avif"),url(/reference-assets/media/salmon/00.webp) type("image/webp"))',
+    );
+}
+
 export async function GET() {
   let html: string;
   try {
@@ -146,7 +171,7 @@ export async function GET() {
     .replace(/<title[\s\S]*?<\/title>/i, '')
     .replace(/<meta\b[^>]*>/gi, '')
     .replace(/<link\b[^>]*(?:canonical|icon|manifest|apple-touch|preload)[^>]*>/gi, '');
-  const withHeadline = withoutOriginalMetadata.replace(
+  const withHeadline = lighterImages(withoutOriginalMetadata).replace(
     '<h1> Total salmon.<br> Totally different. </h1>',
     '<h1> <span class="salmon-h1-strong">One wallet.</span><br> Only what you need. </h1>',
   );
@@ -215,28 +240,28 @@ export async function GET() {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5">
     <meta name="theme-color" content="#ff5c45">
-    <meta name="description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta name="description" content="${HOME_DESCRIPTION}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Salmon — One wallet. Only what you need.">
-    <meta property="og:description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta property="og:title" content="${HOME_TITLE}">
+    <meta property="og:description" content="${HOME_DESCRIPTION}">
     <meta property="og:image" content="${SITE_URL}/images/sharing-og.png">
     <meta property="og:url" content="${SITE_URL}/">
     <meta property="og:site_name" content="Salmon Wallet">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Salmon — One wallet. Only what you need.">
-    <meta name="twitter:description" content="A lightweight Solana wallet that expands through optional Powerups.">
+    <meta name="twitter:title" content="${HOME_TITLE}">
+    <meta name="twitter:description" content="${HOME_DESCRIPTION}">
     <meta name="twitter:image" content="${SITE_URL}/images/sharing-og.png">
     <link rel="canonical" href="${SITE_URL}/">
     <link rel="manifest" href="/manifest.webmanifest">
     <script type="application/ld+json">${JSON.stringify(structuredData()).replace(/</g, '\\u003c')}</script>
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/images/app-icon.png">
-    <title>Salmon — One wallet. Only what you need.</title>
+    <title>${HOME_TITLE}</title>
     <style>
-      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-400.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
-      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-500.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
-      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-600.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
-      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-700.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+      @font-face { font-family: "DM Sans"; src: url("/reference-assets/font/dm-sans-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
       /* Without the black section the page background shows; keep it white
          rather than leaving it to the browser's default canvas. */
       html { background: #fff; }
@@ -1184,12 +1209,6 @@ export async function GET() {
       // so copy is swapped as soon as the DOM is parsed and only the nodes the
       // template caches (percent counter) wait for load.
       function applySalmonCopy() {
-        var powerupsGridImage = document.querySelector('#program-card-content-grid img');
-        if (powerupsGridImage) {
-          powerupsGridImage.src = '/powerups/row.webp';
-          powerupsGridImage.alt = 'Salmon Powerups';
-        }
-
         // The template fades one child of the screen per scroll step and calls
         // play()/pause() on the first two; they become empty markers with no-op
         // media methods. The phone is a mock that draws the Powerups flow at the

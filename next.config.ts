@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  // Pages answer in Markdown or HTML depending on Accept (proxy.ts). Set here because Next replaces a Vary set by
+  // the proxy with its own on Next pages, but appends to this one; /seeker also depends on the user agent.
+  async headers() {
+    return [
+      { source: '/((?!_next/|phone-preview|powerup-rows|.*\\..*).*)', headers: [{ key: 'Vary', value: 'Accept' }] },
+      { source: '/seeker', headers: [{ key: 'Vary', value: 'Accept, User-Agent' }] },
+    ];
+  },
   // Addresses of the previous site keep working: retired pages land on the home, English drops its /en prefix,
   // and only the legal pages exist in Spanish and Portuguese.
   async redirects() {
