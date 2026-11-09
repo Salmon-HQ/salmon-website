@@ -1,37 +1,15 @@
-import type { Metadata } from 'next';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import LegalDocument from '@/components/LegalDocument';
-import { getPowerupsLegal } from '@/lib/legal-powerups.mjs';
+import LegalDocument, { legalMetadata, type LegalLocale } from '@/components/legal/LegalDocument';
 
-type Props = {
-  params: Promise<{ locale: string }>;
-};
+// Spanish and Portuguese texts at /es/privacy and /pt/privacy; English lives at /privacy.
+export const dynamicParams = false;
+export const generateStaticParams = () => [{ locale: 'es' }, { locale: 'pt' }];
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'metadata.privacy' });
-  return {
-    title: t('title'),
-    description: t('description'),
-    alternates: {
-      canonical: locale === 'en' ? '/privacy' : `/${locale}/privacy`,
-      languages: { en: '/privacy', es: '/es/privacy', pt: '/pt/privacy' },
-    },
-  };
+type Props = { params: Promise<{ locale: LegalLocale }> };
+
+export async function generateMetadata({ params }: Props) {
+  return legalMetadata('privacy', (await params).locale);
 }
 
-export default async function PrivacyPage({ params }: Props) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-  const document = getPowerupsLegal(locale, 'privacy');
-
-  return (
-    <>
-      <Navbar />
-      <LegalDocument document={document} />
-      <Footer />
-    </>
-  );
+export default async function LocalizedPrivacyPage({ params }: Props) {
+  return <LegalDocument kind="privacy" locale={(await params).locale} />;
 }

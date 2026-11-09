@@ -8,14 +8,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '', changeFrequency: 'monthly' as const, priority: 1.0 },
     { path: '/terms', changeFrequency: 'yearly' as const, priority: 0.3 },
     { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
-    { path: '/about', changeFrequency: 'monthly' as const, priority: 0.6 },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.6 },
-    { path: '/developers', changeFrequency: 'monthly' as const, priority: 0.7 },
-    { path: '/brand', changeFrequency: 'monthly' as const, priority: 0.6 },
   ];
 
+  // Only the legal pages have Spanish and Portuguese versions.
   return pages.flatMap((page) =>
-    locales.map((locale) => ({
+    (page.path === '/terms' || page.path === '/privacy' ? locales : ['en']).map((locale) => ({
       url: `${BASE_URL}${locale === 'en' ? '' : `/${locale}`}${page.path}`,
       lastModified: new Date(),
       changeFrequency: page.changeFrequency,

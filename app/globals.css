@@ -1,223 +1,47 @@
 @import "tailwindcss";
 
-@theme {
-  /* Neutral white */
-  --color-white: #e1e1dd;
-
-  /* Background */
-  --color-bg-primary: #10131c;
-  --color-bg-secondary: #161c2d;
-  --color-bg-tertiary: rgba(225, 225, 221, 0.08);
-  --color-bg-glass: rgba(0, 0, 0, 0.4);
-
-  /* Cards */
-  --color-card-bg: rgba(64, 73, 98, 0.3);
-  --color-card-border: rgba(225, 225, 221, 0.1);
-
-  /* Text */
-  --color-text-primary: #e1e1dd;
-  --color-text-secondary: #8a8d98;
-  --color-text-tertiary: #6b6e7b;
-
-  /* Borders */
-  --color-border-default: #404962;
-  --color-border-subtle: rgba(225, 225, 221, 0.15);
-
-  /* Accent */
-  --color-accent: #ff5c45;
-  --color-accent-end: rgba(161, 42, 42, 0.9);
-  --color-accent-soft: #ff7e6d;
-
-  /* Status */
-  --color-success: #10b981;
-  --color-error: #ef4444;
-
-  /* Fonts */
-  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
-  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
-  --font-display: var(--font-dm-sans), system-ui, sans-serif;
-
-  /* Type scale (ValidatorStats) */
-  --text-eyebrow: 0.75rem;
-  --text-h2: clamp(2rem, 1.4rem + 2.6vw, 3.5rem);
-
-  /* Spacing (ValidatorStats) */
-  --space-section: clamp(5rem, 3.5rem + 7vw, 11rem);
-  --space-gutter: clamp(1.25rem, 0.5rem + 3vw, 2rem);
-
-  /* Easing */
-  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-400.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Editorial headline defaults (ValidatorStats heading) */
-.font-display {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
-  text-wrap: balance;
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-500.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Mono eyebrow/label helper (ValidatorStats) */
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--text-eyebrow);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-600.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Section eyebrow, as a pill. Not on .eyebrow itself: that class also labels
-   inline things (the Mindfolk tag, the validator stats) where a pill is wrong. */
-.eyebrow-pill {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: var(--text-eyebrow);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-text-primary);
-  padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
-  border: 1px solid color-mix(in oklab, var(--color-accent) 25%, transparent);
-  background-image: linear-gradient(
-    90deg,
-    color-mix(in oklab, var(--color-accent) 24%, transparent),
-    color-mix(in oklab, var(--color-accent) 6%, transparent)
-  );
+@font-face {
+  font-family: "DM Sans";
+  src: url("/reference-assets/font/dm-sans-700.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Hero platform tiles: each carries its own brand colour, passed in as --tint.
-   Hover/focus needs the tint too, which inline styles cannot express. */
-.platform-tile {
-  color: var(--tint);
-  background-color: color-mix(in oklab, var(--tint) 24%, transparent);
-  border-color: color-mix(in oklab, var(--tint) 60%, transparent);
-  box-shadow: 0 4px 20px color-mix(in oklab, var(--tint) 14%, transparent);
-  transition:
-    background-color 300ms var(--ease-expo-out),
-    border-color 300ms var(--ease-expo-out),
-    box-shadow 300ms var(--ease-expo-out),
-    transform 300ms var(--ease-expo-out);
-}
-
-.group:hover .platform-tile,
-.group:focus-visible .platform-tile {
-  background-color: color-mix(in oklab, var(--tint) 30%, transparent);
-  border-color: color-mix(in oklab, var(--tint) 70%, transparent);
-  box-shadow: 0 10px 30px color-mix(in oklab, var(--tint) 28%, transparent);
-  transform: translateY(-3px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .group:hover .platform-tile,
-  .group:focus-visible .platform-tile {
-    transform: none;
-  }
-}
-
-/* Get Salmon cards: the whole card carries the platform's colour, same --tint
-   contract as .platform-tile. */
-.platform-card {
-  color: var(--tint);
-  background-color: color-mix(in oklab, var(--tint) 12%, transparent);
-  border-color: color-mix(in oklab, var(--tint) 45%, transparent);
-  box-shadow: 0 4px 24px color-mix(in oklab, var(--tint) 10%, transparent);
-  transition:
-    background-color 400ms var(--ease-expo-out),
-    border-color 400ms var(--ease-expo-out),
-    box-shadow 400ms var(--ease-expo-out),
-    transform 400ms var(--ease-expo-out);
-}
-
-.group:hover .platform-card,
-.group:focus-visible .platform-card {
-  background-color: color-mix(in oklab, var(--tint) 22%, transparent);
-  border-color: color-mix(in oklab, var(--tint) 75%, transparent);
-  box-shadow: 0 16px 44px color-mix(in oklab, var(--tint) 24%, transparent);
-  transform: translateY(-4px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .group:hover .platform-card,
-  .group:focus-visible .platform-card {
-    transform: none;
-  }
-}
-
-/* Hide scrollbar (single-line stat strip on mobile) */
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-
-/* Base styles */
-html {
-  color-scheme: dark;
-  scroll-behavior: smooth;
-  /* clip, not hidden: hidden turns the root into a scroll container and breaks position: sticky */
-  overflow-x: clip;
-}
-
-@media (max-width: 768px) {
-  html {
-    /* Avoid queued/cancelled smooth-scroll animations while Safari changes
-       the visual viewport as its browser chrome expands and collapses. */
-    scroll-behavior: auto;
-  }
-}
-
+html,
 body {
-  background-color: #10131c;
-  color: #e1e1dd;
-  overflow-x: clip;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Salmon's scale texture from the brand guidelines. */
-.brand-scales {
-  background-image: url('/images/brand-scales.svg');
-  background-repeat: repeat;
-  background-size: 822px 26px;
-}
-
-/* Selection */
-::selection {
-  background-color: rgba(255, 92, 69, 0.3);
-  color: #e1e1dd;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(225, 225, 221, 0.15);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(225, 225, 221, 0.25);
-}
-
-/* Marquee animation for Chains */
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 40s linear infinite;
+  min-height: 100%;
+  margin: 0;
+  background: #10131c;
+  font-family: "DM Sans", system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
-    animation: none;
+  .wallet-mock * {
+    transition-duration: 0s !important;
   }
 }
