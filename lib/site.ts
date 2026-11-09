@@ -57,7 +57,7 @@ export function structuredData() {
           availableLanguage: ['English', 'Spanish', 'Portuguese'],
         },
         knowsAbout: ['Solana wallet', 'Self-custodial wallet', 'Solana'],
-        // TODO(address): add a PostalAddress here once the legal address to publish is confirmed.
+        address: { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' },
         sameAs: ['https://x.com/salmonwallet', GITHUB_URL, 'https://t.me/salmon_wallet', 'https://medium.com/@salmonwallet'],
       },
       {

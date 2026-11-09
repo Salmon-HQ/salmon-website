@@ -2,7 +2,7 @@
 // it may say what the visible copy does not (open source, license). Keep the FAQ in line with the docs FAQ
 // (https://docs.salmonwallet.io/getting-started/faq).
 import { powerupsLegalToMarkdown } from '@/lib/legal-powerups.mjs';
-import { apiGroups, apiVersion } from '@/lib/api-spec';
+import { API_RATE_LIMITS, API_VERSIONING, apiGroups, apiVersion } from '@/lib/api-spec';
 import {
   API_DOCS_URL,
   API_SOURCE_URL,
@@ -164,6 +164,14 @@ The HTTP API behind the Salmon wallet apps: network catalog, balances, activity,
 - Errors: \`{ "error": "snake_case_code", "error_description": "…" }\`.
 - Endpoints that move assets return unsigned transactions for the wallet to review and sign. The API never receives a recovery phrase or private key.
 
+## Rate limits
+
+${API_RATE_LIMITS.map((rule) => `- ${rule}`).join('\n')}
+
+## Versioning and deprecation
+
+${API_VERSIONING.map((rule) => `- ${rule}`).join('\n')}
+
 ## OpenAPI spec
 
 Version ${apiVersion}: [openapi.json](${OPENAPI_URL}) · [openapi.yaml](${SITE_URL}/openapi.yaml) · [API catalog](${SITE_URL}/.well-known/api-catalog)
@@ -243,7 +251,9 @@ Do not present Salmon as able to recover lost recovery phrases, reverse transact
 - [OpenAPI 3 spec](${OPENAPI_URL}) ([YAML](${SITE_URL}/openapi.yaml)): every operation has an \`operationId\`, typed parameters and response schemas.
 - [API overview](${SITE_URL}/api) · [API reference in the docs](${API_DOCS_URL}) · [API catalog (RFC 9727)](${SITE_URL}/.well-known/api-catalog)
 - Start with \`GET /v1/networks\` to learn which networks and features are enabled instead of hard-coding them.
-- Errors share one envelope, \`{ "error": "snake_case_code", "error_description": "…" }\`: branch on \`error\`. Back off on 429 and 503; do not retry 400 unchanged.
+- Errors share one envelope, \`{ "error": "snake_case_code", "error_description": "…" }\`: branch on \`error\`. Do not retry 400 unchanged; back off on 503.
+- Rate limits: per IP, in one-minute windows, stricter on the routes that build transactions. A 429 (\`too_many_requests\`) carries \`Retry-After\` in seconds: wait that long. [Details](${SITE_URL}/api#rate-limits).
+- Versioning: \`/v1\` in the path, backward compatible within a version; breaking changes go to \`/v2\`. Retirements are announced at least 180 days ahead with \`Deprecation\` and \`Sunset\` headers. [Policy](${SITE_URL}/api#versioning).
 - Endpoints that move assets return unsigned transactions. Only a wallet the user controls may sign them, after the user approves.
 
 ## Platforms

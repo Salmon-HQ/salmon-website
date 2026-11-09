@@ -184,3 +184,21 @@ test('/llms.txt says when to use Salmon and how to call its API', async () => {
   const body = await (await fetch(`${BASE}/llms.txt`)).text();
   for (const text of ['## When to use Salmon', '## API', 'https://api.salmonwallet.io', 'https://www.salmonwallet.io/openapi.json', 'GET /v1/networks']) assert.ok(body.includes(text), text);
 });
+
+test('the Organization JSON-LD has a contact point and a postal address', async () => {
+  const home = await (await fetch(`${BASE}/`)).text();
+  const graph = JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'];
+  const org = graph.find((node) => node['@type'] === 'Organization');
+  assert.equal(org.contactPoint.contactType, 'integrations and product enquiries');
+  assert.ok(org.contactPoint.email);
+  assert.deepEqual(org.address, { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' });
+});
+
+test('/api documents the rate limits and the versioning and deprecation policy, in HTML and Markdown', async () => {
+  const html = await (await fetch(`${BASE}/api`)).text();
+  for (const text of ['id="rate-limits"', 'Retry-After', 'id="versioning"', '180 days', 'Deprecation header (RFC 9745)', 'Sunset header (RFC 8594)']) assert.ok(html.includes(text), text);
+  const md = await (await fetch(`${BASE}/api`, { headers: MARKDOWN })).text();
+  for (const text of ['## Rate limits', '## Versioning and deprecation', 'too_many_requests']) assert.ok(md.includes(text), text);
+  const llms = await (await fetch(`${BASE}/llms.txt`)).text();
+  for (const text of ['/api#rate-limits', '/api#versioning', 'Sunset']) assert.ok(llms.includes(text), text);
+});

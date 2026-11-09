@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PageShell from '@/components/legal/PageShell';
-import { apiGroups, apiVersion } from '@/lib/api-spec';
+import { API_RATE_LIMITS, API_VERSIONING, apiGroups, apiVersion } from '@/lib/api-spec';
 import { API_DOCS_URL, API_SOURCE_URL, API_URL, DOCS_URL, SITE_URL } from '@/lib/site';
 
 const TITLE = 'Salmon Wallet API: Docs, Endpoints and OpenAPI Spec';
@@ -35,6 +35,20 @@ export default function ApiPage() {
             <li>Public, with no API key. Browser requests are limited to Salmon&rsquo;s own origins (CORS), and <code>/v1</code> is rate limited per IP.</li>
             <li>Errors use one envelope: <code>{'{ "error": "snake_case_code", "error_description": "…" }'}</code>.</li>
             <li>Endpoints that move assets return unsigned transactions for the wallet to review and sign. The API never receives a recovery phrase or private key.</li>
+          </ul>
+        </section>
+
+        <section id="rate-limits" className="mb-10">
+          <h2 className="mb-4 text-2xl font-semibold">Rate limits</h2>
+          <ul className="list-disc space-y-2 pl-5 text-[#10131c]/80">
+            {API_RATE_LIMITS.map((rule) => <li key={rule}>{rule}</li>)}
+          </ul>
+        </section>
+
+        <section id="versioning" className="mb-10">
+          <h2 className="mb-4 text-2xl font-semibold">Versioning and deprecation</h2>
+          <ul className="list-disc space-y-2 pl-5 text-[#10131c]/80">
+            {API_VERSIONING.map((rule) => <li key={rule}>{rule}</li>)}
           </ul>
         </section>
 
