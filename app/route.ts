@@ -288,8 +288,9 @@ export async function GET() {
         top: 0;
         left: 0;
         width: 100%;
-        height: calc(var(--salmon-nav-solid, 78px) + 18px);
-        background: linear-gradient(to bottom, #fff 0, #fff var(--salmon-nav-solid, 78px), rgba(255,255,255,0) 100%);
+        height: 96px;
+        /* No var() inside the gradient: Dark Reader skips gradients that contain one and leaves the band white. */
+        background: linear-gradient(to bottom, #fff 0, #fff 78px, rgba(255,255,255,0) 100%);
         pointer-events: none;
         transition: opacity .2s cubic-bezier(.215,.61,.355,1);
       }
@@ -1076,7 +1077,10 @@ export async function GET() {
       @media (max-width: 750px) {
         #nav-logo .salmon-reference-wordmark { width: 78px; }
         #nav-logo { top: 21px !important; height: 26px !important; gap: 8px !important; }
-        #nav { --salmon-nav-solid: 56px; }
+        #nav::before {
+          height: 74px;
+          background: linear-gradient(to bottom, #fff 0, #fff 56px, rgba(255,255,255,0) 100%);
+        }
         #nav .soon { right: 6.15385vw !important; }
         #nav-logo::before { width: 26px; height: 26px; }
         #nav-logo::after { font-size: 22px; }
