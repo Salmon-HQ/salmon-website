@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 // The address the site is served from: Vercel redirects the bare domain to www, and the mobile app reads
 // https://www.salmonwallet.io/app/mobile-release.json.
 export const SITE_URL = 'https://www.salmonwallet.io';
+export const RAISE_URL = 'https://backable.biz/raises/7R9mxaGtXKAj5Ft7NQb5V1xzzmUxRKBce3n9XYFWfq8Y';
 
 // The link-preview image. Apps cache previews by image URL, so bump `v` whenever the file changes, or they keep
 // showing the old picture.

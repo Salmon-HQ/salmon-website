@@ -3,7 +3,7 @@ import path from 'node:path';
 import { comingSoonCss, comingSoonHtml } from '@/components/coming-soon/coming-soon';
 import { consentCss, consentHtml, consentScript } from '@/components/consent/consent';
 import { downloadsCss, downloadsHtml, footerCss, footerHtml } from '@/components/footer/site-footer';
-import { HOME_DESCRIPTION, HOME_TITLE, SHARING_IMAGE, SITE_URL, structuredData } from '@/lib/site';
+import { HOME_DESCRIPTION, HOME_TITLE, RAISE_URL, SHARING_IMAGE, SITE_URL, structuredData } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -184,10 +184,12 @@ export async function GET() {
     /<div class=card-content-screen><video[^>]*hero\/00\.mp4[\s\S]*?<\/video><\/div>/,
     '<div class="card-content-screen salmon-phone-screen"><iframe src="/phone-preview" title="Salmon Wallet" tabindex="-1"></iframe></div>',
   );
-  const withDownloadLink = withSalmonPhone.replace(
-    /<a\s+class=soon>/,
-    '<a class=soon href="#salmon-card-1">',
-  );
+  const withDownloadLink = withSalmonPhone
+    .replace(/<a\s+class=soon>/, '<a class=soon href="#salmon-card-1">')
+    .replace(
+      '<nav id=nav>',
+      `<nav id=nav><a class=salmon-raise href="${RAISE_URL}" target=_blank rel="noopener noreferrer"><span>Salmon is raising on Backable</span> <b>Invest →</b></a>`,
+    );
   // The template script still queries #shop on load (clip, sticky list, nav-logo
   // colour), so the Member Shop section becomes an empty stub instead of being
   // removed. Sitting right after #salmon, its card-content also marks where the
@@ -328,6 +330,22 @@ export async function GET() {
       #nav:has(#nav-logo.hide) .soon { opacity: 0; pointer-events: none; }
       #nav-logo { transition: opacity .2s cubic-bezier(.215,.61,.355,1); }
       #nav-logo.hide { opacity: 0; pointer-events: none; }
+      /* Raise link: centred in the nav row, on the Download now button's axis (top 24px + 54px / 2),
+         so nothing else moves and the template's onload measurements stay right. */
+      .salmon-raise {
+        position: absolute; top: 51px; left: 50%; transform: translate(-50%, -50%); z-index: 1;
+        display: flex; align-items: center; gap: 8px;
+        color: #10131c; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+        text-decoration: none; transition: opacity .2s cubic-bezier(.215,.61,.355,1);
+      }
+      .salmon-raise b {
+        font-weight: 600;
+        background: linear-gradient(155deg, #ff7e6d 0%, #ff5c45 55%, #a12a2a 100%);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      }
+      .salmon-raise:hover span { text-decoration: underline; text-underline-offset: 3px; }
+      #nav:has(#nav-logo.hide) .salmon-raise { opacity: 0; pointer-events: none; }
+      @media (max-width: 379px) { .salmon-raise { display: none !important; } }
       #hero-txt {
         padding-top: 7.5vh !important;
         padding-bottom: 40vh !important;
@@ -1096,6 +1114,9 @@ export async function GET() {
           height: 74px;
           background: linear-gradient(to bottom, #fff 0, #fff 56px, rgba(255,255,255,0) 100%);
         }
+        /* Sits just left of Download now (button ~131px wide); hidden where it would touch the logo. */
+        .salmon-raise { top: 34px; left: auto; right: calc(6.15385vw + 147px); transform: translateY(-50%); font-size: 13px; }
+        .salmon-raise span { display: none; }
         #nav .soon { right: 6.15385vw !important; }
         #nav-logo::before { width: 26px; height: 26px; }
         #nav-logo::after { font-size: 22px; }
