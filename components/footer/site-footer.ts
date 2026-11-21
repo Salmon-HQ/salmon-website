@@ -1,3 +1,5 @@
+import { RAISE_URL } from '@/lib/site';
+
 export const STORES = [
   {
     name: 'Chrome',
@@ -69,7 +71,10 @@ const FOOTER_COLUMNS = [
   },
   {
     title: 'Community',
-    links: SOCIALS.filter((social) => social.label !== 'GitHub').map((social) => [social.label, social.href]),
+    links: [
+      ...SOCIALS.filter((social) => social.label !== 'GitHub').map((social) => [social.label, social.href]),
+      ['Invest in Salmon', RAISE_URL],
+    ],
   },
   {
     title: 'Legal',
